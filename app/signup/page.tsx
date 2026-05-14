@@ -95,6 +95,7 @@ export default async function SignupPage({
   const tierSlug =
     params.tier && params.tier in tiers ? params.tier : "workflow-blueprint";
   const selectedTier = tiers[tierSlug as keyof typeof tiers];
+  const showCheckoutError = params.tier && "error" in params;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
@@ -173,8 +174,8 @@ export default async function SignupPage({
           </div>
 
           <form
-            action="/checkout"
-            method="get"
+            action="/api/checkout"
+            method="post"
             className="rounded-[2rem] border border-black/22 bg-[#b8efb9]/45 p-6 sm:p-7"
           >
             <input type="hidden" name="tier" value={tierSlug} />
@@ -191,6 +192,12 @@ export default async function SignupPage({
                 {selectedTier.delivery}
               </p>
             </div>
+
+            {showCheckoutError ? (
+              <p className="mt-6 border border-black/25 bg-black px-4 py-3 text-sm font-bold text-white">
+                Payment setup could not start. Please check the details and try again.
+              </p>
+            ) : null}
 
             <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="block">
