@@ -515,78 +515,79 @@ export default function Home() {
         </div>
       </header>
 
-      <section id="top" className="pt-[5.3rem]">
-        <div className="relative overflow-hidden border-b border-[#9ed39f]/25 bg-black">
-          <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(158,211,159,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.1)_1px,transparent_1px)] [background-size:44px_44px]" />
+      <section id="top" className="pt-[6.6rem] sm:pt-[7.2rem]">
+        <div className="border-b border-[#9ed39f]/25 bg-black px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+          <div className="mx-auto max-w-[1920px]">
+            <div className="overflow-hidden border border-[#9ed39f]/32 bg-[#020503] shadow-[0_26px_90px_rgba(0,0,0,0.45)]">
+              <div className="relative aspect-[16/10] min-h-[320px] sm:aspect-[16/8] sm:min-h-[420px] lg:aspect-[16/6.8] xl:aspect-[16/5.7]">
+                <Image
+                  src="/brand/axiom-architect-header-1920x1080-final.png"
+                  alt="Axiom Architect system banner"
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="object-cover object-center"
+                />
 
-          <div className="relative aspect-[16/15] min-h-[560px] sm:aspect-[16/11] md:aspect-[16/9] lg:aspect-[16/7.1]">
-            <Image
-              src="/brand/axiom-architect-header-1920x1080-final.png"
-              alt="Axiom Architect system banner"
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover object-center"
-            />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/16" />
 
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/16 to-black/35" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/82 via-transparent to-transparent" />
-            <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(158,211,159,0.16)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.16)_1px,transparent_1px)] [background-size:52px_52px]" />
-
-            <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-6 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10">
-              <div className="mx-auto grid w-full max-w-[1920px] grid-cols-1 gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-                <div className="max-w-5xl">
-                  <div className="mb-4 flex flex-wrap gap-2 sm:mb-5">
-                    <span className="inline-flex items-center gap-2 border border-[#9ed39f]/35 bg-[#9ed39f]/14 px-3 py-2 text-[0.64rem] font-black uppercase tracking-[0.24em] text-[#9ed39f] backdrop-blur-sm">
-                      <AxiomIcon kind="diagnose" className="h-3.5 w-3.5" />
-                      AI workflow architecture
-                    </span>
-                    <span className="inline-flex items-center gap-2 border border-white/15 bg-black/45 px-3 py-2 text-[0.64rem] font-black uppercase tracking-[0.24em] text-white/85 backdrop-blur-sm">
-                      <AxiomIcon kind="audit" className="h-3.5 w-3.5" />
-                      Axiom Workflow Audit
-                    </span>
-                  </div>
-
-                  <h1 className="max-w-5xl text-[clamp(3.2rem,10vw,7.7rem)] font-black uppercase leading-[0.88] tracking-[-0.08em] text-white drop-shadow-[0_8px_26px_rgba(0,0,0,0.42)]">
-                    AI workflow architecture for real business operations.
-                  </h1>
-
-                  <p className="mt-4 max-w-3xl text-base leading-7 text-white/84 sm:mt-5 sm:text-lg sm:leading-8">
-                    Axiom Architect turns messy workflows into structured
-                    diagnostics, automation opportunities, review gates, and
-                    practical implementation blueprints.
-                  </p>
-
-                  <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                    <a
-                      href="#start"
-                      className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.22em] text-black transition duration-200 hover:-translate-y-0.5 hover:bg-white sm:min-w-60"
-                    >
-                      Start Workflow Audit
-                    </a>
-                    <a
-                      href="#deliverables"
-                      className="inline-flex min-h-14 items-center justify-center border border-white/20 bg-black/45 px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.22em] text-white transition duration-200 hover:-translate-y-0.5 hover:border-[#9ed39f] hover:bg-[#9ed39f]/12 hover:text-[#9ed39f] sm:min-w-60"
-                    >
-                      View Deliverables
-                    </a>
-                  </div>
+                <div className="absolute left-0 top-0 z-10 flex flex-wrap gap-2 p-4 sm:p-5 lg:p-6">
+                  <span className="inline-flex items-center gap-2 border border-[#9ed39f]/40 bg-black/72 px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.22em] text-[#9ed39f] backdrop-blur-sm">
+                    <AxiomIcon kind="diagnose" className="h-3.5 w-3.5" />
+                    AI workflow architecture
+                  </span>
+                  <span className="inline-flex items-center gap-2 border border-[#9ed39f]/32 bg-[#9ed39f]/16 px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.22em] text-[#9ed39f] backdrop-blur-sm">
+                    <AxiomIcon kind="audit" className="h-3.5 w-3.5" />
+                    Axiom Workflow Audit
+                  </span>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-                  {heroSignals.map((item) => (
-                    <div
-                      key={item}
-                      className="border border-[#9ed39f]/28 bg-black/44 px-4 py-4 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:border-[#9ed39f]/55 hover:bg-[#9ed39f]/10"
-                    >
-                      <span className="block text-[0.58rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]/74">
-                        Signal
-                      </span>
-                      <span className="mt-2 block text-xs font-bold uppercase tracking-[0.14em] text-white">
-                        {item}
-                      </span>
+              <div className="border-t border-[#9ed39f]/32 bg-[#020503] p-5 sm:p-7 lg:p-9">
+                <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+                  <div>
+                    <h1 className="max-w-5xl text-[clamp(2.8rem,7vw,6.8rem)] font-black uppercase leading-[0.9] tracking-[-0.08em] text-white">
+                      AI workflow architecture for real business operations.
+                    </h1>
+                    <p className="mt-5 max-w-3xl text-base leading-7 text-white/82 sm:text-lg sm:leading-8">
+                      Axiom Architect turns messy workflows into structured
+                      diagnostics, automation opportunities, review gates, and
+                      practical implementation blueprints.
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+                      {heroSignals.map((item) => (
+                        <div
+                          key={item}
+                          className="border border-[#9ed39f]/28 bg-[#061008] px-3 py-3 transition duration-200 hover:-translate-y-0.5 hover:border-[#9ed39f]/55 hover:bg-[#9ed39f]/10"
+                        >
+                          <span className="block text-[0.56rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]/78">
+                            Signal
+                          </span>
+                          <span className="mt-1 block text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white">
+                            {item}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                      <a
+                        href="#start"
+                        className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.22em] text-black transition duration-200 hover:-translate-y-0.5 hover:bg-white sm:min-w-56"
+                      >
+                        Start Workflow Audit
+                      </a>
+                      <a
+                        href="#deliverables"
+                        className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/32 bg-black/35 px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.22em] text-white transition duration-200 hover:-translate-y-0.5 hover:border-[#9ed39f] hover:bg-[#9ed39f]/12 hover:text-[#9ed39f] sm:min-w-56"
+                      >
+                        View Deliverables
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -901,3 +902,4 @@ export default function Home() {
     </main>
   );
 }
+
