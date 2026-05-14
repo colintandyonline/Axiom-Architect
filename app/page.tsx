@@ -397,7 +397,7 @@ function SectionLabel({
   children: ReactNode;
 }) {
   return (
-    <p className="inline-flex items-center gap-2 border border-[#9ed39f]/35 bg-[#9ed39f]/12 px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]">
+    <p className="inline-flex items-center gap-2 border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black shadow-[0_0_24px_rgba(158,211,159,0.18)]">
       <AxiomIcon kind={icon} className="h-4 w-4" />
       {children}
     </p>
@@ -416,22 +416,23 @@ function SectionIntro({
   text?: string;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
       <div>
         <SectionLabel icon={icon}>{label}</SectionLabel>
-        <h2 className="mt-5 max-w-5xl text-[clamp(2.55rem,5.6vw,5.8rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-white">
+        <h2 className="mt-5 max-w-5xl text-[clamp(2.45rem,5.3vw,5.55rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-white drop-shadow-[0_12px_34px_rgba(0,0,0,0.45)]">
           {title}
         </h2>
       </div>
       {text ? (
-        <p className="max-w-3xl text-base leading-8 text-white/72 sm:text-lg">
-          {text}
-        </p>
+        <div className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-6">
+          <p className="text-base leading-8 text-[#e7ffe8] sm:text-lg">
+            {text}
+          </p>
+        </div>
       ) : null}
     </div>
   );
 }
-
 function DropdownCard({
   name,
   href,
@@ -667,7 +668,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="relative border-b border-[#9ed39f]/20 bg-black px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+      <section className="relative border-b border-[#9ed39f]/25 bg-[radial-gradient(circle_at_top_right,rgba(158,211,159,0.18),#041008_34%,#000_74%)] px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
         <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(158,211,159,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.1)_1px,transparent_1px)] [background-size:44px_44px]" />
         <div className="relative mx-auto max-w-[1440px]">
           <SectionIntro
@@ -681,15 +682,15 @@ export default function Home() {
             {problemSignals.map((item) => (
               <article
                 key={item.title}
-                className="group border border-[#9ed39f]/28 bg-[#061008] p-7 transition duration-300 hover:-translate-y-1 hover:border-[#9ed39f]/60 hover:bg-[#0b1d10]"
+                className="group border border-[#9ed39f]/38 bg-[linear-gradient(135deg,#102b17_0%,#061008_62%,#020503_100%)] p-7 shadow-[0_18px_54px_rgba(0,0,0,0.24)] transition duration-300 hover:-translate-y-1 hover:border-[#9ed39f] hover:bg-[#9ed39f]/15 hover:shadow-[0_0_34px_rgba(158,211,159,0.14)]"
               >
-                <div className="flex h-14 w-14 items-center justify-center border border-[#9ed39f]/40 bg-[#9ed39f]/12 text-[#9ed39f] transition duration-300 group-hover:bg-[#9ed39f] group-hover:text-black">
+                <div className="flex h-14 w-14 items-center justify-center border border-[#9ed39f]/40 bg-[#9ed39f] text-black shadow-[0_0_26px_rgba(158,211,159,0.18)] transition duration-300 group-hover:bg-white group-hover:text-black">
                   <AxiomIcon kind={item.icon} className="h-6 w-6" />
                 </div>
                 <h3 className="mt-8 text-2xl font-black uppercase tracking-[-0.03em] text-white">
                   {item.title}
                 </h3>
-                <p className="mt-4 text-base leading-8 text-white/72">
+                <p className="mt-4 text-base leading-8 text-[#ddf4de]/78">
                   {item.text}
                 </p>
               </article>
@@ -700,7 +701,7 @@ export default function Home() {
 
       <section
         id="audit"
-        className="border-b border-[#9ed39f]/20 bg-[#020503] px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
+        className="border-b border-[#9ed39f]/25 bg-[linear-gradient(135deg,#07190c_0%,#020503_42%,#000_100%)] px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
       >
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:gap-16">
           <div>
@@ -716,7 +717,7 @@ export default function Home() {
               process, tool stack, or business problem into a structured
               blueprint for AI-supported execution.
             </p>
-            <p className="mt-6 text-base leading-8 text-white/72 sm:text-lg">
+            <p className="mt-6 text-base leading-8 text-[#ddf4de]/78 sm:text-lg">
               The audit separates useful automation from risky shortcuts. It
               identifies what should be improved, what can be assisted by AI,
               what still needs human review, and what sequence makes sense.
@@ -727,7 +728,7 @@ export default function Home() {
 
       <section
         id="method"
-        className="relative border-b border-[#9ed39f]/20 bg-black px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
+        className="relative border-b border-[#9ed39f]/25 bg-[radial-gradient(circle_at_top_right,rgba(158,211,159,0.18),#041008_34%,#000_74%)] px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
       >
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.09)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.09)_1px,transparent_1px)] [background-size:52px_52px]" />
         <div className="relative mx-auto max-w-[1440px]">
@@ -738,24 +739,24 @@ export default function Home() {
             text="The process is designed to create operational clarity before software, assistants, automations, or implementation work begins."
           />
 
-          <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden border border-[#9ed39f]/30 bg-[#9ed39f]/25 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden border border-[#9ed39f]/42 bg-[#9ed39f]/34 md:grid-cols-2 xl:grid-cols-4">
             {methodSteps.map((step) => (
               <article
                 key={step.number}
-                className="group bg-[#041008] p-7 transition duration-300 hover:bg-[#0a1c10]"
+                className="group bg-[linear-gradient(135deg,#0d2a14_0%,#041008_70%,#020503_100%)] p-7 transition duration-300 hover:bg-[#102f18] hover:shadow-[0_0_34px_rgba(158,211,159,0.12)]"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[0.78rem] font-black uppercase tracking-[0.26em] text-[#9ed39f]">
                     {step.number}
                   </span>
-                  <span className="flex h-12 w-12 items-center justify-center border border-[#9ed39f]/35 bg-[#9ed39f]/12 text-[#9ed39f] transition duration-300 group-hover:bg-[#9ed39f] group-hover:text-black">
+                  <span className="flex h-12 w-12 items-center justify-center border border-[#9ed39f]/35 bg-[#9ed39f] text-black shadow-[0_0_26px_rgba(158,211,159,0.18)] transition duration-300 group-hover:bg-white group-hover:text-black">
                     <AxiomIcon kind={step.icon} className="h-5 w-5" />
                   </span>
                 </div>
                 <h3 className="mt-16 text-2xl font-black uppercase tracking-[-0.03em] text-white">
                   {step.title}
                 </h3>
-                <p className="mt-4 text-base leading-8 text-white/72">
+                <p className="mt-4 text-base leading-8 text-[#ddf4de]/78">
                   {step.text}
                 </p>
               </article>
@@ -766,7 +767,7 @@ export default function Home() {
 
       <section
         id="deliverables"
-        className="border-b border-[#9ed39f]/20 bg-[#020503] px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
+        className="border-b border-[#9ed39f]/25 bg-[linear-gradient(135deg,#07190c_0%,#020503_42%,#000_100%)] px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
       >
         <div className="mx-auto max-w-[1440px]">
           <SectionIntro
@@ -780,15 +781,15 @@ export default function Home() {
             {deliverables.map((item) => (
               <article
                 key={item.title}
-                className="group border border-[#9ed39f]/28 bg-black/78 p-7 transition duration-300 hover:-translate-y-1 hover:border-[#9ed39f]/60 hover:bg-[#06150b]"
+                className="group border border-[#9ed39f]/38 bg-[linear-gradient(135deg,#0b2211_0%,#030804_72%,#000_100%)] p-7 shadow-[0_18px_54px_rgba(0,0,0,0.24)] transition duration-300 hover:-translate-y-1 hover:border-[#9ed39f] hover:bg-[#102f18] hover:shadow-[0_0_34px_rgba(158,211,159,0.14)]"
               >
-                <div className="flex h-14 w-14 items-center justify-center border border-[#9ed39f]/38 bg-[#9ed39f]/12 text-[#9ed39f] transition duration-300 group-hover:bg-[#9ed39f] group-hover:text-black">
+                <div className="flex h-14 w-14 items-center justify-center border border-[#9ed39f]/38 bg-[#9ed39f] text-black shadow-[0_0_26px_rgba(158,211,159,0.18)] transition duration-300 group-hover:bg-white group-hover:text-black">
                   <AxiomIcon kind={item.icon} className="h-6 w-6" />
                 </div>
                 <h3 className="mt-7 text-[1.45rem] font-black uppercase tracking-[-0.03em] text-white">
                   {item.title}
                 </h3>
-                <p className="mt-4 text-base leading-8 text-white/70">
+                <p className="mt-4 text-base leading-8 text-[#ddf4de]/76">
                   {item.text}
                 </p>
               </article>
@@ -797,7 +798,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-b border-[#9ed39f]/20 bg-black px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+      <section className="border-b border-[#9ed39f]/25 bg-[linear-gradient(135deg,#000_0%,#061108_48%,#0c2613_100%)] px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
         <div className="mx-auto max-w-[1440px]">
           <SectionIntro
             icon="team"
@@ -810,7 +811,7 @@ export default function Home() {
             {audiences.map((item) => (
               <div
                 key={item.name}
-                className="group flex items-center gap-3 border border-[#9ed39f]/30 bg-[#061008] px-5 py-5 text-white transition duration-300 hover:-translate-y-1 hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
+                className="group flex items-center gap-3 border border-[#9ed39f]/40 bg-[linear-gradient(135deg,#102b17_0%,#061008_100%)] px-5 py-5 text-[#eaffeb] shadow-[0_18px_54px_rgba(0,0,0,0.2)] transition duration-300 hover:-translate-y-1 hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
               >
                 <AxiomIcon kind={item.icon} className="h-5 w-5 shrink-0" />
                 <span className="text-sm font-black uppercase tracking-[0.22em]">
@@ -824,7 +825,7 @@ export default function Home() {
 
       <section
         id="services"
-        className="relative border-b border-[#9ed39f]/20 bg-[#010302] px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
+        className="relative border-b border-[#9ed39f]/25 bg-[radial-gradient(circle_at_center,rgba(158,211,159,0.15),#041008_38%,#000_78%)] px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
       >
         <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(158,211,159,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.1)_1px,transparent_1px)] [background-size:48px_48px]" />
         <div className="relative mx-auto max-w-[1440px]">
@@ -835,24 +836,24 @@ export default function Home() {
             text="The Workflow Audit is the entry point. Deeper services can extend the diagnosis into protocols, agent instructions, implementation workbooks, or system builds."
           />
 
-          <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden border border-[#9ed39f]/30 bg-[#9ed39f]/24 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden border border-[#9ed39f]/42 bg-[#9ed39f]/34 md:grid-cols-2 xl:grid-cols-3">
             {serviceLadder.map((service) => (
               <article
                 key={service.name}
-                className="group bg-[#041008] p-7 transition duration-300 hover:bg-[#0a1c10]"
+                className="group bg-[linear-gradient(135deg,#0d2a14_0%,#041008_70%,#020503_100%)] p-7 transition duration-300 hover:bg-[#102f18] hover:shadow-[0_0_34px_rgba(158,211,159,0.12)]"
               >
                 <div className="flex items-center justify-between gap-4">
                   <span className="inline-flex border border-[#9ed39f]/30 bg-[#9ed39f]/12 px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]">
                     {service.status}
                   </span>
-                  <span className="flex h-12 w-12 items-center justify-center border border-[#9ed39f]/35 bg-[#9ed39f]/12 text-[#9ed39f] transition duration-300 group-hover:bg-[#9ed39f] group-hover:text-black">
+                  <span className="flex h-12 w-12 items-center justify-center border border-[#9ed39f]/35 bg-[#9ed39f] text-black shadow-[0_0_26px_rgba(158,211,159,0.18)] transition duration-300 group-hover:bg-white group-hover:text-black">
                     <AxiomIcon kind={service.icon} className="h-5 w-5" />
                   </span>
                 </div>
                 <h3 className="mt-12 text-[1.5rem] font-black uppercase tracking-[-0.04em] text-white">
                   {service.name}
                 </h3>
-                <p className="mt-4 text-base leading-8 text-white/70">
+                <p className="mt-4 text-base leading-8 text-[#ddf4de]/76">
                   {service.text}
                 </p>
               </article>
@@ -873,7 +874,7 @@ export default function Home() {
               <h2 className="mt-5 max-w-4xl text-[clamp(2.55rem,5vw,5.4rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-white">
                 Bring one messy workflow. Leave with a structured plan.
               </h2>
-              <p className="mt-6 max-w-2xl text-base leading-8 text-white/72 sm:text-lg">
+              <p className="mt-6 max-w-2xl text-base leading-8 text-[#ddf4de]/78 sm:text-lg">
                 Axiom Architect begins with a single workflow audit: one
                 process, one diagnosis, one practical blueprint for better
                 AI-supported execution.
@@ -892,3 +893,4 @@ export default function Home() {
     </main>
   );
 }
+
