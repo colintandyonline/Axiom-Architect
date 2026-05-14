@@ -13,7 +13,7 @@ const tiers = {
     name: "Workflow Audit",
     price: "$49",
     label: "Launch diagnostic",
-    delivery: "24-72 hours",
+    delivery: "Report generated after intake",
     summary:
       "A focused diagnostic for one workflow that needs clarity, scoring, and practical next steps.",
   },
@@ -21,7 +21,7 @@ const tiers = {
     name: "Workflow Blueprint",
     price: "$149",
     label: "Recommended",
-    delivery: "3-5 business days",
+    delivery: "Report generated after intake",
     summary:
       "A deeper blueprint with future-state workflow design, review gates, assistant roles, and an implementation sequence.",
   },
@@ -29,7 +29,7 @@ const tiers = {
     name: "Custom Operating Pack",
     price: "$399",
     label: "Premium buildout",
-    delivery: "5-10 business days",
+    delivery: "Report generated after intake",
     summary:
       "A complete operating pack for one workflow, including protocols, instructions, workbook, and handoff assets.",
   },
@@ -135,7 +135,7 @@ export default async function SignupPage({
           <div>
             <Eyebrow>Secure your audit</Eyebrow>
             <h1 className="mt-6 max-w-5xl text-[clamp(2.65rem,6vw,5.8rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
-              Confirm where your report should be delivered.
+              Confirm your details and continue to payment.
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-[#e6f6e7]/80 sm:text-xl">
               Enter the details for your receipt, dashboard access, workflow intake, and report delivery. Your client dashboard is created after payment is confirmed.
@@ -188,7 +188,7 @@ export default async function SignupPage({
                 </p>
               </div>
               <p className="border border-black/20 px-4 py-3 text-sm font-bold uppercase tracking-[0.12em]">
-                Delivery: {selectedTier.delivery}
+                {selectedTier.delivery}
               </p>
             </div>
 
