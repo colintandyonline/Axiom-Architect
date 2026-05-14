@@ -416,13 +416,13 @@ export default function Home() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
       <header className="fixed left-0 top-0 z-50 w-full border-b border-[#9ed39f]/30 bg-black/88 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
           <a
             href="#top"
             aria-label="Axiom Architect home"
-            className="flex min-w-0 items-center gap-4"
+            className="flex min-w-0 items-center gap-3 sm:gap-4"
           >
-            <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden border border-[#9ed39f]/40 bg-black shadow-[0_0_22px_rgba(158,211,159,0.15)]">
+            <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden border border-[#9ed39f]/40 bg-black shadow-[0_0_22px_rgba(158,211,159,0.15)] sm:h-14 sm:w-14">
               <Image
                 src="/brand/axiom-logo.png"
                 alt=""
@@ -433,7 +433,7 @@ export default function Home() {
               />
             </span>
             <span className="min-w-0">
-              <span className="block text-sm font-black uppercase tracking-[0.28em] text-white sm:text-[1.05rem]">
+              <span className="block max-w-[11rem] truncate text-[0.84rem] font-black uppercase tracking-[0.22em] text-white min-[430px]:max-w-none sm:text-[1.05rem] sm:tracking-[0.28em]">
                 Axiom Architect
               </span>
               <span className="mt-1 block text-[0.72rem] uppercase tracking-[0.24em] text-[#9ed39f]/82 sm:text-[0.84rem]">
@@ -507,7 +507,7 @@ export default function Home() {
 
           <a
             href="#start"
-            className="inline-flex min-h-12 shrink-0 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-5 text-center text-[0.72rem] font-black uppercase tracking-[0.22em] text-black transition duration-200 hover:-translate-y-0.5 hover:bg-white sm:px-7"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-4 text-center text-[0.68rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:-translate-y-0.5 hover:bg-white sm:min-h-12 sm:px-7 sm:text-[0.72rem] sm:tracking-[0.22em]"
           >
             <span className="hidden min-[430px]:inline">Start Audit</span>
             <span className="min-[430px]:hidden">Start</span>
@@ -515,33 +515,33 @@ export default function Home() {
         </div>
       </header>
 
-      <section id="top" className="bg-black pt-[6.7rem] sm:pt-[7.35rem]">
+      <section id="top" className="bg-black pt-[5.15rem] sm:pt-[7.35rem]">
         <div className="border-b border-[#9ed39f]/25 bg-black">
           <h1 className="sr-only">
             Axiom Architect — AI workflow architecture for real business operations
           </h1>
 
           <div className="relative w-full overflow-hidden border-y border-[#9ed39f]/25 bg-black">
-            <div className="relative mx-auto aspect-[16/9] min-h-[360px] w-full max-w-[1920px] sm:min-h-[520px] lg:min-h-[720px]">
+            <div className="relative mx-auto aspect-[16/9] w-full max-w-[1920px] bg-black sm:min-h-[520px] lg:min-h-[720px]">
               <Image
                 src="/brand/axiom-architect-hero-banner.png"
                 alt="Axiom Architect — The architecture behind intelligent work"
                 fill
                 priority
                 sizes="100vw"
-                className="object-cover object-center"
+                className="object-contain object-center md:object-cover"
               />
             </div>
           </div>
 
-          <div className="bg-[#020503] px-4 py-6 sm:px-6 sm:py-7 lg:px-8">
+          <div className="bg-[#020503] px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
             <div className="mx-auto grid max-w-[1920px] grid-cols-1 gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
-                <p className="inline-flex items-center gap-2 border border-[#9ed39f]/35 bg-[#9ed39f]/10 px-3 py-2 text-[0.64rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]">
+                <p className="inline-flex items-center gap-2 border border-[#9ed39f]/35 bg-[#9ed39f]/10 px-3 py-2 text-[0.58rem] font-black uppercase tracking-[0.16em] text-[#9ed39f] sm:text-[0.64rem] sm:tracking-[0.22em]">
                   <AxiomIcon kind="diagnose" className="h-3.5 w-3.5" />
                   Workflow diagnostics / operating blueprints / review gates
                 </p>
-                <p className="mt-4 max-w-4xl text-base leading-7 text-white/78 sm:text-lg sm:leading-8">
+                <p className="mt-4 max-w-4xl text-[1rem] leading-7 text-white/78 sm:text-lg sm:leading-8">
                   Axiom Architect turns messy workflows into structured diagnostics,
                   automation opportunities, human review gates, and practical
                   implementation blueprints.
@@ -872,6 +872,7 @@ export default function Home() {
     </main>
   );
 }
+
 
 
 
