@@ -1,5 +1,23 @@
 ﻿import Image from "next/image";
 
+const studioLinks = [
+  {
+    name: "Protocols",
+    href: "https://axiom-studio.co/collections/protocols",
+  },
+  {
+    name: "Agent Kits",
+    href: "https://axiom-studio.co/collections/agent-kits",
+  },
+  {
+    name: "Workbooks",
+    href: "https://axiom-studio.co/collections/workbooks",
+  },
+  {
+    name: "Operating Packs",
+    href: "https://axiom-studio.co/collections/operating-packs",
+  },
+];
 const problemSignals = [
   {
     title: "Messy workflows",
@@ -130,19 +148,67 @@ export default function Home() {
 
           <nav
             aria-label="Main navigation"
-            className="hidden items-center gap-7 text-[0.7rem] font-bold uppercase tracking-[0.22em] text-white/62 lg:flex"
+            className="hidden items-center gap-7 text-[0.72rem] font-semibold text-[#9ed39f] lg:flex"
           >
-            <a className="transition hover:text-[#9ed39f]" href="#audit">
+            <a
+              className="uppercase tracking-[0.16em] transition hover:text-white"
+              href="#audit"
+            >
               Audit
             </a>
-            <a className="transition hover:text-[#9ed39f]" href="#method">
+            <a
+              className="uppercase tracking-[0.16em] transition hover:text-white"
+              href="#method"
+            >
               Method
             </a>
-            <a className="transition hover:text-[#9ed39f]" href="#deliverables">
+            <a
+              className="uppercase tracking-[0.16em] transition hover:text-white"
+              href="#deliverables"
+            >
               Deliverables
             </a>
-            <a className="transition hover:text-[#9ed39f]" href="#services">
+            <a
+              className="uppercase tracking-[0.16em] transition hover:text-white"
+              href="#services"
+            >
               Services
+            </a>
+
+            <div className="group relative">
+              <button
+                type="button"
+                className="flex items-center gap-2 uppercase tracking-[0.16em] text-[#9ed39f] transition hover:text-white"
+                aria-haspopup="true"
+              >
+                Core Systems
+                <span className="text-sm leading-none text-[#9ed39f] transition group-hover:text-white">
+                  ⌄
+                </span>
+              </button>
+
+              <div className="invisible absolute left-1/2 top-8 z-50 grid min-w-72 -translate-x-1/2 gap-1 border border-[#9ed39f]/35 bg-black/95 p-2 opacity-0 shadow-2xl shadow-black/70 transition duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                {studioLinks.map((link) => (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="border border-transparent px-4 py-3 text-[0.72rem] font-medium text-[#9ed39f] transition hover:border-[#9ed39f]/35 hover:bg-[#9ed39f]/10 hover:text-white"
+                  >
+                    {link.name}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            <a
+              className="uppercase tracking-[0.16em] transition hover:text-white"
+              href="https://axiom-studio.co/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Axiom Studio
             </a>
           </nav>
 
@@ -258,15 +324,42 @@ export default function Home() {
       </section>
 
       <section className="border-b border-[#9ed39f]/20 bg-[#9ed39f] px-4 py-12 text-black sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <p className="!m-0 max-w-3xl text-3xl font-black uppercase leading-none tracking-[-0.06em] sm:text-5xl">
-            From messy process to AI-ready operating system.
-          </p>
-          <p className="!m-0 max-w-xl text-base font-medium leading-7 text-black/72">
-            Axiom Studio sells structured systems. Axiom Architect applies that
-            thinking to your real workflows, tools, handoffs, and operational
-            decisions.
-          </p>
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-end">
+          <div>
+            <p className="!m-0 max-w-3xl text-3xl font-black uppercase leading-none tracking-[-0.06em] sm:text-5xl">
+              From messy process to AI-ready operating system.
+            </p>
+            <p className="!m-0 mt-4 max-w-2xl text-base font-medium leading-7 text-black/72">
+              Axiom Studio sells structured systems. Axiom Architect applies
+              that thinking to your real workflows, tools, handoffs, and
+              operational decisions.
+            </p>
+          </div>
+
+          <div className="grid gap-3">
+            <a
+              href="https://axiom-studio.co/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-13 items-center justify-center border border-black bg-black px-5 py-4 text-center text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f] transition hover:bg-white hover:text-black sm:text-xs"
+            >
+              Visit Axiom Studio
+            </a>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {studioLinks.map((link) => (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-12 items-center justify-center border border-black/35 bg-[#9ed39f] px-4 py-3 text-center text-[0.62rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
+                >
+                  {link.name}
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -495,4 +588,6 @@ export default function Home() {
     </main>
   );
 }
+
+
 
