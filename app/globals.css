@@ -113,6 +113,13 @@ section[class*="bg-[#9ed39f]"] button:hover[class*="hover:bg-black"] {
   color: #ffffff !important;
 }
 
+a[href="#deliverables"]:hover,
+a[href="#deliverables"]:focus-visible {
+  background: var(--axiom-mint) !important;
+  border-color: var(--axiom-mint) !important;
+  color: #000000 !important;
+}
+
 #method article,
 #deliverables article,
 #services article {
