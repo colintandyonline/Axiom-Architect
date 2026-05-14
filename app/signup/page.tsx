@@ -1,10 +1,11 @@
 import Image from "next/image";
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "Create Your Audit Account | Axiom Architect",
+  title: "Secure Your Workflow Audit | Axiom Architect",
   description:
-    "Create your Axiom Architect audit account and keep your selected tier, workflow intake, status updates, and report delivery in one secure place.",
+    "Confirm your selected Axiom Architect audit tier, enter your delivery details, and continue to secure payment.",
 };
 
 const tiers = {
@@ -22,7 +23,7 @@ const tiers = {
     label: "Recommended",
     delivery: "3-5 business days",
     summary:
-      "The audit plus future-state workflow design, review gates, assistant roles, and an implementation sequence.",
+      "A deeper blueprint with future-state workflow design, review gates, assistant roles, and an implementation sequence.",
   },
   "custom-operating-pack": {
     name: "Custom Operating Pack",
@@ -34,20 +35,34 @@ const tiers = {
   },
 };
 
-const flow = [
-  "Create account",
-  "Pay securely",
+const checkoutFlow = [
+  "Enter details",
+  "Secure payment",
+  "Dashboard opens",
   "Submit workflow",
-  "Track status",
   "Receive report",
 ];
 
-const accountReasons = [
-  "Keep your audit tier attached to your submission",
-  "Return to your intake if you need more time",
-  "Track the status of your workflow report",
-  "Access the final report and download link",
+const dashboardTabs = [
+  "Workflow intake",
+  "Report status",
+  "Payment details",
+  "Account settings",
 ];
+
+function Eyebrow({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
+  return (
+    <p
+      className={
+        dark
+          ? "inline-flex border border-black bg-black px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-white"
+          : "inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black"
+      }
+    >
+      {children}
+    </p>
+  );
+}
 
 function SystemMotif() {
   return (
@@ -80,7 +95,6 @@ export default async function SignupPage({
   const tierSlug =
     params.tier && params.tier in tiers ? params.tier : "workflow-blueprint";
   const selectedTier = tiers[tierSlug as keyof typeof tiers];
-  const nextHref = `/checkout?tier=${tierSlug}`;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
@@ -102,7 +116,7 @@ export default async function SignupPage({
                 Axiom Architect
               </span>
               <span className="hidden text-[0.68rem] uppercase tracking-[0.2em] text-[#9ed39f]/80 sm:block">
-                Audit account setup
+                Secure audit checkout
               </span>
             </span>
           </a>
@@ -119,21 +133,19 @@ export default async function SignupPage({
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.11)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.11)_1px,transparent_1px)] [background-size:44px_44px]" />
         <div className="relative mx-auto grid max-w-[1440px] grid-cols-1 gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
-            <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-              Account setup
-            </p>
+            <Eyebrow>Secure your audit</Eyebrow>
             <h1 className="mt-6 max-w-5xl text-[clamp(2.65rem,6vw,5.8rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
-              Keep your audit, intake, and report together.
+              Confirm where your report should be delivered.
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-[#e6f6e7]/80 sm:text-xl">
-              Create your Axiom Architect account so your selected audit tier, workflow submission, report status, and final delivery stay connected from the start.
+              Enter the details for your receipt, dashboard access, workflow intake, and report delivery. Your client dashboard is created after payment is confirmed.
             </p>
           </div>
 
           <div className="grid gap-5">
             <SystemMotif />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
-              {flow.map((step, index) => (
+              {checkoutFlow.map((step, index) => (
                 <div key={step} className="border border-[#9ed39f]/28 bg-[#061008]/88 px-4 py-4">
                   <span className="block text-[0.56rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">
                     0{index + 1}
@@ -149,11 +161,9 @@ export default async function SignupPage({
       </section>
 
       <section className="border-y border-[#9ed39f]/20 bg-[#9ed39f] px-4 py-14 text-black sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
+        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
           <div>
-            <p className="inline-flex border border-black bg-black px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-white">
-              Selected tier
-            </p>
+            <Eyebrow dark>Selected audit</Eyebrow>
             <h2 className="mt-5 max-w-4xl text-[clamp(2.15rem,4vw,3.8rem)] font-black uppercase leading-[0.92] tracking-[-0.06em]">
               {selectedTier.name}
             </h2>
@@ -162,7 +172,12 @@ export default async function SignupPage({
             </p>
           </div>
 
-          <div className="rounded-[2rem] border border-black/22 bg-[#b8efb9]/45 p-6 sm:p-7">
+          <form
+            action="/checkout"
+            method="get"
+            className="rounded-[2rem] border border-black/22 bg-[#b8efb9]/45 p-6 sm:p-7"
+          >
+            <input type="hidden" name="tier" value={tierSlug} />
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div>
                 <p className="inline-flex border border-black bg-black px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-white">
@@ -176,59 +191,78 @@ export default async function SignupPage({
                 Delivery: {selectedTier.delivery}
               </p>
             </div>
-            <a
-              href={nextHref}
-              className="mt-8 inline-flex min-h-14 w-full items-center justify-center border border-black bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black"
+
+            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className="mb-2 block text-[0.66rem] font-black uppercase tracking-[0.18em] text-black/72">
+                  Full name
+                </span>
+                <input
+                  name="name"
+                  type="text"
+                  required
+                  className="min-h-13 w-full border border-black/25 bg-[#e4f6e4] px-4 text-base text-black outline-none transition focus:border-black"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-[0.66rem] font-black uppercase tracking-[0.18em] text-black/72">
+                  Email address
+                </span>
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  className="min-h-13 w-full border border-black/25 bg-[#e4f6e4] px-4 text-base text-black outline-none transition focus:border-black"
+                />
+              </label>
+              <label className="block sm:col-span-2">
+                <span className="mb-2 block text-[0.66rem] font-black uppercase tracking-[0.18em] text-black/72">
+                  Business or project name
+                </span>
+                <input
+                  name="business"
+                  type="text"
+                  className="min-h-13 w-full border border-black/25 bg-[#e4f6e4] px-4 text-base text-black outline-none transition focus:border-black"
+                />
+              </label>
+            </div>
+
+            <p className="mt-5 text-sm leading-6 text-black/68">
+              After payment, your dashboard access and receipt are sent to this email. The dashboard is where you complete the workflow intake and track report delivery.
+            </p>
+
+            <button
+              type="submit"
+              className="mt-7 inline-flex min-h-14 w-full items-center justify-center border border-black bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black"
             >
-              Continue to secure account
-            </a>
-          </div>
+              Continue to payment
+            </button>
+          </form>
         </div>
       </section>
 
       <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
           <div>
-            <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-              Why account first
-            </p>
+            <Eyebrow>After checkout</Eyebrow>
             <h2 className="mt-5 text-[clamp(2.1rem,4vw,3.7rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
-              Your audit becomes a workspace, not a one-off file.
+              Your dashboard becomes the working area.
             </h2>
+            <p className="mt-5 max-w-2xl text-base leading-8 text-[#e6f6e7]/76 sm:text-lg">
+              Payment confirmation opens the client space for your audit. That is where the actual workflow work begins.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {accountReasons.map((reason) => (
-              <div key={reason} className="rounded-[1.5rem] border border-[#9ed39f]/30 bg-[#041008] p-5">
+            {dashboardTabs.map((tab) => (
+              <div key={tab} className="rounded-[1.5rem] border border-[#9ed39f]/30 bg-[#041008] p-5">
                 <span className="mb-5 block h-2 w-2 bg-[#9ed39f]" />
-                <p className="text-base font-bold leading-7 text-[#e6f6e7]/82">
-                  {reason}
+                <p className="text-base font-black uppercase tracking-[0.08em] text-white">
+                  {tab}
                 </p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="bg-[linear-gradient(135deg,#07190c_0%,#020503_42%,#000_100%)] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-8 rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div>
-            <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-              Next step
-            </p>
-            <h2 className="mt-5 max-w-4xl text-[clamp(2.1rem,4vw,3.7rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
-              Secure the audit space before payment.
-            </h2>
-            <p className="mt-5 max-w-3xl text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
-              The next screen completes account setup, then moves you into secure checkout for the selected tier.
-            </p>
-          </div>
-          <a
-            href={nextHref}
-            className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:min-w-72"
-          >
-            Continue
-          </a>
         </div>
       </section>
     </main>
