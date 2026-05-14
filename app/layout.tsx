@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,7 +18,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              document.addEventListener('click', function (event) {
+                var target = event.target;
+                if (!target || !target.closest) return;
+                var link = target.closest('a');
+                if (!link) return;
+                var href = link.getAttribute('href');
+                if (href === '#start' || href === 'mailto:hello@axiom-architect.co?subject=Start%20Workflow%20Audit') {
+                  event.preventDefault();
+                  window.location.href = '/audit';
+                }
+              });
+            `,
+          }}
+        />
+      </body>
     </html>
   );
 }
