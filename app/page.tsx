@@ -567,36 +567,50 @@ export default function Home() {
         </div>
       </section>
 <section className="border-b border-[#9ed39f]/20 bg-[#9ed39f] px-4 py-14 text-black sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-[1920px] grid-cols-1 gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+        <div className="mx-auto grid max-w-[1920px] grid-cols-1 gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
-            <p className="text-[clamp(2.55rem,5vw,5.4rem)] font-black uppercase leading-[0.9] tracking-[-0.07em]">
-              From messy process to AI-ready operating system.
+            <p className="inline-flex items-center gap-2 border border-black/25 bg-black px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]">
+              <AxiomIcon kind="build" className="h-4 w-4" />
+              Axiom Studio connection
             </p>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-black/78">
+
+            <h2 className="mt-5 max-w-4xl text-[clamp(2.65rem,5vw,5.35rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-black">
+              From messy process to AI-ready operating system.
+            </h2>
+
+            <p className="mt-5 max-w-3xl text-base leading-7 text-black/78 sm:text-lg sm:leading-8">
               Axiom Studio sells structured systems. Axiom Architect applies
               that thinking to your real workflows, tools, handoffs, and
               operational decisions.
             </p>
           </div>
 
-          <div className="grid gap-4">
+          <div className="border border-black/22 bg-[#b8efb9]/35 p-4 sm:p-5 lg:p-6">
             <a
               href="https://axiom-studio.co/"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-14 w-full items-center justify-center border border-black bg-black px-6 text-center text-[0.74rem] font-black uppercase tracking-[0.22em] text-[#9ed39f] transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-black"
+              className="group flex min-h-16 w-full items-center justify-between gap-4 border border-black bg-black px-5 py-4 text-black transition duration-200 hover:-translate-y-0.5 hover:bg-white"
             >
-              Visit Axiom Studio
+              <span className="flex items-center gap-3 text-[#9ed39f] transition group-hover:text-black">
+                <AxiomIcon kind="build" className="h-5 w-5" />
+                <span className="text-[0.78rem] font-black uppercase tracking-[0.22em]">
+                  Visit Axiom Studio
+                </span>
+              </span>
+              <span className="text-xl font-black text-[#9ed39f] transition group-hover:text-black">
+                →
+              </span>
             </a>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {studioLinks.map((link) => (
                 <a
                   key={link.name}
                   href={link.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="group inline-flex min-h-14 items-center justify-center gap-3 border border-black/22 bg-[#b8efb9]/40 px-4 py-3 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-black transition duration-200 hover:-translate-y-0.5 hover:border-black hover:bg-white"
+                  className="group inline-flex min-h-16 items-center justify-center gap-3 border border-black/28 bg-[#9ed39f] px-4 py-4 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-black transition duration-200 hover:-translate-y-0.5 hover:border-black hover:bg-white"
                 >
                   <AxiomIcon kind={link.icon} className="h-4 w-4" />
                   <span>{link.name}</span>
@@ -872,6 +886,7 @@ export default function Home() {
     </main>
   );
 }
+
 
 
 
