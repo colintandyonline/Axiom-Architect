@@ -1,4 +1,5 @@
 ﻿import Image from "next/image";
+import type { ReactNode } from "react";
 
 const studioLinks = [
   {
@@ -26,17 +27,17 @@ const studioLinks = [
 const problemSignals = [
   {
     title: "Messy workflows",
-    text: "Processes live across chats, spreadsheets, inboxes, documents, and memory. The work gets done, but the system is hard to see.",
+    text: "Work is spread across inboxes, chats, documents, meetings, tools, and memory. The operation runs, but the system is hard to see.",
     icon: "messy",
   },
   {
     title: "Unclear AI use",
-    text: "Teams know AI could help, but not which steps it should touch, what context it needs, or where human judgment must stay in control.",
+    text: "AI feels useful, but the right role is unclear: what it should touch, what it should prepare, and where human judgement must stay.",
     icon: "spark",
   },
   {
     title: "Automation risk",
-    text: "Automating too early can amplify weak inputs, unclear approvals, fragile handoffs, and decisions that still need review gates.",
+    text: "Automating too early can make weak inputs, unclear handoffs, and missing review gates fail faster at a larger scale.",
     icon: "shield",
   },
 ];
@@ -45,19 +46,19 @@ const methodSteps = [
   {
     number: "01",
     title: "Submit",
-    text: "You describe the workflow, tools, handoffs, bottlenecks, repeated tasks, review points, and desired outcome.",
+    text: "You describe the workflow, tools, pain points, handoffs, review requirements, repeated tasks, and desired outcome.",
     icon: "submit",
   },
   {
     number: "02",
     title: "Diagnose",
-    text: "Axiom Architect maps the current operating pattern and identifies weak points, friction, risk, and automation suitability.",
+    text: "Axiom Architect maps the operating pattern, weak points, bottlenecks, risk areas, and automation suitability.",
     icon: "diagnose",
   },
   {
     number: "03",
     title: "Blueprint",
-    text: "You receive a structured implementation blueprint showing what should change, what AI can support, and what needs control.",
+    text: "You receive a structured operating blueprint showing what should change, where AI belongs, and where controls are needed.",
     icon: "blueprint",
   },
   {
@@ -71,32 +72,32 @@ const methodSteps = [
 const deliverables = [
   {
     title: "Current workflow diagnosis",
-    text: "A clear view of the process, current shape, handoffs, and where the system weakens.",
+    text: "A clear view of how the process works now, where the work moves, and where it breaks down.",
     icon: "map",
   },
   {
     title: "Bottlenecks and weak points",
-    text: "Friction, repeated manual effort, approval slowdowns, and process breakpoints.",
+    text: "Repeated friction, manual effort, approval delays, missing inputs, and fragile handoffs.",
     icon: "bottleneck",
   },
   {
     title: "Automation opportunities",
-    text: "Where automation can support execution without amplifying weak inputs.",
+    text: "Where automation can safely reduce manual effort without amplifying weak process design.",
     icon: "automation",
   },
   {
     title: "AI assistant opportunities",
-    text: "Where assistants can support drafting, sorting, summarising, routing, or preparation.",
+    text: "Where assistants can support drafting, sorting, summarising, routing, preparation, or review.",
     icon: "assistant",
   },
   {
     title: "Risk and review requirements",
-    text: "Human-in-the-loop review gates, quality control, and operational safeguards.",
+    text: "Human-in-the-loop controls, quality checks, escalation points, and operational safeguards.",
     icon: "review",
   },
   {
     title: "Implementation blueprint",
-    text: "A structured operating model with recommended next steps and execution sequence.",
+    text: "A practical operating model with a recommended sequence for improving the workflow.",
     icon: "roadmap",
   },
 ];
@@ -113,37 +114,37 @@ const serviceLadder = [
   {
     name: "Workflow Audit",
     status: "Launch offer",
-    text: "A focused diagnostic for one workflow, process, or operating problem.",
+    text: "A focused diagnostic for one workflow, process, tool stack, or operating problem.",
     icon: "audit",
   },
   {
     name: "Workflow Blueprint",
     status: "Next layer",
-    text: "A deeper operating model with implementation structure and sequence.",
+    text: "A deeper operating model with implementation structure, sequencing, and ownership.",
     icon: "blueprint",
   },
   {
     name: "Custom AI Operating Protocol",
     status: "System asset",
-    text: "Rules, prompts, review gates, and execution standards for repeated work.",
+    text: "Rules, prompts, review gates, and execution standards for repeated AI-supported work.",
     icon: "protocol",
   },
   {
     name: "Agent Instruction Kit",
     status: "Assistant layer",
-    text: "Role-specific assistant instructions designed around your workflow.",
+    text: "Role-specific assistant instructions designed around the real workflow and controls.",
     icon: "agent",
   },
   {
     name: "Implementation Workbook",
     status: "Action layer",
-    text: "A practical workbook for moving from diagnosis into structured change.",
+    text: "A practical workbook for moving from diagnosis into structured operational change.",
     icon: "workbook",
   },
   {
     name: "AI Workflow System Build",
     status: "Build layer",
-    text: "A larger service path for designing and building the operating system.",
+    text: "A larger service path for designing and building the operating system around the work.",
     icon: "build",
   },
 ];
@@ -151,8 +152,8 @@ const serviceLadder = [
 const heroSignals = [
   "Workflow diagnostics",
   "Operating blueprints",
-  "AI system design",
   "Review gates",
+  "Implementation plans",
 ];
 
 function AxiomIcon({
@@ -388,6 +389,49 @@ function AxiomIcon({
   }
 }
 
+function SectionLabel({
+  icon,
+  children,
+}: {
+  icon: string;
+  children: ReactNode;
+}) {
+  return (
+    <p className="inline-flex items-center gap-2 border border-[#9ed39f]/35 bg-[#9ed39f]/12 px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]">
+      <AxiomIcon kind={icon} className="h-4 w-4" />
+      {children}
+    </p>
+  );
+}
+
+function SectionIntro({
+  icon,
+  label,
+  title,
+  text,
+}: {
+  icon: string;
+  label: string;
+  title: string;
+  text?: string;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
+      <div>
+        <SectionLabel icon={icon}>{label}</SectionLabel>
+        <h2 className="mt-5 max-w-5xl text-[clamp(2.55rem,5.6vw,5.8rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-white">
+          {title}
+        </h2>
+      </div>
+      {text ? (
+        <p className="max-w-3xl text-base leading-8 text-white/72 sm:text-lg">
+          {text}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function DropdownCard({
   name,
   href,
@@ -415,7 +459,7 @@ function DropdownCard({
 export default function Home() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
-      <header className="fixed left-0 top-0 z-50 w-full border-b border-[#9ed39f]/30 bg-black/88 backdrop-blur-xl">
+      <header className="fixed left-0 top-0 z-50 w-full border-b border-[#9ed39f]/30 bg-black/90 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
           <a
             href="#top"
@@ -436,7 +480,7 @@ export default function Home() {
               <span className="block max-w-[11rem] truncate text-[0.84rem] font-black uppercase tracking-[0.22em] text-white min-[430px]:max-w-none sm:text-[1.05rem] sm:tracking-[0.28em]">
                 Axiom Architect
               </span>
-              <span className="mt-1 block text-[0.72rem] uppercase tracking-[0.24em] text-[#9ed39f]/82 sm:text-[0.84rem]">
+              <span className="mt-1 hidden text-[0.72rem] uppercase tracking-[0.24em] text-[#9ed39f]/86 sm:block sm:text-[0.84rem]">
                 The architecture behind intelligent work
               </span>
             </span>
@@ -518,7 +562,8 @@ export default function Home() {
       <section id="top" className="bg-black pt-[5.15rem] sm:pt-[7.35rem]">
         <div className="border-b border-[#9ed39f]/25 bg-black">
           <h1 className="sr-only">
-            Axiom Architect — AI workflow architecture for real business operations
+            Axiom Architect — AI workflow architecture for real business
+            operations
           </h1>
 
           <div className="relative w-full overflow-hidden border-y border-[#9ed39f]/25 bg-black">
@@ -534,17 +579,17 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="bg-[#020503] px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
-            <div className="mx-auto grid max-w-[1920px] grid-cols-1 gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="bg-[#020503] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+            <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
                 <p className="inline-flex items-center gap-2 border border-[#9ed39f]/35 bg-[#9ed39f]/10 px-3 py-2 text-[0.58rem] font-black uppercase tracking-[0.16em] text-[#9ed39f] sm:text-[0.64rem] sm:tracking-[0.22em]">
                   <AxiomIcon kind="diagnose" className="h-3.5 w-3.5" />
                   Workflow diagnostics / operating blueprints / review gates
                 </p>
-                <p className="mt-4 max-w-4xl text-[1rem] leading-7 text-white/78 sm:text-lg sm:leading-8">
-                  Axiom Architect turns messy workflows into structured diagnostics,
-                  automation opportunities, human review gates, and practical
-                  implementation blueprints.
+                <p className="mt-5 max-w-4xl text-lg leading-8 text-white/82 sm:text-xl">
+                  Axiom Architect turns messy workflows into structured
+                  diagnostics, automation opportunities, human review gates, and
+                  practical implementation blueprints.
                 </p>
               </div>
 
@@ -566,8 +611,9 @@ export default function Home() {
           </div>
         </div>
       </section>
-<section className="border-b border-[#9ed39f]/20 bg-[#9ed39f] px-4 py-14 text-black sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-[1920px] grid-cols-1 gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+
+      <section className="border-b border-[#9ed39f]/20 bg-[#9ed39f] px-4 py-16 text-black sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
             <p className="inline-flex items-center gap-2 border border-black/25 bg-black px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]">
               <AxiomIcon kind="build" className="h-4 w-4" />
@@ -590,7 +636,7 @@ export default function Home() {
               href="https://axiom-studio.co/"
               target="_blank"
               rel="noreferrer"
-              className="group flex min-h-16 w-full items-center justify-between gap-4 border border-black bg-black px-5 py-4 text-black transition duration-200 hover:-translate-y-0.5 hover:bg-white"
+              className="group flex min-h-16 w-full items-center justify-between gap-4 border border-black bg-black px-5 py-4 transition duration-200 hover:-translate-y-0.5 hover:bg-white"
             >
               <span className="flex items-center gap-3 text-[#9ed39f] transition group-hover:text-black">
                 <AxiomIcon kind="build" className="h-5 w-5" />
@@ -620,36 +666,30 @@ export default function Home() {
           </div>
         </div>
       </section>
-<section className="border-b border-[#9ed39f]/20 bg-black px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-        <div className="mx-auto max-w-[1920px]">
-          <div className="max-w-3xl">
-            <p className="inline-flex items-center gap-2 border border-[#9ed39f]/30 bg-[#9ed39f]/10 px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.24em] text-[#9ed39f]">
-              <AxiomIcon kind="messy" className="h-4 w-4" />
-              The problem
-            </p>
-            <h2 className="mt-5 text-[clamp(2.2rem,5vw,5.3rem)] font-black uppercase leading-[0.93] tracking-[-0.07em] text-white">
-              AI does not fix a workflow you cannot see.
-            </h2>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-white/70">
-              Most teams do not need another vague automation idea. They need a
-              clear view of the current process, where the risk sits, and where
-              AI can support execution without weakening control.
-            </p>
-          </div>
 
-          <div className="mt-12 grid grid-cols-1 gap-5 xl:grid-cols-3">
+      <section className="relative border-b border-[#9ed39f]/20 bg-black px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+        <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(158,211,159,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.1)_1px,transparent_1px)] [background-size:44px_44px]" />
+        <div className="relative mx-auto max-w-[1440px]">
+          <SectionIntro
+            icon="messy"
+            label="The problem"
+            title="AI does not fix a workflow you cannot see."
+            text="Before a workflow can be automated, assisted, or rebuilt, it needs to be understood as a system: inputs, decisions, handoffs, risks, controls, tools, and outcomes."
+          />
+
+          <div className="mt-12 grid grid-cols-1 gap-5 lg:grid-cols-3">
             {problemSignals.map((item) => (
               <article
                 key={item.title}
-                className="group border border-[#9ed39f]/25 bg-[#030804] p-7 transition duration-300 hover:-translate-y-1 hover:border-[#9ed39f]/55 hover:bg-[#07120a]"
+                className="group border border-[#9ed39f]/28 bg-[#061008] p-7 transition duration-300 hover:-translate-y-1 hover:border-[#9ed39f]/60 hover:bg-[#0b1d10]"
               >
-                <div className="flex h-14 w-14 items-center justify-center border border-[#9ed39f]/35 bg-[#9ed39f]/10 text-[#9ed39f] transition duration-300 group-hover:bg-[#9ed39f] group-hover:text-black">
+                <div className="flex h-14 w-14 items-center justify-center border border-[#9ed39f]/40 bg-[#9ed39f]/12 text-[#9ed39f] transition duration-300 group-hover:bg-[#9ed39f] group-hover:text-black">
                   <AxiomIcon kind={item.icon} className="h-6 w-6" />
                 </div>
-                <h3 className="mt-7 text-2xl font-black uppercase tracking-[-0.03em] text-white">
+                <h3 className="mt-8 text-2xl font-black uppercase tracking-[-0.03em] text-white">
                   {item.title}
                 </h3>
-                <p className="mt-4 text-base leading-8 text-white/68">
+                <p className="mt-4 text-base leading-8 text-white/72">
                   {item.text}
                 </p>
               </article>
@@ -662,24 +702,21 @@ export default function Home() {
         id="audit"
         className="border-b border-[#9ed39f]/20 bg-[#020503] px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
       >
-        <div className="mx-auto grid max-w-[1920px] grid-cols-1 gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
+        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:gap-16">
           <div>
-            <p className="inline-flex items-center gap-2 border border-[#9ed39f]/30 bg-[#9ed39f]/10 px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.24em] text-[#9ed39f]">
-              <AxiomIcon kind="audit" className="h-4 w-4" />
-              Primary offer
-            </p>
-            <h2 className="mt-5 text-[clamp(2.2rem,5vw,5.2rem)] font-black uppercase leading-[0.93] tracking-[-0.07em] text-white">
+            <SectionLabel icon="audit">Primary offer</SectionLabel>
+            <h2 className="mt-5 text-[clamp(2.7rem,5vw,5.8rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-white">
               Axiom Workflow Audit
             </h2>
           </div>
 
-          <div className="border border-[#9ed39f]/30 bg-black/70 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.3)] sm:p-8 lg:p-10">
-            <p className="text-xl font-semibold leading-9 text-white sm:text-2xl">
+          <div className="border border-[#9ed39f]/32 bg-black/70 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.32)] sm:p-8 lg:p-10">
+            <p className="text-2xl font-semibold leading-10 text-white lg:text-3xl">
               A focused diagnostic that turns one messy workflow, operating
               process, tool stack, or business problem into a structured
               blueprint for AI-supported execution.
             </p>
-            <p className="mt-6 text-base leading-8 text-white/68">
+            <p className="mt-6 text-base leading-8 text-white/72 sm:text-lg">
               The audit separates useful automation from risky shortcuts. It
               identifies what should be improved, what can be assisted by AI,
               what still needs human review, and what sequence makes sense.
@@ -690,43 +727,35 @@ export default function Home() {
 
       <section
         id="method"
-        className="border-b border-[#9ed39f]/20 bg-black px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
+        className="relative border-b border-[#9ed39f]/20 bg-black px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
       >
-        <div className="mx-auto max-w-[1920px]">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <p className="inline-flex items-center gap-2 border border-[#9ed39f]/30 bg-[#9ed39f]/10 px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.24em] text-[#9ed39f]">
-                <AxiomIcon kind="roadmap" className="h-4 w-4" />
-                How it works
-              </p>
-              <h2 className="mt-5 text-[clamp(2.2rem,5vw,5rem)] font-black uppercase leading-[0.93] tracking-[-0.07em] text-white">
-                Submit. Diagnose. Blueprint. Implement.
-              </h2>
-            </div>
-            <p className="max-w-lg text-base leading-8 text-white/66">
-              The process is designed to create clarity before software,
-              assistants, automations, or implementation work begins.
-            </p>
-          </div>
+        <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.09)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.09)_1px,transparent_1px)] [background-size:52px_52px]" />
+        <div className="relative mx-auto max-w-[1440px]">
+          <SectionIntro
+            icon="roadmap"
+            label="How it works"
+            title="Submit. Diagnose. Blueprint. Implement."
+            text="The process is designed to create operational clarity before software, assistants, automations, or implementation work begins."
+          />
 
-          <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden border border-[#9ed39f]/25 bg-[#9ed39f]/25 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden border border-[#9ed39f]/30 bg-[#9ed39f]/25 md:grid-cols-2 xl:grid-cols-4">
             {methodSteps.map((step) => (
               <article
                 key={step.number}
-                className="group bg-[#031007] p-8 transition duration-300 hover:bg-[#07150c]"
+                className="group bg-[#041008] p-7 transition duration-300 hover:bg-[#0a1c10]"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[0.74rem] font-black uppercase tracking-[0.26em] text-[#9ed39f]">
+                  <span className="text-[0.78rem] font-black uppercase tracking-[0.26em] text-[#9ed39f]">
                     {step.number}
                   </span>
-                  <span className="flex h-11 w-11 items-center justify-center border border-[#9ed39f]/30 bg-[#9ed39f]/10 text-[#9ed39f] transition duration-300 group-hover:bg-[#9ed39f] group-hover:text-black">
+                  <span className="flex h-12 w-12 items-center justify-center border border-[#9ed39f]/35 bg-[#9ed39f]/12 text-[#9ed39f] transition duration-300 group-hover:bg-[#9ed39f] group-hover:text-black">
                     <AxiomIcon kind={step.icon} className="h-5 w-5" />
                   </span>
                 </div>
-                <h3 className="mt-14 text-2xl font-black uppercase tracking-[-0.03em] text-white">
+                <h3 className="mt-16 text-2xl font-black uppercase tracking-[-0.03em] text-white">
                   {step.title}
                 </h3>
-                <p className="mt-4 text-base leading-8 text-white/66">
+                <p className="mt-4 text-base leading-8 text-white/72">
                   {step.text}
                 </p>
               </article>
@@ -739,35 +768,27 @@ export default function Home() {
         id="deliverables"
         className="border-b border-[#9ed39f]/20 bg-[#020503] px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
       >
-        <div className="mx-auto max-w-[1920px]">
-          <div className="max-w-3xl">
-            <p className="inline-flex items-center gap-2 border border-[#9ed39f]/30 bg-[#9ed39f]/10 px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.24em] text-[#9ed39f]">
-              <AxiomIcon kind="blueprint" className="h-4 w-4" />
-              What you receive
-            </p>
-            <h2 className="mt-5 text-[clamp(2.2rem,5vw,5rem)] font-black uppercase leading-[0.93] tracking-[-0.07em] text-white">
-              A practical blueprint, not a generic AI answer.
-            </h2>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-white/68">
-              The output is structured so you can brief a team, improve the
-              workflow, configure assistants, or plan the next implementation
-              layer with better judgment.
-            </p>
-          </div>
+        <div className="mx-auto max-w-[1440px]">
+          <SectionIntro
+            icon="blueprint"
+            label="What you receive"
+            title="A practical blueprint, not a generic AI answer."
+            text="The output is designed so you can brief a team, improve the workflow, configure assistants, or plan the next implementation layer with better judgement."
+          />
 
-          <div className="mt-12 grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {deliverables.map((item) => (
               <article
                 key={item.title}
-                className="group border border-[#9ed39f]/25 bg-black/75 p-7 transition duration-300 hover:-translate-y-1 hover:border-[#9ed39f]/55 hover:bg-[#051109]"
+                className="group border border-[#9ed39f]/28 bg-black/78 p-7 transition duration-300 hover:-translate-y-1 hover:border-[#9ed39f]/60 hover:bg-[#06150b]"
               >
-                <div className="flex h-14 w-14 items-center justify-center border border-[#9ed39f]/35 bg-[#9ed39f]/12 text-[#9ed39f] transition duration-300 group-hover:bg-[#9ed39f] group-hover:text-black">
+                <div className="flex h-14 w-14 items-center justify-center border border-[#9ed39f]/38 bg-[#9ed39f]/12 text-[#9ed39f] transition duration-300 group-hover:bg-[#9ed39f] group-hover:text-black">
                   <AxiomIcon kind={item.icon} className="h-6 w-6" />
                 </div>
-                <h3 className="mt-7 text-[1.55rem] font-black uppercase tracking-[-0.03em] text-white">
+                <h3 className="mt-7 text-[1.45rem] font-black uppercase tracking-[-0.03em] text-white">
                   {item.title}
                 </h3>
-                <p className="mt-4 text-base leading-8 text-white/66">
+                <p className="mt-4 text-base leading-8 text-white/70">
                   {item.text}
                 </p>
               </article>
@@ -777,22 +798,19 @@ export default function Home() {
       </section>
 
       <section className="border-b border-[#9ed39f]/20 bg-black px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-        <div className="mx-auto max-w-[1920px]">
-          <div className="max-w-4xl">
-            <p className="inline-flex items-center gap-2 border border-[#9ed39f]/30 bg-[#9ed39f]/10 px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.24em] text-[#9ed39f]">
-              <AxiomIcon kind="team" className="h-4 w-4" />
-              Who it is for
-            </p>
-            <h2 className="mt-5 text-[clamp(2.3rem,6vw,5.6rem)] font-black uppercase leading-[0.93] tracking-[-0.07em] text-white">
-              For people building real operations, not chasing AI noise.
-            </h2>
-          </div>
+        <div className="mx-auto max-w-[1440px]">
+          <SectionIntro
+            icon="team"
+            label="Who it is for"
+            title="For people building real operations, not chasing AI noise."
+            text="Axiom Architect is for people who need a repeatable operating model, not another scattered collection of prompts."
+          />
 
           <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {audiences.map((item) => (
               <div
                 key={item.name}
-                className="group flex items-center gap-3 border border-[#9ed39f]/28 bg-[#051008] px-5 py-5 text-white transition duration-300 hover:-translate-y-1 hover:border-[#9ed39f]/55 hover:bg-[#9ed39f] hover:text-black"
+                className="group flex items-center gap-3 border border-[#9ed39f]/30 bg-[#061008] px-5 py-5 text-white transition duration-300 hover:-translate-y-1 hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
               >
                 <AxiomIcon kind={item.icon} className="h-5 w-5 shrink-0" />
                 <span className="text-sm font-black uppercase tracking-[0.22em]">
@@ -806,44 +824,35 @@ export default function Home() {
 
       <section
         id="services"
-        className="border-b border-[#9ed39f]/20 bg-[#010302] px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
+        className="relative border-b border-[#9ed39f]/20 bg-[#010302] px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
       >
-        <div className="mx-auto max-w-[1920px]">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <p className="inline-flex items-center gap-2 border border-[#9ed39f]/30 bg-[#9ed39f]/10 px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.24em] text-[#9ed39f]">
-                <AxiomIcon kind="build" className="h-4 w-4" />
-                Service ladder
-              </p>
-              <h2 className="mt-5 text-[clamp(2.2rem,5vw,5rem)] font-black uppercase leading-[0.93] tracking-[-0.07em] text-white">
-                Start with diagnosis. Build toward an operating system.
-              </h2>
-            </div>
-            <p className="max-w-lg text-base leading-8 text-white/66">
-              The Workflow Audit is the first entry point. Deeper services can
-              extend the diagnosis into protocols, agent instructions,
-              implementation workbooks, or system builds.
-            </p>
-          </div>
+        <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(158,211,159,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.1)_1px,transparent_1px)] [background-size:48px_48px]" />
+        <div className="relative mx-auto max-w-[1440px]">
+          <SectionIntro
+            icon="build"
+            label="Service ladder"
+            title="Start with diagnosis. Build toward an operating system."
+            text="The Workflow Audit is the entry point. Deeper services can extend the diagnosis into protocols, agent instructions, implementation workbooks, or system builds."
+          />
 
-          <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden border border-[#9ed39f]/25 bg-[#9ed39f]/20 xl:grid-cols-3">
+          <div className="mt-12 grid grid-cols-1 gap-px overflow-hidden border border-[#9ed39f]/30 bg-[#9ed39f]/24 md:grid-cols-2 xl:grid-cols-3">
             {serviceLadder.map((service) => (
               <article
                 key={service.name}
-                className="group bg-[#031007] p-8 transition duration-300 hover:bg-[#08170e]"
+                className="group bg-[#041008] p-7 transition duration-300 hover:bg-[#0a1c10]"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <span className="inline-flex border border-[#9ed39f]/28 bg-[#9ed39f]/10 px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]">
+                  <span className="inline-flex border border-[#9ed39f]/30 bg-[#9ed39f]/12 px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]">
                     {service.status}
                   </span>
-                  <span className="flex h-11 w-11 items-center justify-center border border-[#9ed39f]/30 bg-[#9ed39f]/10 text-[#9ed39f] transition duration-300 group-hover:bg-[#9ed39f] group-hover:text-black">
+                  <span className="flex h-12 w-12 items-center justify-center border border-[#9ed39f]/35 bg-[#9ed39f]/12 text-[#9ed39f] transition duration-300 group-hover:bg-[#9ed39f] group-hover:text-black">
                     <AxiomIcon kind={service.icon} className="h-5 w-5" />
                   </span>
                 </div>
-                <h3 className="mt-12 text-[1.55rem] font-black uppercase tracking-[-0.04em] text-white">
+                <h3 className="mt-12 text-[1.5rem] font-black uppercase tracking-[-0.04em] text-white">
                   {service.name}
                 </h3>
-                <p className="mt-4 text-base leading-8 text-white/66">
+                <p className="mt-4 text-base leading-8 text-white/70">
                   {service.text}
                 </p>
               </article>
@@ -857,17 +866,14 @@ export default function Home() {
         className="relative overflow-hidden bg-black px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
       >
         <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(158,211,159,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.12)_1px,transparent_1px)] [background-size:44px_44px]" />
-        <div className="relative mx-auto max-w-[1920px] border border-[#9ed39f]/35 bg-[#031007]/92 p-7 shadow-[0_26px_90px_rgba(0,0,0,0.42)] sm:p-10 lg:p-14">
+        <div className="relative mx-auto max-w-[1440px] border border-[#9ed39f]/38 bg-[#041008]/94 p-7 shadow-[0_26px_90px_rgba(0,0,0,0.42)] sm:p-10 lg:p-14">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
-              <p className="inline-flex items-center gap-2 border border-[#9ed39f]/30 bg-[#9ed39f]/10 px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.24em] text-[#9ed39f]">
-                <AxiomIcon kind="audit" className="h-4 w-4" />
-                Start Workflow Audit
-              </p>
-              <h2 className="mt-5 max-w-4xl text-[clamp(2.2rem,5vw,5.4rem)] font-black uppercase leading-[0.93] tracking-[-0.07em] text-white">
+              <SectionLabel icon="audit">Start Workflow Audit</SectionLabel>
+              <h2 className="mt-5 max-w-4xl text-[clamp(2.55rem,5vw,5.4rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-white">
                 Bring one messy workflow. Leave with a structured plan.
               </h2>
-              <p className="mt-6 max-w-2xl text-base leading-8 text-white/68">
+              <p className="mt-6 max-w-2xl text-base leading-8 text-white/72 sm:text-lg">
                 Axiom Architect begins with a single workflow audit: one
                 process, one diagnosis, one practical blueprint for better
                 AI-supported execution.
@@ -886,9 +892,3 @@ export default function Home() {
     </main>
   );
 }
-
-
-
-
-
-
