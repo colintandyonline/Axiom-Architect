@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 export const metadata: Metadata = {
   title: "Axiom Workflow Audit | Axiom Architect",
   description:
-    "Choose an Axiom Workflow Audit tier and turn one messy workflow into a clear operating blueprint for AI-supported execution.",
+    "Choose an Axiom Workflow Audit tier and turn one messy workflow into a clear operating blueprint for supported execution.",
 };
 
 const tiers = [
@@ -17,14 +17,14 @@ const tiers = [
     href: "/signup?tier=workflow-audit",
     summary:
       "For one workflow that needs clarity, scoring, and a practical next-step plan.",
-    delivery: "24-72 hours",
+    delivery: "Report generated after intake",
     motif: "checklist",
     includes: [
       "One workflow submission",
       "Current workflow diagnosis",
       "Bottlenecks and friction points",
       "Automation suitability score",
-      "AI opportunity map",
+      "Assistant opportunity map",
       "Risk and review notes",
       "Actionable next steps",
       "Branded PDF report",
@@ -39,13 +39,13 @@ const tiers = [
     featured: true,
     summary:
       "For a stronger plan: diagnosis, future-state design, sequence, roles, and review gates.",
-    delivery: "3-5 business days",
+    delivery: "Report generated after intake",
     motif: "layers",
     includes: [
       "Everything in Workflow Audit",
       "Future-state workflow design",
       "Step-by-step implementation plan",
-      "Recommended AI assistant roles",
+      "Recommended assistant roles",
       "Review gate structure",
       "Tool stack recommendations",
       "30-day implementation sequence",
@@ -59,14 +59,14 @@ const tiers = [
     href: "/contact?tier=custom-operating-pack",
     summary:
       "For a complete operating system around one workflow, with reusable instructions and handoff assets.",
-    delivery: "5-10 business days",
+    delivery: "Report generated after intake",
     motif: "radar",
     includes: [
       "Everything in Workflow Blueprint",
       "Custom operating protocol",
       "Custom agent instruction kit",
       "Implementation workbook",
-      "Copy/paste AI instruction blocks",
+      "Copy/paste instruction blocks",
       "Team handoff guide",
       "Optional review call later",
     ],
@@ -75,10 +75,10 @@ const tiers = [
 
 const flowSteps = [
   "Choose tier",
-  "Create account",
-  "Pay securely",
+  "Enter details",
+  "Secure payment",
+  "Dashboard opens",
   "Submit workflow",
-  "Track status",
   "Receive report",
 ];
 
@@ -88,7 +88,7 @@ const diagnosisAreas = [
   "Inputs and outputs",
   "Handoffs and tools",
   "Bottlenecks",
-  "AI opportunities",
+  "Assistant opportunities",
   "Automation suitability",
   "Review gates",
 ];
@@ -101,7 +101,7 @@ const deliverables = [
   },
   {
     title: "Opportunity model",
-    text: "A practical read on what AI can prepare, summarise, route, draft, or support without taking over judgement.",
+    text: "A practical read on what assistants can prepare, summarise, route, draft, or support without taking over judgement.",
     motif: "radar",
   },
   {
@@ -113,9 +113,9 @@ const deliverables = [
 
 const faqs = [
   {
-    question: "Why begin with an audit page?",
+    question: "What happens after I buy?",
     answer:
-      "Because this is a diagnostic service. The page gives the client scope, value, tier choice, and delivery expectations before they commit.",
+      "You are taken to your dashboard, where you complete the workflow intake. Once the intake is submitted, the report is generated and prepared for delivery.",
   },
   {
     question: "What should I submit?",
@@ -123,14 +123,14 @@ const faqs = [
       "One real workflow, process, tool stack, handoff, or operating problem. The more specific the workflow, the better the report.",
   },
   {
-    question: "Does AI make the final decisions?",
+    question: "What should automation never decide?",
     answer:
-      "No. The audit identifies where AI can support work and where human approval, brand judgement, legal review, or financial control should remain in place.",
+      "The audit highlights where human approval, brand judgement, legal review, financial control, or client-facing decisions should stay protected.",
   },
   {
-    question: "What happens after payment?",
+    question: "Where do I complete the workflow intake?",
     answer:
-      "You complete a staged intake. Your submission is then reviewed and turned into a report, with status updates as the service layer matures.",
+      "Your dashboard opens after payment. That is where you enter the workflow details, track the report status, and access the final deliverable.",
   },
 ];
 
@@ -231,7 +231,7 @@ function TierCard({ tier }: { tier: (typeof tiers)[number] }) {
       </p>
 
       <div className={tier.featured ? "mt-5 border border-black/20 bg-black/8 p-4" : "mt-5 border border-[#9ed39f]/24 bg-[#9ed39f]/8 p-4"}>
-        <p className="text-sm font-bold uppercase tracking-[0.13em]">Delivery: {tier.delivery}</p>
+        <p className="text-sm font-bold uppercase tracking-[0.13em]">{tier.delivery}</p>
       </div>
 
       <ul className="mt-6 space-y-3">
@@ -251,7 +251,7 @@ function TierCard({ tier }: { tier: (typeof tiers)[number] }) {
             : "mt-8 inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
         }
       >
-        {tier.slug === "custom-operating-pack" ? "Request availability" : "Choose this tier"}
+        {tier.slug === "custom-operating-pack" ? "Request availability" : "Buy now"}
       </a>
     </article>
   );
@@ -287,7 +287,7 @@ export default function AuditPage() {
               Choose the right workflow diagnostic.
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-[#e6f6e7]/80 sm:text-xl">
-              Turn one messy workflow into a clear operating blueprint: what to improve, where AI belongs, what needs review, and what to implement next.
+              Turn one messy workflow into a clear operating blueprint: what to improve, where support belongs, what needs review, and what to implement next.
             </p>
           </div>
 
@@ -407,7 +407,7 @@ export default function AuditPage() {
             </p>
           </div>
           <a href="/signup?tier=workflow-blueprint" className="inline-flex min-h-14 items-center justify-center border border-black bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black sm:min-w-72">
-            Choose Workflow Blueprint
+            Buy now
           </a>
         </div>
       </section>
