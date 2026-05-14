@@ -228,7 +228,7 @@ export default function Home() {
                   sizes="(max-width: 1024px) 100vw, 48vw"
                   className="object-cover opacity-88"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/22 to-transparent" />
+                
               </div>
 
               <div className="grid grid-cols-2 border-t border-[#9ed39f]/25 sm:grid-cols-3">
@@ -495,3 +495,4 @@ export default function Home() {
     </main>
   );
 }
+
