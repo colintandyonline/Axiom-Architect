@@ -86,6 +86,33 @@ section[class*="bg-[#9ed39f]"] p[class*="bg-black"],
   color: #ffffff !important;
 }
 
+a:hover[class*="hover:bg-white"],
+button:hover[class*="hover:bg-white"],
+a:hover[class*="hover:text-black"],
+button:hover[class*="hover:text-black"],
+section[class*="bg-[#9ed39f]"] a:hover[class*="hover:bg-white"],
+section[class*="bg-[#9ed39f]"] button:hover[class*="hover:bg-white"],
+#tiers article[class*="bg-[#9ed39f]"] a:hover[class*="hover:bg-white"],
+#tiers article[class*="bg-[#9ed39f]"] button:hover[class*="hover:bg-white"] {
+  color: #000000 !important;
+}
+
+a:hover[class*="hover:bg-[#9ed39f]"],
+button:hover[class*="hover:bg-[#9ed39f]"],
+a:hover[class*="hover:text-black"],
+button:hover[class*="hover:text-black"] {
+  color: #000000 !important;
+}
+
+a:hover[class*="hover:bg-black"],
+button:hover[class*="hover:bg-black"],
+a:hover[class*="hover:text-white"],
+button:hover[class*="hover:text-white"],
+section[class*="bg-[#9ed39f]"] a:hover[class*="hover:bg-black"],
+section[class*="bg-[#9ed39f]"] button:hover[class*="hover:bg-black"] {
+  color: #ffffff !important;
+}
+
 #method article,
 #deliverables article,
 #services article {
