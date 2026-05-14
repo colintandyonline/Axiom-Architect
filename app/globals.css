@@ -76,6 +76,8 @@ canvas {
   outline-offset: 4px;
 }
 
+section[class*="bg-[#9ed39f]"] a[class*="bg-black"],
+section[class*="bg-[#9ed39f]"] p[class*="bg-black"],
 #tiers article[class*="bg-[#9ed39f]"] a[class*="bg-black"],
 #tiers article[class*="bg-[#9ed39f]"] p[class*="bg-black"] {
   color: #ffffff !important;
