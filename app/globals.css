@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 :root {
   --axiom-mint: #9ed39f;
@@ -74,4 +74,9 @@ canvas {
 :focus-visible {
   outline: 2px solid var(--axiom-mint);
   outline-offset: 4px;
+}
+
+#tiers article[class*="bg-[#9ed39f]"] a[class*="bg-black"],
+#tiers article[class*="bg-[#9ed39f]"] p[class*="bg-black"] {
+  color: #ffffff !important;
 }
