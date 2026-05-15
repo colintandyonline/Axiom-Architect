@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAuthRedirectPath } from "@/lib/axiom-auth";
+import { getAuthRedirectPath } from "../../lib/axiom-auth";
 
 export const metadata: Metadata = {
   title: "Login | Axiom Architect",
