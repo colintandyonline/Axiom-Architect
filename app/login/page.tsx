@@ -11,6 +11,7 @@ type SearchParams = {
   error?: string;
   logged_out?: string;
   redirect?: string;
+  signup?: string;
 };
 
 function errorMessage(error?: string) {
@@ -29,6 +30,22 @@ function errorMessage(error?: string) {
   return null;
 }
 
+function signupMessage(signup?: string) {
+  if (signup === "check_email") {
+    return "Check your email to confirm the account, then log in to continue your audit checkout.";
+  }
+
+  if (signup === "confirmed") {
+    return "Your email has been confirmed. Log in to continue your audit checkout.";
+  }
+
+  if (signup === "existing") {
+    return "An account already exists for that email. Log in to continue.";
+  }
+
+  return null;
+}
+
 export default async function LoginPage({
   searchParams,
 }: {
@@ -37,6 +54,7 @@ export default async function LoginPage({
   const params = await searchParams;
   const redirectTo = getAuthRedirectPath(params.redirect);
   const message = errorMessage(params.error);
+  const signupNotice = signupMessage(params.signup);
   const loggedOut = params.logged_out === "1";
 
   return (
@@ -45,12 +63,20 @@ export default async function LoginPage({
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.11)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.11)_1px,transparent_1px)] [background-size:44px_44px]" />
 
         <div className="relative mx-auto flex min-h-[calc(100vh-5rem)] max-w-[1180px] flex-col justify-center">
-          <a
-            href="/"
-            className="mb-10 inline-flex w-fit border border-[#9ed39f]/45 bg-black px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black"
-          >
-            Axiom Architect
-          </a>
+          <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
+            <a
+              href="/"
+              className="inline-flex w-fit border border-[#9ed39f]/45 bg-black px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black"
+            >
+              Axiom Architect
+            </a>
+            <a
+              href="/pricing"
+              className="inline-flex w-fit border border-[#9ed39f]/45 bg-black px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.18em] text-white transition hover:bg-[#9ed39f] hover:text-black"
+            >
+              View pricing
+            </a>
+          </div>
 
           <div className="grid gap-8 lg:grid-cols-[0.88fr_0.72fr] lg:items-center">
             <div>
@@ -61,7 +87,7 @@ export default async function LoginPage({
                 Access your workflow audit workspace.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-                Log in to review submitted workflow intakes, check report status, and manage your Axiom Architect account.
+                Log in to continue checkout, submit workflow intakes, check report status, and manage your Axiom Architect account.
               </p>
             </div>
 
@@ -75,6 +101,12 @@ export default async function LoginPage({
               {loggedOut && (
                 <div className="mb-5 border border-[#9ed39f]/45 bg-[#9ed39f]/10 p-4 text-sm leading-6 text-[#e6f6e7]/80">
                   You have been logged out.
+                </div>
+              )}
+
+              {signupNotice && (
+                <div className="mb-5 border border-[#9ed39f]/45 bg-[#9ed39f]/10 p-4 text-sm leading-6 text-[#e6f6e7]/80">
+                  {signupNotice}
                 </div>
               )}
 
@@ -124,7 +156,11 @@ export default async function LoginPage({
                   Forgot your password?
                 </a>
                 <p className="m-0">
-                  New account creation is being connected next. For now, use the email connected to your paid audit.
+                  New here?{" "}
+                  <a href="/pricing" className="text-[#9ed39f] transition hover:text-white">
+                    View pricing first
+                  </a>{" "}
+                  or create an account from your selected service.
                 </p>
               </div>
             </form>
