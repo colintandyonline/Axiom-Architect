@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 type SearchParams = {
   checkout?: string;
   session_id?: string;
+  submission_id?: string;
 };
 
 type AxiomOrder = {
@@ -33,15 +34,23 @@ type AxiomCustomer = {
 
 type AxiomWorkflowSubmission = {
   id: string;
+  customer_id: string | null;
+  order_id: string | null;
   workflow_title: string;
   status: string;
   tier_slug: string;
 };
 
+type AxiomAuditReport = {
+  status: string;
+  updated_at: string | null;
+};
+
 type DashboardRecord = {
-  order: AxiomOrder;
+  order: AxiomOrder | null;
   customer: AxiomCustomer | null;
   workflow: AxiomWorkflowSubmission | null;
+  report: AxiomAuditReport | null;
 };
 
 const fallbackTabs = [
@@ -101,7 +110,31 @@ async function supabaseFetch<T>(path: string): Promise<T | null> {
   return (await response.json()) as T;
 }
 
-async function getDashboardRecord(sessionId?: string): Promise<DashboardRecord | null> {
+async function getCustomer(customerId?: string | null) {
+  if (!customerId) {
+    return null;
+  }
+
+  const customers = await supabaseFetch<AxiomCustomer[]>(
+    `axiom_customers?select=email,full_name,business_name&id=eq.${encodeURIComponent(customerId)}&limit=1`,
+  );
+
+  return customers?.[0] ?? null;
+}
+
+async function getReport(submissionId?: string | null) {
+  if (!submissionId) {
+    return null;
+  }
+
+  const reports = await supabaseFetch<AxiomAuditReport[]>(
+    `axiom_audit_reports?select=status,updated_at&submission_id=eq.${encodeURIComponent(submissionId)}&limit=1`,
+  );
+
+  return reports?.[0] ?? null;
+}
+
+async function getDashboardRecordBySession(sessionId?: string): Promise<DashboardRecord | null> {
   if (!sessionId) {
     return null;
   }
@@ -116,21 +149,53 @@ async function getDashboardRecord(sessionId?: string): Promise<DashboardRecord |
     return null;
   }
 
-  const [customers, workflows] = await Promise.all([
-    order.customer_id
-      ? supabaseFetch<AxiomCustomer[]>(
-          `axiom_customers?select=email,full_name,business_name&id=eq.${encodeURIComponent(order.customer_id)}&limit=1`,
-        )
-      : Promise.resolve(null),
-    supabaseFetch<AxiomWorkflowSubmission[]>(
-      `axiom_workflow_submissions?select=id,workflow_title,status,tier_slug&order_id=eq.${encodeURIComponent(order.id)}&limit=1`,
-    ),
+  const workflows = await supabaseFetch<AxiomWorkflowSubmission[]>(
+    `axiom_workflow_submissions?select=id,customer_id,order_id,workflow_title,status,tier_slug&order_id=eq.${encodeURIComponent(order.id)}&limit=1`,
+  );
+  const workflow = workflows?.[0] ?? null;
+
+  const [customer, report] = await Promise.all([
+    getCustomer(order.customer_id),
+    getReport(workflow?.id),
   ]);
 
   return {
     order,
-    customer: customers?.[0] ?? null,
-    workflow: workflows?.[0] ?? null,
+    customer,
+    workflow,
+    report,
+  };
+}
+
+async function getDashboardRecordBySubmission(submissionId?: string): Promise<DashboardRecord | null> {
+  if (!submissionId) {
+    return null;
+  }
+
+  const workflows = await supabaseFetch<AxiomWorkflowSubmission[]>(
+    `axiom_workflow_submissions?select=id,customer_id,order_id,workflow_title,status,tier_slug&id=eq.${encodeURIComponent(submissionId)}&limit=1`,
+  );
+  const workflow = workflows?.[0];
+
+  if (!workflow) {
+    return null;
+  }
+
+  const [orders, customer, report] = await Promise.all([
+    workflow.order_id
+      ? supabaseFetch<AxiomOrder[]>(
+          `axiom_orders?select=id,customer_id,tier_slug,service_name,amount_total,currency,payment_status,status,stripe_checkout_session_id&id=eq.${encodeURIComponent(workflow.order_id)}&limit=1`,
+        )
+      : Promise.resolve(null),
+    getCustomer(workflow.customer_id),
+    getReport(workflow.id),
+  ]);
+
+  return {
+    order: orders?.[0] ?? null,
+    customer,
+    workflow,
+    report,
   };
 }
 
@@ -160,29 +225,39 @@ export default async function DashboardPage({
 }) {
   const params = await searchParams;
   const isCheckoutSuccess = params.checkout === "success";
-  const record = await getDashboardRecord(params.session_id);
+  const record =
+    (await getDashboardRecordBySubmission(params.submission_id)) ??
+    (await getDashboardRecordBySession(params.session_id));
   const customerName = record?.customer?.full_name || "Your audit";
   const businessName = record?.customer?.business_name || "Workflow project";
-  const serviceName = record?.order.service_name || "Workflow Blueprint";
+  const serviceName = record?.order?.service_name || record?.workflow?.tier_slug || "Workflow Blueprint";
   const workflowStatus = labelFromStatus(record?.workflow?.status || "draft");
-  const paymentStatus = labelFromStatus(record?.order.payment_status || (isCheckoutSuccess ? "paid" : "pending"));
+  const reportStatus = labelFromStatus(record?.report?.status || (record?.workflow?.status === "submitted" ? "queued" : "pending"));
+  const paymentStatus = labelFromStatus(record?.order?.payment_status || (isCheckoutSuccess ? "paid" : "pending"));
   const paymentAmount = formatCurrency(
-    record?.order.amount_total ?? null,
-    record?.order.currency ?? null,
+    record?.order?.amount_total ?? null,
+    record?.order?.currency ?? null,
   );
+  const workflowTitle = record?.workflow?.workflow_title || "Untitled workflow";
   const intakeHref = record?.workflow?.id
     ? `/dashboard/intake?submission_id=${record.workflow.id}`
     : "/dashboard/intake";
+  const receivedHref = record?.workflow?.id
+    ? `/dashboard/intake/received?submission_id=${record.workflow.id}`
+    : "/dashboard";
+  const hasSubmittedIntake = !!record?.workflow?.id && record.workflow.status !== "draft";
 
   const dashboardTabs = record
     ? [
         {
           label: "Workflow intake",
-          text: `${serviceName} is ready for ${businessName}. Status: ${workflowStatus}.`,
+          text: hasSubmittedIntake
+            ? `${workflowTitle} has been submitted and is ready for review.`
+            : `${serviceName} is ready for ${businessName}. Status: ${workflowStatus}.`,
         },
         {
           label: "Report status",
-          text: "Your report will be generated after the workflow intake is submitted.",
+          text: `Report status: ${reportStatus}.`,
         },
         {
           label: "Payment details",
@@ -232,7 +307,9 @@ export default async function DashboardPage({
                     {serviceName}
                   </p>
                   <p className="m-0">
-                    {businessName} is set up. Start the workflow intake to generate the report from your submitted details.
+                    {hasSubmittedIntake
+                      ? `${workflowTitle} is submitted. The report record is ${reportStatus}.`
+                      : `${businessName} is set up. Start the workflow intake to generate the report from your submitted details.`}
                   </p>
                 </div>
               ) : (
@@ -245,15 +322,15 @@ export default async function DashboardPage({
         </div>
       </section>
 
-      <section className="bg-[#9ed39f] px-4 py-14 text-black sm:px-6 lg:px-8">
+      <section className="bg-[#9ed39f] px-4 py-14 text-white sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-5 lg:grid-cols-4">
           {dashboardTabs.map((tab) => (
-            <article key={tab.label} className="rounded-[1.5rem] border border-black/22 bg-[#b8efb9]/45 p-5">
-              <span className="mb-5 block h-2 w-2 bg-black" />
-              <h2 className="text-lg font-black uppercase tracking-[0.02em]">
+            <article key={tab.label} className="rounded-[1.25rem] border border-black bg-[#061009] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.26)]">
+              <span className="mb-5 block h-2 w-2 bg-[#9ed39f]" />
+              <h2 className="text-lg font-black uppercase tracking-[0.02em] text-[#9ed39f]">
                 {tab.label}
               </h2>
-              <p className="mt-4 text-sm leading-6 text-black/72">{tab.text}</p>
+              <p className="mt-4 text-sm leading-6 text-white/78">{tab.text}</p>
             </article>
           ))}
         </div>
@@ -263,21 +340,33 @@ export default async function DashboardPage({
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-8 rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
             <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-              Next step
+              {hasSubmittedIntake ? "Submitted intake" : "Next step"}
             </p>
             <h2 className="mt-5 max-w-4xl text-[clamp(2.1rem,4vw,3.7rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
-              Submit your first workflow.
+              {hasSubmittedIntake ? "Review your submitted workflow." : "Submit your first workflow."}
             </h2>
             <p className="mt-5 max-w-3xl text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
-              The intake form is the source material for your diagnostic report. The stronger the workflow details, the stronger the report.
+              {hasSubmittedIntake
+                ? "Your intake has been received and the report record is queued. You can reopen the submitted intake from here whenever you need to review it."
+                : "The intake form is the source material for your diagnostic report. The stronger the workflow details, the stronger the report."}
             </p>
           </div>
-          <a
-            href={intakeHref}
-            className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:min-w-72"
-          >
-            Start workflow intake
-          </a>
+          <div className="flex flex-col gap-4 sm:flex-row lg:flex-col">
+            <a
+              href={intakeHref}
+              className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:min-w-72"
+            >
+              {hasSubmittedIntake ? "Review submitted intake" : "Start workflow intake"}
+            </a>
+            {hasSubmittedIntake && (
+              <a
+                href={receivedHref}
+                className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/45 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black sm:min-w-72"
+              >
+                View confirmation
+              </a>
+            )}
+          </div>
         </div>
       </section>
     </main>
