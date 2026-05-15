@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { getAxiomAuthContext } from "../../../lib/axiom-auth";
 
 export const runtime = "nodejs";
 
@@ -26,16 +27,12 @@ const tierConfig: Record<
   },
 };
 
-function isTierSlug(value: FormDataEntryValue | null): value is TierSlug {
+function isTierSlug(value: FormDataEntryValue | string | null): value is TierSlug {
   return (
     value === "workflow-audit" ||
     value === "workflow-blueprint" ||
     value === "custom-operating-pack"
   );
-}
-
-function cleanField(value: FormDataEntryValue | null) {
-  return typeof value === "string" ? value.trim() : "";
 }
 
 function getAppUrl(request: Request) {
@@ -67,21 +64,29 @@ function getPriceId(tier: TierSlug) {
   return priceId;
 }
 
+function redirectToSignup(request: Request, tier: TierSlug, reason: string) {
+  const appUrl = getAppUrl(request);
+  return NextResponse.redirect(`${appUrl}/signup?tier=${tier}&account=${reason}`, 303);
+}
+
 export async function POST(request: Request) {
   const formData = await request.formData();
   const tierValue = formData.get("tier");
   const tier: TierSlug = isTierSlug(tierValue) ? tierValue : "workflow-blueprint";
   const selectedTier = tierConfig[tier];
-  const name = cleanField(formData.get("name"));
-  const email = cleanField(formData.get("email"));
-  const business = cleanField(formData.get("business"));
   const appUrl = getAppUrl(request);
+  const { user, customer } = await getAxiomAuthContext();
 
-  if (!email) {
-    return NextResponse.redirect(
-      `${appUrl}/signup?tier=${tier}&error=missing-email`,
-      303,
-    );
+  if (!user) {
+    return redirectToSignup(request, tier, "required");
+  }
+
+  if (!customer) {
+    return redirectToSignup(request, tier, "customer-required");
+  }
+
+  if (!customer.email) {
+    return redirectToSignup(request, tier, "email-required");
   }
 
   try {
@@ -91,14 +96,16 @@ export async function POST(request: Request) {
     const metadata = {
       tier,
       service_name: selectedTier.name,
-      customer_name: name,
-      customer_email: email,
-      business_name: business,
+      auth_user_id: user.id,
+      axiom_customer_id: customer.id,
+      customer_name: customer.full_name || user.email || "",
+      customer_email: customer.email,
+      business_name: customer.business_name || "",
     };
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      customer_email: email,
+      customer_email: customer.email,
       customer_creation: "always",
       line_items: [
         {
@@ -111,7 +118,7 @@ export async function POST(request: Request) {
         metadata,
       },
       success_url: `${appUrl}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/signup?tier=${tier}&checkout=cancelled`,
+      cancel_url: `${appUrl}/audit?tier=${tier}&checkout=cancelled#tiers`,
       custom_text: {
         submit: {
           message:
@@ -129,7 +136,7 @@ export async function POST(request: Request) {
     console.error("Checkout session creation failed", error);
 
     return NextResponse.redirect(
-      `${appUrl}/signup?tier=${tier}&error=checkout`,
+      `${appUrl}/audit?tier=${tier}&error=checkout#tiers`,
       303,
     );
   }
@@ -138,5 +145,5 @@ export async function POST(request: Request) {
 export function GET(request: Request) {
   const appUrl = getAppUrl(request);
 
-  return NextResponse.redirect(`${appUrl}/audit#tiers`, 303);
+  return NextResponse.redirect(`${appUrl}/pricing`, 303);
 }
