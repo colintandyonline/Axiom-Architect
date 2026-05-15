@@ -380,28 +380,28 @@ export default async function WorkflowIntakePage({
                 </section>
               ))}
 
-              <section className="grid gap-6 border border-[#9ed39f] bg-[#9ed39f] p-5 text-black sm:p-7 lg:grid-cols-[0.55fr_1fr] lg:p-8">
+              <section className="grid gap-6 border border-[#9ed39f]/34 bg-[#030804] p-5 text-white sm:p-7 lg:grid-cols-[0.55fr_1fr] lg:p-8">
                 <div>
-                  <p className="m-0 text-[0.72rem] font-black uppercase tracking-[0.18em] text-black/70">
+                  <p className="m-0 text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">
                     Stage 07
                   </p>
-                  <h2 className="mt-4 text-[clamp(1.65rem,3vw,2.8rem)] font-black uppercase leading-[0.95] tracking-[-0.06em] text-black">
+                  <h2 className="mt-4 text-[clamp(1.65rem,3vw,2.8rem)] font-black uppercase leading-[0.95] tracking-[-0.06em] text-white">
                     Review and submit
                   </h2>
                 </div>
-                <div className="grid gap-4 text-sm leading-7 text-black/72">
+                <div className="grid gap-4 text-sm leading-7 text-[#e6f6e7]/78">
                   <p className="m-0">
-                    <strong className="text-black">Tier purchased:</strong> {context.order?.service_name || context.intake.tier_slug}
+                    <strong className="text-white">Tier purchased:</strong> {context.order?.service_name || context.intake.tier_slug}
                   </p>
                   <p className="m-0">
-                    <strong className="text-black">Workflow title:</strong> Entered above and saved into the audit record.
+                    <strong className="text-white">Workflow title:</strong> Entered above and saved into the audit record.
                   </p>
                   <p className="m-0">
-                    <strong className="text-black">Delivery expectation:</strong> Report generation begins after the intake is submitted.
+                    <strong className="text-white">Delivery expectation:</strong> Report generation begins after the intake is submitted.
                   </p>
                   <button
                     type="submit"
-                    className="mt-4 inline-flex min-h-14 items-center justify-center border border-black bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-white hover:text-black sm:w-fit"
+                    className="mt-4 inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:w-fit"
                   >
                     Submit workflow intake
                   </button>
