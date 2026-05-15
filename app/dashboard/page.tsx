@@ -246,6 +246,8 @@ export default async function DashboardPage({
     ? `/dashboard/intake/received?submission_id=${record.workflow.id}`
     : "/dashboard";
   const hasSubmittedIntake = !!record?.workflow?.id && record.workflow.status !== "draft";
+  const hasQueuedReport = reportStatus !== "pending";
+  const isReportReady = ["ready", "delivered"].includes(record?.report?.status || "");
 
   const dashboardTabs = record
     ? [
@@ -271,6 +273,39 @@ export default async function DashboardPage({
         },
       ]
     : fallbackTabs;
+
+  const statusSteps = [
+    {
+      number: "01",
+      title: "Payment confirmed",
+      text: `${paymentAmount} · ${paymentStatus}.`,
+      state: record?.order ? "complete" : "pending",
+    },
+    {
+      number: "02",
+      title: hasSubmittedIntake ? "Intake submitted" : "Intake required",
+      text: hasSubmittedIntake
+        ? `${workflowTitle} has been saved as structured source material.`
+        : "Complete the staged workflow intake to begin report processing.",
+      state: hasSubmittedIntake ? "complete" : "active",
+    },
+    {
+      number: "03",
+      title: hasQueuedReport ? `Report ${reportStatus}` : "Report pending",
+      text: hasQueuedReport
+        ? "The report record is queued and ready for review or generation."
+        : "A report record is created once the intake is submitted.",
+      state: hasQueuedReport ? "active" : "pending",
+    },
+    {
+      number: "04",
+      title: isReportReady ? "Report ready" : "Delivery pending",
+      text: isReportReady
+        ? "Your report output is ready for delivery."
+        : "The dashboard will show a delivery link when the report is ready.",
+      state: isReportReady ? "complete" : "pending",
+    },
+  ];
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
@@ -337,7 +372,66 @@ export default async function DashboardPage({
       </section>
 
       <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-8 rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div className="mx-auto grid max-w-[1440px] gap-8 lg:grid-cols-[0.82fr_1fr]">
+          <article className="rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-8">
+            <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
+              My audit
+            </p>
+            <h2 className="mt-5 text-[clamp(2.1rem,4vw,4.1rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
+              {workflowTitle}
+            </h2>
+            <div className="mt-8 grid gap-4 text-sm leading-7 text-[#e6f6e7]/78 sm:grid-cols-2">
+              <p className="m-0 border border-[#9ed39f]/24 bg-[#9ed39f]/8 p-4">
+                <strong className="block text-[0.68rem] uppercase tracking-[0.16em] text-[#9ed39f]">Tier</strong>
+                {serviceName}
+              </p>
+              <p className="m-0 border border-[#9ed39f]/24 bg-[#9ed39f]/8 p-4">
+                <strong className="block text-[0.68rem] uppercase tracking-[0.16em] text-[#9ed39f]">Business</strong>
+                {businessName}
+              </p>
+              <p className="m-0 border border-[#9ed39f]/24 bg-[#9ed39f]/8 p-4">
+                <strong className="block text-[0.68rem] uppercase tracking-[0.16em] text-[#9ed39f]">Intake</strong>
+                {workflowStatus}
+              </p>
+              <p className="m-0 border border-[#9ed39f]/24 bg-[#9ed39f]/8 p-4">
+                <strong className="block text-[0.68rem] uppercase tracking-[0.16em] text-[#9ed39f]">Report</strong>
+                {reportStatus}
+              </p>
+            </div>
+          </article>
+
+          <div className="grid gap-4">
+            {statusSteps.map((step) => (
+              <article
+                key={step.number}
+                className={`grid gap-4 rounded-[1.25rem] border p-5 shadow-[0_18px_40px_rgba(0,0,0,0.18)] sm:grid-cols-[4.5rem_1fr_auto] sm:items-center ${
+                  step.state === "complete"
+                    ? "border-[#9ed39f]/42 bg-[#061009]"
+                    : step.state === "active"
+                      ? "border-[#9ed39f] bg-[#0a180c]"
+                      : "border-[#9ed39f]/20 bg-[#020503]"
+                }`}
+              >
+                <span className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">
+                  {step.number}
+                </span>
+                <div>
+                  <h3 className="m-0 text-xl font-black uppercase tracking-[-0.04em] text-white">
+                    {step.title}
+                  </h3>
+                  <p className="mb-0 mt-2 text-sm leading-7 text-[#e6f6e7]/70">
+                    {step.text}
+                  </p>
+                </div>
+                <span className="w-fit border border-[#9ed39f]/45 px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">
+                  {step.state}
+                </span>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        <div className="mx-auto mt-8 grid max-w-[1440px] grid-cols-1 gap-8 rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
             <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
               {hasSubmittedIntake ? "Submitted intake" : "Next step"}
