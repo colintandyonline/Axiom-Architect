@@ -100,6 +100,12 @@ function redirectToIntake(request: Request, submissionId: string, state: string)
   return NextResponse.redirect(url, 303);
 }
 
+function redirectToReceived(request: Request, submissionId: string) {
+  const url = new URL("/dashboard/intake/received", request.url);
+  url.searchParams.set("submission_id", submissionId);
+  return NextResponse.redirect(url, 303);
+}
+
 async function getWorkflowSubmission(submissionId: string) {
   const records = await supabaseFetch<WorkflowRecord[]>(
     `axiom_workflow_submissions?select=id,customer_id,order_id,tier_slug&id=eq.${encodeURIComponent(submissionId)}&limit=1`,
@@ -205,7 +211,7 @@ export async function POST(request: Request) {
       }),
     });
 
-    return redirectToIntake(request, submissionId, "submitted");
+    return redirectToReceived(request, submissionId);
   } catch (error) {
     console.error("Workflow intake submission failed", error);
     return redirectToIntake(request, submissionId, "error");
