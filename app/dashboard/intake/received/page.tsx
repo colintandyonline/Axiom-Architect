@@ -100,7 +100,7 @@ function formatDate(value?: string | null) {
 }
 
 const summaryCardClass =
-  "border border-black bg-[#061009] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.26)]";
+  "rounded-[1.25rem] border border-black bg-[#061009] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.26)]";
 const summaryHeadingClass = "text-lg font-black uppercase tracking-[0.02em] text-[#9ed39f]";
 const summaryBodyClass = "mt-4 text-sm leading-6 text-white/78";
 
