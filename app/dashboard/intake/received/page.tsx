@@ -99,6 +99,11 @@ function formatDate(value?: string | null) {
   }).format(new Date(value));
 }
 
+const summaryCardClass =
+  "border border-black bg-[#061009] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.26)]";
+const summaryHeadingClass = "text-lg font-black uppercase tracking-[0.02em] text-[#9ed39f]";
+const summaryBodyClass = "mt-4 text-sm leading-6 text-white/78";
+
 export default async function IntakeReceivedPage({
   searchParams,
 }: {
@@ -160,27 +165,27 @@ export default async function IntakeReceivedPage({
         </div>
       </section>
 
-      <section className="bg-[#9ed39f] px-4 py-10 text-black sm:px-6 lg:px-8">
+      <section className="bg-[#9ed39f] px-4 py-10 text-white sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-[1220px] grid-cols-1 gap-5 lg:grid-cols-4">
-          <article className="border border-black/22 bg-[#b8efb9]/45 p-5">
-            <span className="mb-5 block h-2 w-2 bg-black" />
-            <h2 className="text-lg font-black uppercase tracking-[0.02em]">Selected tier</h2>
-            <p className="mt-4 text-sm leading-6 text-black/72">{serviceName}</p>
+          <article className={summaryCardClass}>
+            <span className="mb-5 block h-2 w-2 bg-[#9ed39f]" />
+            <h2 className={summaryHeadingClass}>Selected tier</h2>
+            <p className={summaryBodyClass}>{serviceName}</p>
           </article>
-          <article className="border border-black/22 bg-[#b8efb9]/45 p-5">
-            <span className="mb-5 block h-2 w-2 bg-black" />
-            <h2 className="text-lg font-black uppercase tracking-[0.02em]">Workflow</h2>
-            <p className="mt-4 text-sm leading-6 text-black/72">{workflowTitle}</p>
+          <article className={summaryCardClass}>
+            <span className="mb-5 block h-2 w-2 bg-[#9ed39f]" />
+            <h2 className={summaryHeadingClass}>Workflow</h2>
+            <p className={summaryBodyClass}>{workflowTitle}</p>
           </article>
-          <article className="border border-black/22 bg-[#b8efb9]/45 p-5">
-            <span className="mb-5 block h-2 w-2 bg-black" />
-            <h2 className="text-lg font-black uppercase tracking-[0.02em]">Business</h2>
-            <p className="mt-4 text-sm leading-6 text-black/72">{businessName}</p>
+          <article className={summaryCardClass}>
+            <span className="mb-5 block h-2 w-2 bg-[#9ed39f]" />
+            <h2 className={summaryHeadingClass}>Business</h2>
+            <p className={summaryBodyClass}>{businessName}</p>
           </article>
-          <article className="border border-black/22 bg-[#b8efb9]/45 p-5">
-            <span className="mb-5 block h-2 w-2 bg-black" />
-            <h2 className="text-lg font-black uppercase tracking-[0.02em]">Status</h2>
-            <p className="mt-4 text-sm leading-6 text-black/72">
+          <article className={summaryCardClass}>
+            <span className="mb-5 block h-2 w-2 bg-[#9ed39f]" />
+            <h2 className={summaryHeadingClass}>Status</h2>
+            <p className={summaryBodyClass}>
               Intake {formatStatus(submission?.status)} · Report {formatStatus(reportStatus)}
             </p>
           </article>
