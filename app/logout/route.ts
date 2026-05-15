@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clearAxiomAuthCookies } from "@/lib/axiom-auth";
+import { clearAxiomAuthCookies } from "../../lib/axiom-auth";
 
 export const runtime = "nodejs";
 
