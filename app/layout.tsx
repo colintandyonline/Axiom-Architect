@@ -31,7 +31,7 @@ export default function RootLayout({
                 var href = link.getAttribute('href');
                 if (href === '#start' || href === 'mailto:hello@axiom-architect.co?subject=Start%20Workflow%20Audit') {
                   event.preventDefault();
-                  window.location.href = '/audit';
+                  window.location.href = '/pricing';
                 }
               });
             `,
