@@ -114,17 +114,20 @@ async function upsertCustomer(session: Stripe.Checkout.Session) {
   const businessName = getMetadataValue(session, "business_name") || null;
   const stripeCustomerId = getSessionString(session, "customer");
 
-  const customers = await supabaseFetch<CustomerRecord[]>("customers?select=id", {
-    method: "POST",
-    prefer: "resolution=merge-duplicates,return=representation",
-    body: JSON.stringify({
-      email,
-      full_name: fullName,
-      business_name: businessName,
-      stripe_customer_id: stripeCustomerId,
-      updated_at: new Date().toISOString(),
-    }),
-  });
+  const customers = await supabaseFetch<CustomerRecord[]>(
+    "axiom_customers?select=id&on_conflict=email",
+    {
+      method: "POST",
+      prefer: "resolution=merge-duplicates,return=representation",
+      body: JSON.stringify({
+        email,
+        full_name: fullName,
+        business_name: businessName,
+        stripe_customer_id: stripeCustomerId,
+        updated_at: new Date().toISOString(),
+      }),
+    },
+  );
 
   const customer = customers[0];
 
@@ -141,23 +144,26 @@ async function upsertOrder(session: Stripe.Checkout.Session, customerId: string)
   const stripeCustomerId = getSessionString(session, "customer");
   const stripePaymentIntentId = getSessionString(session, "payment_intent");
 
-  const orders = await supabaseFetch<OrderRecord[]>("orders?select=id", {
-    method: "POST",
-    prefer: "resolution=merge-duplicates,return=representation",
-    body: JSON.stringify({
-      customer_id: customerId,
-      stripe_checkout_session_id: session.id,
-      stripe_customer_id: stripeCustomerId,
-      stripe_payment_intent_id: stripePaymentIntentId,
-      tier_slug: tier,
-      service_name: serviceName,
-      amount_total: session.amount_total,
-      currency: session.currency,
-      payment_status: session.payment_status || "paid",
-      status: "paid",
-      updated_at: new Date().toISOString(),
-    }),
-  });
+  const orders = await supabaseFetch<OrderRecord[]>(
+    "axiom_orders?select=id&on_conflict=stripe_checkout_session_id",
+    {
+      method: "POST",
+      prefer: "resolution=merge-duplicates,return=representation",
+      body: JSON.stringify({
+        customer_id: customerId,
+        stripe_checkout_session_id: session.id,
+        stripe_customer_id: stripeCustomerId,
+        stripe_payment_intent_id: stripePaymentIntentId,
+        tier_slug: tier,
+        service_name: serviceName,
+        amount_total: session.amount_total,
+        currency: session.currency,
+        payment_status: session.payment_status || "paid",
+        status: "paid",
+        updated_at: new Date().toISOString(),
+      }),
+    },
+  );
 
   const order = orders[0];
 
@@ -180,7 +186,7 @@ async function createWorkflowSlot({
   orderId: string;
   tier: string;
 }) {
-  await supabaseFetch("workflow_submissions", {
+  await supabaseFetch("axiom_workflow_submissions?on_conflict=order_id", {
     method: "POST",
     prefer: "resolution=merge-duplicates,return=minimal",
     body: JSON.stringify({
