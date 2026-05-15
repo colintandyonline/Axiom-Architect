@@ -4,7 +4,7 @@ import {
   linkAuthUserToCustomerByEmail,
   setAxiomAuthCookies,
   type AxiomAuthUser,
-} from "@/lib/axiom-auth";
+} from "../../../../lib/axiom-auth";
 
 export const runtime = "nodejs";
 
