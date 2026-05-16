@@ -24,35 +24,15 @@ export function AxiomSiteHeader() {
             </span>
           </span>
         </a>
-
         <nav aria-label="Main navigation" className="hidden items-center gap-7 text-[0.74rem] font-semibold text-[#9ed39f] lg:flex">
-          <a className="uppercase tracking-[0.18em] transition hover:text-white" href="/audit">
-            Workflow Audit
-          </a>
-          <a className="uppercase tracking-[0.18em] transition hover:text-white" href="/pricing">
-            Pricing
-          </a>
-          <a className="uppercase tracking-[0.18em] transition hover:text-white" href="/login">
-            Login
-          </a>
-          <a className="uppercase tracking-[0.18em] transition hover:text-white" href="https://axiom-studio.co/" target="_blank" rel="noreferrer">
-            Axiom Studio
-          </a>
+          <a className="uppercase tracking-[0.18em] transition hover:text-white" href="/audit">Workflow Audit</a>
+          <a className="uppercase tracking-[0.18em] transition hover:text-white" href="/pricing">Pricing</a>
+          <a className="uppercase tracking-[0.18em] transition hover:text-white" href="/login">Login</a>
+          <a className="uppercase tracking-[0.18em] transition hover:text-white" href="https://axiom-studio.co/" target="_blank" rel="noreferrer">Axiom Studio</a>
         </nav>
-
         <div className="flex items-center gap-2">
-          <a
-            href="/login"
-            className="hidden min-h-10 items-center justify-center border border-[#9ed39f]/35 bg-black px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:text-[#9ed39f] sm:inline-flex"
-          >
-            Login
-          </a>
-          <a
-            href="/pricing"
-            className="inline-flex min-h-10 shrink-0 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-black transition hover:bg-white sm:px-5"
-          >
-            Start Audit
-          </a>
+          <a href="/login" className="hidden min-h-10 items-center justify-center border border-[#9ed39f]/35 bg-black px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:text-[#9ed39f] sm:inline-flex">Login</a>
+          <a href="/signup?tier=workflow-blueprint&account=required" className="inline-flex min-h-10 shrink-0 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-black transition hover:bg-white sm:px-5">Start Audit</a>
         </div>
       </div>
     </header>
