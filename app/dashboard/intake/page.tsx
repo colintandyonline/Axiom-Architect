@@ -15,43 +15,24 @@ type SearchParams = {
   not_found?: string;
 };
 
+type IntakePayload = {
+  fields?: Record<string, unknown>;
+};
+
 type IntakeRecord = {
   id: string;
-  tier_slug: string;
+  product_id: string | null;
+  intake_schema_id: string | null;
+  intake_schema_version: number | null;
+  tier_slug: string | null;
   workflow_title: string | null;
   status: string;
-  business_type: string | null;
-  user_role: string | null;
-  team_size: string | null;
-  industry: string | null;
-  business_description: string | null;
-  workflow_goal: string | null;
-  people_involved: string | null;
-  workflow_frequency: string | null;
-  workflow_trigger: string | null;
-  current_process_steps: string | null;
-  tools_used: string | null;
-  inputs_needed: string | null;
-  outputs_produced: string | null;
-  handoffs: string | null;
-  information_storage: string | null;
-  workflow_slowdowns: string | null;
-  manual_repetition: string | null;
-  mistake_points: string | null;
-  delay_causes: string | null;
-  team_or_client_frustrations: string | null;
-  failure_impact: string | null;
-  human_approval_needed: string | null;
-  risk_areas: string | null;
-  protected_decisions: string | null;
-  ideal_workflow: string | null;
-  assistant_support_requested: string | null;
-  tools_open_to_using: string | null;
-  success_definition: string | null;
+  intake_payload: IntakePayload | null;
+  [key: string]: unknown;
 };
 
 type OrderRecord = {
-  service_name: string;
+  service_name: string | null;
   amount_total: number | null;
   currency: string | null;
 };
@@ -62,99 +43,38 @@ type CustomerRecord = {
   email: string | null;
 };
 
+type SchemaField = {
+  key: string;
+  label: string;
+  type?: "input" | "textarea";
+  placeholder?: string;
+  required?: boolean;
+};
+
+type SchemaStage = {
+  number: string;
+  title: string;
+  description?: string;
+  fields: SchemaField[];
+};
+
+type IntakeSchemaRecord = {
+  id: string;
+  schema_key: string;
+  version: number;
+  title: string;
+  description: string | null;
+  schema_json: {
+    stages?: SchemaStage[];
+  } | null;
+};
+
 type IntakeContext = {
   intake: IntakeRecord;
   order: OrderRecord | null;
   customer: CustomerRecord | null;
+  schema: IntakeSchemaRecord | null;
 };
-
-type Field = {
-  name: keyof IntakeRecord;
-  label: string;
-  type?: "input" | "textarea";
-  placeholder?: string;
-};
-
-type Stage = {
-  number: string;
-  title: string;
-  description: string;
-  fields: Field[];
-};
-
-const stages: Stage[] = [
-  {
-    number: "01",
-    title: "Business context",
-    description: "Give the report engine enough context to understand the operating environment.",
-    fields: [
-      { name: "business_type", label: "Business type", type: "input", placeholder: "Example: consultancy, ecommerce, agency, creator business" },
-      { name: "user_role", label: "Your role", type: "input", placeholder: "Example: founder, operations lead, consultant" },
-      { name: "team_size", label: "Team size", type: "input", placeholder: "Example: solo, 2-5, 6-20, 20+" },
-      { name: "industry", label: "Industry", type: "input", placeholder: "Example: professional services, retail, education" },
-      { name: "business_description", label: "What does the business do?", placeholder: "Describe the business, customers, offers, and main operating model." },
-    ],
-  },
-  {
-    number: "02",
-    title: "Workflow overview",
-    description: "Define the workflow we are diagnosing and what it is supposed to achieve.",
-    fields: [
-      { name: "workflow_title", label: "Workflow name", type: "input", placeholder: "Example: client onboarding, content production, order fulfilment" },
-      { name: "workflow_goal", label: "What is the workflow trying to achieve?", placeholder: "Explain the end result this workflow should produce." },
-      { name: "people_involved", label: "Who is involved?", placeholder: "List roles, teams, clients, suppliers, approvers, or tools involved." },
-      { name: "workflow_frequency", label: "How often does it happen?", type: "input", placeholder: "Example: daily, weekly, per client, per order" },
-      { name: "workflow_trigger", label: "What triggers it?", placeholder: "Describe the event, request, sale, deadline, or input that starts the workflow." },
-    ],
-  },
-  {
-    number: "03",
-    title: "Current process",
-    description: "Map how the workflow actually happens today, including tools, handoffs, and stored information.",
-    fields: [
-      { name: "current_process_steps", label: "Step-by-step current process", placeholder: "Write the current process as numbered steps from start to finish." },
-      { name: "tools_used", label: "Tools used", placeholder: "List the apps, documents, inboxes, spreadsheets, databases, or platforms involved." },
-      { name: "inputs_needed", label: "Inputs needed", placeholder: "What information, files, messages, or approvals are needed before work can begin?" },
-      { name: "outputs_produced", label: "Outputs produced", placeholder: "What does the workflow create, update, send, or deliver?" },
-      { name: "handoffs", label: "Handoffs", placeholder: "Where does the work move from one person, system, or stage to another?" },
-      { name: "information_storage", label: "Where information is stored", placeholder: "Where do notes, decisions, assets, records, and final outputs live?" },
-    ],
-  },
-  {
-    number: "04",
-    title: "Pain points",
-    description: "Identify friction, repeated manual effort, delays, and weak points.",
-    fields: [
-      { name: "workflow_slowdowns", label: "What slows this down?", placeholder: "Describe bottlenecks, waiting time, unclear ownership, or approval delays." },
-      { name: "manual_repetition", label: "What gets repeated manually?", placeholder: "List repeated copying, rewriting, checking, chasing, or formatting tasks." },
-      { name: "mistake_points", label: "Where do mistakes happen?", placeholder: "Describe missed steps, wrong data, duplicated work, or quality issues." },
-      { name: "delay_causes", label: "What causes delays?", placeholder: "Explain what usually blocks progress or creates rework." },
-      { name: "team_or_client_frustrations", label: "What frustrates the team or client?", placeholder: "Capture practical frustrations from the people using or receiving this workflow." },
-    ],
-  },
-  {
-    number: "05",
-    title: "Risk and review",
-    description: "Set the boundaries for safe implementation and human-in-the-loop review.",
-    fields: [
-      { name: "failure_impact", label: "What happens if this goes wrong?", placeholder: "Describe operational, client, financial, legal, or brand impact." },
-      { name: "human_approval_needed", label: "Does a human need to approve anything?", placeholder: "List decisions, messages, outputs, or changes that need review before action." },
-      { name: "risk_areas", label: "Legal, financial, client, or brand risks", placeholder: "Describe sensitive areas, compliance concerns, client commitments, or reputation risks." },
-      { name: "protected_decisions", label: "What must never be decided automatically?", placeholder: "Define decisions that should always remain with a person." },
-    ],
-  },
-  {
-    number: "06",
-    title: "Desired outcome",
-    description: "Describe the better operating model this audit should help design.",
-    fields: [
-      { name: "ideal_workflow", label: "What would a better version look like?", placeholder: "Describe the improved workflow in practical terms." },
-      { name: "assistant_support_requested", label: "What would you like assistants or automation to help with?", placeholder: "List drafting, checking, routing, summarising, data entry, alerts, or preparation tasks." },
-      { name: "tools_open_to_using", label: "What tools are you open to using?", placeholder: "List current tools you want to keep and any tools you are willing to add." },
-      { name: "success_definition", label: "What does success look like?", placeholder: "Describe the result that would make this workflow noticeably better." },
-    ],
-  },
-];
 
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -194,6 +114,34 @@ async function supabaseFetch<T>(path: string): Promise<T | null> {
   return (await response.json()) as T;
 }
 
+async function getActiveSchemaByProduct(productId?: string | null) {
+  if (!productId) {
+    return null;
+  }
+
+  const schemas = await supabaseFetch<IntakeSchemaRecord[]>(
+    `axiom_product_intake_schemas?select=id,schema_key,version,title,description,schema_json&product_id=eq.${encodeURIComponent(productId)}&active=eq.true&limit=1`,
+  );
+
+  return schemas?.[0] ?? null;
+}
+
+async function getSchemaById(schemaId?: string | null) {
+  if (!schemaId) {
+    return null;
+  }
+
+  const schemas = await supabaseFetch<IntakeSchemaRecord[]>(
+    `axiom_product_intake_schemas?select=id,schema_key,version,title,description,schema_json&id=eq.${encodeURIComponent(schemaId)}&limit=1`,
+  );
+
+  return schemas?.[0] ?? null;
+}
+
+async function getSchemaForIntake(intake: IntakeRecord) {
+  return (await getSchemaById(intake.intake_schema_id)) || (await getActiveSchemaByProduct(intake.product_id));
+}
+
 async function getIntakeContext(submissionId?: string): Promise<IntakeContext | null> {
   if (!submissionId) {
     return null;
@@ -220,38 +168,71 @@ async function getIntakeContext(submissionId?: string): Promise<IntakeContext | 
     intake: record,
     order: record.axiom_orders,
     customer: record.axiom_customers,
+    schema: await getSchemaForIntake(record),
   };
 }
 
-function fieldValue(record: IntakeRecord, fieldName: keyof IntakeRecord) {
-  const value = record[fieldName];
+function getSchemaStages(schema?: IntakeSchemaRecord | null): SchemaStage[] {
+  const stages = schema?.schema_json?.stages;
+
+  if (!Array.isArray(stages)) {
+    return [];
+  }
+
+  return stages
+    .map((stage, index) => ({
+      number: stage.number || String(index + 1).padStart(2, "0"),
+      title: stage.title || `Stage ${index + 1}`,
+      description: stage.description || "Complete the fields for this stage.",
+      fields: Array.isArray(stage.fields)
+        ? stage.fields.filter((field) => Boolean(field.key && field.label))
+        : [],
+    }))
+    .filter((stage) => stage.fields.length > 0);
+}
+
+function payloadFieldValue(record: IntakeRecord, fieldKey: string) {
+  const value = record.intake_payload?.fields?.[fieldKey];
   return typeof value === "string" ? value : "";
 }
 
-function renderField(field: Field, record: IntakeRecord, locked: boolean) {
+function fieldValue(record: IntakeRecord, fieldKey: string) {
+  const directValue = record[fieldKey];
+
+  if (typeof directValue === "string") {
+    return directValue;
+  }
+
+  return payloadFieldValue(record, fieldKey);
+}
+
+function renderField(field: SchemaField, record: IntakeRecord, locked: boolean) {
   const commonClasses = `mt-2 w-full border border-[#9ed39f]/28 bg-black/55 px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-white/32 focus:border-[#9ed39f] ${locked ? "opacity-70" : ""}`;
-  const value = fieldValue(record, field.name);
+  const value = fieldValue(record, field.key);
 
   return (
-    <label key={field.name} className="block">
+    <label key={field.key} className="block">
       <span className="text-[0.72rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">
         {field.label}
+        {field.required ? <span className="ml-1 text-white/70">*</span> : null}
       </span>
       {field.type === "input" ? (
         <input
-          name={field.name}
+          name={field.key}
           defaultValue={value}
           placeholder={field.placeholder}
           readOnly={locked}
+          required={!locked && field.required}
           className={commonClasses}
         />
       ) : (
         <textarea
-          name={field.name}
+          name={field.key}
           defaultValue={value}
           placeholder={field.placeholder}
           rows={5}
           readOnly={locked}
+          required={!locked && field.required}
           className={`${commonClasses} min-h-36 resize-y`}
         />
       )}
@@ -270,11 +251,15 @@ export default async function WorkflowIntakePage({
 }) {
   const params = await searchParams;
   const context = await getIntakeContext(params.submission_id);
+  const stages = getSchemaStages(context?.schema);
   const isSubmitted = params.submitted === "1";
   const hasError = params.error === "1";
   const notFound = params.not_found === "1" || (!!params.submission_id && !context);
+  const schemaMissing = Boolean(context && stages.length === 0);
   const isLocked = Boolean(context && context.intake.status !== "draft");
   const reportHref = context ? `/dashboard/report?submission_id=${context.intake.id}` : "/dashboard/report";
+  const reviewStageNumber = String(stages.length + 1).padStart(2, "0");
+  const schemaTitle = context?.schema?.title || "Workflow intake";
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
@@ -289,7 +274,7 @@ export default async function WorkflowIntakePage({
           </a>
 
           <p className="mt-10 inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-            Workflow intake
+            {schemaTitle}
           </p>
 
           <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[0.95fr_0.75fr] lg:items-end">
@@ -300,7 +285,8 @@ export default async function WorkflowIntakePage({
               <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
                 {isLocked
                   ? "This workflow intake has already been submitted and is now locked. Use the report status page to track the diagnostic report."
-                  : "Work through each stage carefully. This intake becomes the source material for your report, recommendations, and future workflow blueprint."}
+                  : context?.schema?.description ||
+                    "Work through each stage carefully. This intake becomes the source material for your report, recommendations, and future workflow blueprint."}
               </p>
             </div>
 
@@ -310,7 +296,10 @@ export default async function WorkflowIntakePage({
               </p>
               <div className="mt-5 grid gap-3 text-sm leading-6 text-[#e6f6e7]/78">
                 <p className="m-0">
-                  <strong className="text-white">Tier:</strong> {context?.order?.service_name || context?.intake.tier_slug || "Workflow audit"}
+                  <strong className="text-white">Product:</strong> {context?.order?.service_name || context?.intake.tier_slug || "Workflow audit"}
+                </p>
+                <p className="m-0">
+                  <strong className="text-white">Schema:</strong> {context?.schema ? `v${context.schema.version}` : "Not loaded"}
                 </p>
                 <p className="m-0">
                   <strong className="text-white">Business:</strong> {context?.customer?.business_name || "Not loaded"}
@@ -377,7 +366,18 @@ export default async function WorkflowIntakePage({
             </div>
           )}
 
-          {context && (
+          {schemaMissing && (
+            <div className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-6">
+              <h2 className="m-0 text-2xl font-black uppercase tracking-[-0.04em] text-white">
+                Intake schema not found
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-[#e6f6e7]/75">
+                This submission is missing its product intake schema. The product record needs an active intake schema before the form can be displayed.
+              </p>
+            </div>
+          )}
+
+          {context && !schemaMissing && (
             <form action="/api/intake" method="post" className="grid gap-8">
               <input type="hidden" name="submission_id" value={context.intake.id} />
 
@@ -406,7 +406,7 @@ export default async function WorkflowIntakePage({
               <section className="grid gap-6 border border-[#9ed39f]/34 bg-[#030804] p-5 text-white sm:p-7 lg:grid-cols-[0.55fr_1fr] lg:p-8">
                 <div>
                   <p className="m-0 text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">
-                    Stage 07
+                    Stage {reviewStageNumber}
                   </p>
                   <h2 className="mt-4 text-[clamp(1.65rem,3vw,2.8rem)] font-black uppercase leading-[0.95] tracking-[-0.06em] text-white">
                     Review and submit
@@ -414,10 +414,10 @@ export default async function WorkflowIntakePage({
                 </div>
                 <div className="grid gap-4 text-sm leading-7 text-[#e6f6e7]/78">
                   <p className="m-0">
-                    <strong className="text-white">Tier purchased:</strong> {context.order?.service_name || context.intake.tier_slug}
+                    <strong className="text-white">Product purchased:</strong> {context.order?.service_name || context.intake.tier_slug}
                   </p>
                   <p className="m-0">
-                    <strong className="text-white">Workflow title:</strong> {context.intake.workflow_title || "Entered above and saved into the audit record."}
+                    <strong className="text-white">Workflow title:</strong> {context.intake.workflow_title || fieldValue(context.intake, "workflow_title") || "Entered above and saved into the audit record."}
                   </p>
                   <p className="m-0">
                     <strong className="text-white">Delivery expectation:</strong> Report generation begins after the intake is submitted.
