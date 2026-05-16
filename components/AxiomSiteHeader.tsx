@@ -6,14 +6,7 @@ export function AxiomSiteHeader() {
       <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
         <a href="/" aria-label="Axiom Architect home" className="flex min-w-0 items-center gap-3 sm:gap-4">
           <span className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden border border-[#9ed39f]/40 bg-black shadow-[0_0_22px_rgba(158,211,159,0.15)] sm:h-12 sm:w-12">
-            <Image
-              src="/brand/axiom-logo.png"
-              alt=""
-              width={48}
-              height={48}
-              priority
-              className="h-full w-full object-contain"
-            />
+            <Image src="/brand/axiom-logo.png" alt="" width={48} height={48} priority className="h-full w-full object-contain" />
           </span>
           <span className="min-w-0">
             <span className="block max-w-[11rem] truncate text-[0.78rem] font-black uppercase tracking-[0.22em] text-white min-[430px]:max-w-none sm:text-[0.94rem] sm:tracking-[0.26em]">
@@ -32,7 +25,7 @@ export function AxiomSiteHeader() {
         </nav>
         <div className="flex items-center gap-2">
           <a href="/login" className="hidden min-h-10 items-center justify-center border border-[#9ed39f]/35 bg-black px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:text-[#9ed39f] sm:inline-flex">Login</a>
-          <a href="/signup?tier=workflow-blueprint&account=required" className="inline-flex min-h-10 shrink-0 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-black transition hover:bg-white sm:px-5">Start Audit</a>
+          <a href="/signup" className="inline-flex min-h-10 shrink-0 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-black transition hover:bg-white sm:px-5">Start Audit</a>
         </div>
       </div>
     </header>
