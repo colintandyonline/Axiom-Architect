@@ -1,6 +1,6 @@
-import Image from "next/image";
 import type { Metadata } from "next";
 import { AxiomSiteHeader } from "../../components/AxiomSiteHeader";
+import { ProductSystemVisual } from "../../components/ProductSystemVisual";
 import { getAxiomAuthContext } from "../../lib/axiom-auth";
 
 export const metadata: Metadata = {
@@ -171,19 +171,9 @@ export default async function PricingPage() {
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-[2rem] border border-[#9ed39f]/42 bg-[#020503] p-4 shadow-[0_28px_90px_rgba(0,0,0,0.42)] sm:p-5">
-              <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.12)_1px,transparent_1px)] [background-size:34px_34px]" />
-              <div className="relative aspect-[16/10] overflow-hidden rounded-[1.45rem] border border-[#9ed39f]/30 bg-black">
-                <Image
-                  src="/brand/axiom-architect-hero-banner.png"
-                  alt="Axiom Architect workflow architecture visual"
-                  fill
-                  priority
-                  sizes="(min-width: 1024px) 48vw, 100vw"
-                  className="object-cover object-center"
-                />
-              </div>
-              <div className="relative mt-4 grid grid-cols-3 gap-3">
+            <div className="grid gap-5">
+              <ProductSystemVisual kind="architect-residency" />
+              <div className="grid grid-cols-3 gap-3">
                 {["Diagnose", "Systemise", "Scale"].map((item) => (
                   <div key={item} className="border border-[#9ed39f]/25 bg-[#061008]/86 px-3 py-4 text-center">
                     <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{item}</p>
@@ -194,101 +184,61 @@ export default async function PricingPage() {
           </div>
 
           <div className="mt-12 grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
-            {tiers.map((tier) => {
-              const isFeatured = Boolean(tier.featured);
+            {tiers.map((tier) => (
+              <article
+                key={tier.slug}
+                className="group rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)] transition duration-200 hover:border-black hover:bg-[#9ed39f] hover:text-black hover:shadow-[0_0_70px_rgba(158,211,159,0.24)]"
+              >
+                <ProductSystemVisual kind={tier.slug} />
 
-              return (
-                <article
-                  key={tier.slug}
-                  className={
-                    isFeatured
-                      ? "rounded-[2rem] border border-[#9ed39f] bg-[#9ed39f] p-6 text-black shadow-[0_0_60px_rgba(158,211,159,0.22)]"
-                      : "rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)]"
-                  }
-                >
-                  <p
-                    className={
-                      isFeatured
-                        ? "inline-flex border border-black bg-black px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]"
-                        : "inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-black"
-                    }
-                  >
-                    {tier.label}
-                  </p>
+                <p className="mt-6 inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-black transition duration-200 group-hover:border-black group-hover:bg-black group-hover:text-[#9ed39f]">
+                  {tier.label}
+                </p>
 
-                  <p
-                    className={
-                      isFeatured
-                        ? "mt-5 text-[0.68rem] font-black uppercase tracking-[0.2em] text-black/62"
-                        : "mt-5 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]"
-                    }
-                  >
-                    {tier.header}
-                  </p>
+                <p className="mt-5 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f] transition duration-200 group-hover:text-black/64">
+                  {tier.header}
+                </p>
 
-                  <div className="mt-3 flex items-start justify-between gap-5">
-                    <h2 className="text-2xl font-black uppercase tracking-[-0.04em] sm:text-3xl">
-                      {tier.name}
-                    </h2>
-                    <p className="text-4xl font-black tracking-[-0.06em]">{tier.price}</p>
-                  </div>
+                <div className="mt-3 flex items-start justify-between gap-5">
+                  <h2 className="text-2xl font-black uppercase tracking-[-0.04em] sm:text-3xl">
+                    {tier.name}
+                  </h2>
+                  <p className="text-4xl font-black tracking-[-0.06em]">{tier.price}</p>
+                </div>
 
-                  <p
-                    className={
-                      isFeatured
-                        ? "mt-5 text-base leading-7 text-black/76"
-                        : "mt-5 text-base leading-7 text-[#e6f6e7]/78"
-                    }
-                  >
-                    {tier.summary}
-                  </p>
+                <p className="mt-5 text-base leading-7 text-[#e6f6e7]/78 transition duration-200 group-hover:text-black/76">
+                  {tier.summary}
+                </p>
 
-                  <ul className="mt-6 space-y-3">
-                    {tier.includes.map((item) => (
-                      <li key={item} className="flex gap-3 text-sm leading-6">
-                        <span
-                          className={
-                            isFeatured
-                              ? "mt-1.5 h-2 w-2 shrink-0 bg-black"
-                              : "mt-1.5 h-2 w-2 shrink-0 bg-[#9ed39f]"
-                          }
-                        />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                <ul className="mt-6 space-y-3">
+                  {tier.includes.map((item) => (
+                    <li key={item} className="flex gap-3 text-sm leading-6">
+                      <span className="mt-1.5 h-2 w-2 shrink-0 bg-[#9ed39f] transition duration-200 group-hover:bg-black" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
 
-                  {isSignedIn ? (
-                    <form action="/api/checkout" method="post" className="mt-8">
-                      <input type="hidden" name="tier" value={tier.slug} />
-                      <button
-                        type="submit"
-                        style={isFeatured ? { color: "#ffffff" } : undefined}
-                        className={
-                          isFeatured
-                            ? "inline-flex min-h-14 w-full items-center justify-center border border-black bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#ffffff] transition hover:bg-[#071208]"
-                            : "inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
-                        }
-                      >
-                        Continue to checkout
-                      </button>
-                    </form>
-                  ) : (
-                    <a
-                      href={`/signup?tier=${tier.slug}&account=required`}
-                      style={isFeatured ? { color: "#ffffff" } : undefined}
-                      className={
-                        isFeatured
-                          ? "mt-8 inline-flex min-h-14 w-full items-center justify-center border border-black bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#ffffff] transition hover:bg-[#071208]"
-                          : "mt-8 inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
-                      }
+                {isSignedIn ? (
+                  <form action="/api/checkout" method="post" className="mt-8">
+                    <input type="hidden" name="tier" value={tier.slug} />
+                    <button
+                      type="submit"
+                      className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-white group-hover:border-black group-hover:bg-black group-hover:text-white"
                     >
-                      Start this package
-                    </a>
-                  )}
-                </article>
-              );
-            })}
+                      Continue to checkout
+                    </button>
+                  </form>
+                ) : (
+                  <a
+                    href={`/signup?tier=${tier.slug}&account=required`}
+                    className="mt-8 inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-white group-hover:border-black group-hover:bg-black group-hover:text-white"
+                  >
+                    Start this package
+                  </a>
+                )}
+              </article>
+            ))}
           </div>
 
           <div className="mt-10 border border-[#9ed39f]/30 bg-[#041008] p-6 text-[#e6f6e7]/78">
