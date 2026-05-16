@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AxiomSiteHeader } from "../../components/AxiomSiteHeader";
 import { getAxiomAuthContext } from "../../lib/axiom-auth";
 
 export const metadata: Metadata = {
@@ -79,25 +80,11 @@ export default async function PricingPage() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
+      <AxiomSiteHeader />
       <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(158,211,159,0.18),#041008_34%,#000_76%)] px-4 py-10 sm:px-6 lg:px-8">
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.11)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.11)_1px,transparent_1px)] [background-size:44px_44px]" />
 
         <div className="relative mx-auto max-w-[1280px] py-10 lg:py-16">
-          <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
-            <a
-              href="/"
-              className="inline-flex w-fit border border-[#9ed39f]/45 bg-black px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black"
-            >
-              Axiom Architect
-            </a>
-            <a
-              href="/audit"
-              className="inline-flex w-fit border border-[#9ed39f]/45 bg-black px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.18em] text-white transition hover:bg-[#9ed39f] hover:text-black"
-            >
-              View audit page
-            </a>
-          </div>
-
           <div className="max-w-4xl">
             <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
               Transparent pricing
