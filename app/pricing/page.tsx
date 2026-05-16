@@ -6,26 +6,35 @@ import { getAxiomAuthContext } from "../../lib/axiom-auth";
 export const metadata: Metadata = {
   title: "Pricing | Axiom Architect",
   description:
-    "Clear Axiom Architect pricing for workflow audits, workflow blueprints, and custom operating packs.",
+    "Clear Axiom Architect pricing for workflow audits, workflow blueprints, operating packs, retainers, departmental systems, and implementation residency.",
 };
 
-type TierSlug = "workflow-audit" | "workflow-blueprint" | "custom-operating-pack";
+type ProductSlug =
+  | "workflow-audit"
+  | "workflow-blueprint"
+  | "custom-operating-pack"
+  | "workflow-stewardship"
+  | "departmental-ecosystem"
+  | "architect-residency";
 
 const tiers: Array<{
-  slug: TierSlug;
+  slug: ProductSlug;
   name: string;
+  header: string;
   price: string;
   label: string;
   summary: string;
   includes: string[];
+  featured?: boolean;
 }> = [
   {
     slug: "workflow-audit",
     name: "Workflow Audit",
+    header: "Entry diagnostic",
     price: "$49",
     label: "Focused diagnostic",
     summary:
-      "For one workflow that needs a clear diagnosis, friction map, automation suitability review, and practical next steps.",
+      "Diagnose one workflow and identify bottlenecks, AI opportunities, risks, and practical next steps.",
     includes: [
       "One workflow submission",
       "Current workflow diagnosis",
@@ -40,10 +49,12 @@ const tiers: Array<{
   {
     slug: "workflow-blueprint",
     name: "Workflow Blueprint",
+    header: "Implementation plan",
     price: "$149",
     label: "Recommended plan",
     summary:
-      "For clients who want the diagnostic plus a structured future-state workflow, review gates, assistant roles, and implementation sequence.",
+      "Turn the audit into a practical implementation plan with review gates, assistant roles, tool recommendations, and a 30-day sequence.",
+    featured: true,
     includes: [
       "Everything in Workflow Audit",
       "Future-state workflow design",
@@ -58,10 +69,11 @@ const tiers: Array<{
   {
     slug: "custom-operating-pack",
     name: "Custom Operating Pack",
+    header: "Complete workflow system",
     price: "$399",
     label: "Complete workflow asset",
     summary:
-      "For one workflow that needs a full operating pack with protocol structure, reusable instructions, workbook assets, and handoff guidance.",
+      "Build the full workflow system: protocol, assistant instructions, workbook assets, handoff guidance, and quality-control checkpoints.",
     includes: [
       "Everything in Workflow Blueprint",
       "Custom operating protocol",
@@ -71,6 +83,58 @@ const tiers: Array<{
       "Team handoff guide",
       "Quality-control checkpoints",
       "Branded operating pack",
+    ],
+  },
+  {
+    slug: "workflow-stewardship",
+    name: "Workflow Stewardship",
+    header: "Workflow stewardship",
+    price: "$299/mo",
+    label: "Ongoing optimisation",
+    summary:
+      "Quarterly recalibration and performance tuning for core AI-supported workflows that need ongoing review and improvement.",
+    includes: [
+      "Quarterly audit of active workflows",
+      "Error logging and bottleneck analysis",
+      "Priority access for logic updates",
+      "Bi-annual tool stack reassessment",
+      "Performance efficiency dashboard",
+      "Ongoing email support for minor workflow questions",
+    ],
+  },
+  {
+    slug: "departmental-ecosystem",
+    name: "Departmental Ecosystem",
+    header: "Departmental ecosystem",
+    price: "$999",
+    label: "Multi-workflow system",
+    summary:
+      "Map and connect up to five core workflows into a shared operating system for a team, department, or scaling business unit.",
+    includes: [
+      "Up to five core workflow maps",
+      "Cross-departmental handoff logic",
+      "Centralised data source strategy",
+      "Interdependency mapping",
+      "Universal Axiom documentation guide",
+      "Master implementation roadmap for the quarter",
+    ],
+  },
+  {
+    slug: "architect-residency",
+    name: "Architect Residency",
+    header: "Architect residency",
+    price: "$2,499+",
+    label: "High-touch deployment",
+    summary:
+      "High-touch implementation partnership for teams that need guided deployment, workshops, training, technical oversight, and custom system design.",
+    includes: [
+      "Live remote implementation workshop",
+      "On-site available by arrangement",
+      "Legacy hardware or software integration planning",
+      "Team-wide training and onboarding sessions",
+      "Direct oversight of first-run live operations",
+      "Custom-coded private edge functions or APIs",
+      "1:1 leadership strategy sessions",
     ],
   },
 ];
@@ -85,20 +149,20 @@ export default async function PricingPage() {
       <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(158,211,159,0.18),#041008_34%,#000_76%)] px-4 py-10 sm:px-6 lg:px-8">
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.11)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.11)_1px,transparent_1px)] [background-size:44px_44px]" />
 
-        <div className="relative mx-auto max-w-[1280px] py-10 lg:py-16">
+        <div className="relative mx-auto max-w-[1400px] py-10 lg:py-16">
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div>
               <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-                Transparent pricing
+                Six-product ladder
               </p>
               <h1 className="mt-6 max-w-4xl text-[clamp(2.55rem,5.2vw,5rem)] font-black uppercase leading-[0.92] tracking-[-0.07em] text-white">
-                Workflow architecture packages with clear scope.
+                Workflow architecture packages with clear upgrade paths.
               </h1>
               <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-                Choose the level of diagnosis, blueprinting, and implementation support your workflow needs. Every package starts with one real process and ends with a structured operating asset you can use.
+                Start with diagnosis, move into implementation planning, build operating assets, then scale into ongoing support, departmental architecture, or high-touch deployment.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <a href="/audit" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white">
+                <a href="/signup" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white">
                   Start audit
                 </a>
                 <a href="/login" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/35 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-white transition hover:border-[#9ed39f] hover:text-[#9ed39f]">
@@ -120,7 +184,7 @@ export default async function PricingPage() {
                 />
               </div>
               <div className="relative mt-4 grid grid-cols-3 gap-3">
-                {["Diagnose", "Blueprint", "Implement"].map((item) => (
+                {["Diagnose", "Systemise", "Scale"].map((item) => (
                   <div key={item} className="border border-[#9ed39f]/25 bg-[#061008]/86 px-3 py-4 text-center">
                     <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{item}</p>
                   </div>
@@ -129,88 +193,102 @@ export default async function PricingPage() {
             </div>
           </div>
 
-          <div className="mt-12 grid gap-5 xl:grid-cols-3">
-            {tiers.map((tier) => (
-              <article
-                key={tier.slug}
-                className={
-                  tier.slug === "workflow-blueprint"
-                    ? "rounded-[2rem] border border-[#9ed39f] bg-[#9ed39f] p-6 text-black shadow-[0_0_60px_rgba(158,211,159,0.22)]"
-                    : "rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)]"
-                }
-              >
-                <p
+          <div className="mt-12 grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
+            {tiers.map((tier) => {
+              const isFeatured = Boolean(tier.featured);
+
+              return (
+                <article
+                  key={tier.slug}
                   className={
-                    tier.slug === "workflow-blueprint"
-                      ? "inline-flex border border-black bg-black px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]"
-                      : "inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-black"
+                    isFeatured
+                      ? "rounded-[2rem] border border-[#9ed39f] bg-[#9ed39f] p-6 text-black shadow-[0_0_60px_rgba(158,211,159,0.22)]"
+                      : "rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)]"
                   }
                 >
-                  {tier.label}
-                </p>
-
-                <div className="mt-6 flex items-start justify-between gap-5">
-                  <h2 className="text-2xl font-black uppercase tracking-[-0.04em] sm:text-3xl">
-                    {tier.name}
-                  </h2>
-                  <p className="text-4xl font-black tracking-[-0.06em]">{tier.price}</p>
-                </div>
-
-                <p
-                  className={
-                    tier.slug === "workflow-blueprint"
-                      ? "mt-5 text-base leading-7 text-black/76"
-                      : "mt-5 text-base leading-7 text-[#e6f6e7]/78"
-                  }
-                >
-                  {tier.summary}
-                </p>
-
-                <ul className="mt-6 space-y-3">
-                  {tier.includes.map((item) => (
-                    <li key={item} className="flex gap-3 text-sm leading-6">
-                      <span
-                        className={
-                          tier.slug === "workflow-blueprint"
-                            ? "mt-1.5 h-2 w-2 shrink-0 bg-black"
-                            : "mt-1.5 h-2 w-2 shrink-0 bg-[#9ed39f]"
-                        }
-                      />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {isSignedIn ? (
-                  <form action="/api/checkout" method="post" className="mt-8">
-                    <input type="hidden" name="tier" value={tier.slug} />
-                    <button
-                      type="submit"
-                      style={tier.slug === "workflow-blueprint" ? { color: "#ffffff" } : undefined}
-                      className={
-                        tier.slug === "workflow-blueprint"
-                          ? "inline-flex min-h-14 w-full items-center justify-center border border-black bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#ffffff] transition hover:bg-[#071208]"
-                          : "inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
-                      }
-                    >
-                      Continue to checkout
-                    </button>
-                  </form>
-                ) : (
-                  <a
-                    href={`/signup?tier=${tier.slug}&account=required`}
-                    style={tier.slug === "workflow-blueprint" ? { color: "#ffffff" } : undefined}
+                  <p
                     className={
-                      tier.slug === "workflow-blueprint"
-                        ? "mt-8 inline-flex min-h-14 w-full items-center justify-center border border-black bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#ffffff] transition hover:bg-[#071208]"
-                        : "mt-8 inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
+                      isFeatured
+                        ? "inline-flex border border-black bg-black px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]"
+                        : "inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-black"
                     }
                   >
-                    Start this package
-                  </a>
-                )}
-              </article>
-            ))}
+                    {tier.label}
+                  </p>
+
+                  <p
+                    className={
+                      isFeatured
+                        ? "mt-5 text-[0.68rem] font-black uppercase tracking-[0.2em] text-black/62"
+                        : "mt-5 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]"
+                    }
+                  >
+                    {tier.header}
+                  </p>
+
+                  <div className="mt-3 flex items-start justify-between gap-5">
+                    <h2 className="text-2xl font-black uppercase tracking-[-0.04em] sm:text-3xl">
+                      {tier.name}
+                    </h2>
+                    <p className="text-4xl font-black tracking-[-0.06em]">{tier.price}</p>
+                  </div>
+
+                  <p
+                    className={
+                      isFeatured
+                        ? "mt-5 text-base leading-7 text-black/76"
+                        : "mt-5 text-base leading-7 text-[#e6f6e7]/78"
+                    }
+                  >
+                    {tier.summary}
+                  </p>
+
+                  <ul className="mt-6 space-y-3">
+                    {tier.includes.map((item) => (
+                      <li key={item} className="flex gap-3 text-sm leading-6">
+                        <span
+                          className={
+                            isFeatured
+                              ? "mt-1.5 h-2 w-2 shrink-0 bg-black"
+                              : "mt-1.5 h-2 w-2 shrink-0 bg-[#9ed39f]"
+                          }
+                        />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {isSignedIn ? (
+                    <form action="/api/checkout" method="post" className="mt-8">
+                      <input type="hidden" name="tier" value={tier.slug} />
+                      <button
+                        type="submit"
+                        style={isFeatured ? { color: "#ffffff" } : undefined}
+                        className={
+                          isFeatured
+                            ? "inline-flex min-h-14 w-full items-center justify-center border border-black bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#ffffff] transition hover:bg-[#071208]"
+                            : "inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
+                        }
+                      >
+                        Continue to checkout
+                      </button>
+                    </form>
+                  ) : (
+                    <a
+                      href={`/signup?tier=${tier.slug}&account=required`}
+                      style={isFeatured ? { color: "#ffffff" } : undefined}
+                      className={
+                        isFeatured
+                          ? "mt-8 inline-flex min-h-14 w-full items-center justify-center border border-black bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#ffffff] transition hover:bg-[#071208]"
+                          : "mt-8 inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
+                      }
+                    >
+                      Start this package
+                    </a>
+                  )}
+                </article>
+              );
+            })}
           </div>
 
           <div className="mt-10 border border-[#9ed39f]/30 bg-[#041008] p-6 text-[#e6f6e7]/78">
@@ -218,7 +296,7 @@ export default async function PricingPage() {
               How to begin
             </p>
             <p className="mt-4 max-w-4xl text-base leading-8">
-              Select a package, create your secure client account, complete checkout, and submit your workflow through the dashboard. Your report workspace opens after payment is confirmed.
+              Select a package, create your secure client account, complete checkout, and submit the intake matched to that product. Your report workspace opens after payment is confirmed.
             </p>
           </div>
         </div>
