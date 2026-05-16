@@ -2,15 +2,15 @@ import Image from "next/image";
 
 const navLinks = [
   { label: "Workflow Audit", href: "/audit" },
-  { label: "How It Works", href: "/#method" },
   { label: "Pricing", href: "/pricing" },
-  { label: "About", href: "/about" },
+  { label: "How It Works", href: "/#method" },
+  { label: "Deliverables", href: "/#deliverables" },
   { label: "Axiom Studio", href: "https://axiom-studio.co/", external: true },
 ];
 
 export function AxiomSiteHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-[#9ed39f]/30 bg-black/92 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-[#9ed39f]/30 bg-black/94 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
         <a href="/" aria-label="Axiom Architect home" className="flex min-w-0 items-center gap-3 sm:gap-4">
           <span className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden border border-[#9ed39f]/40 bg-black shadow-[0_0_22px_rgba(158,211,159,0.15)] sm:h-12 sm:w-12">
@@ -41,7 +41,7 @@ export function AxiomSiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <a href="/login" className="inline-flex min-h-10 items-center justify-center border border-[#9ed39f]/35 bg-black px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:text-[#9ed39f]">Login</a>
+          <a href="/login" className="inline-flex min-h-10 items-center justify-center border border-[#9ed39f]/35 bg-black px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:text-[#9ed39f]">Sign In</a>
           <a href="/signup" className="inline-flex min-h-10 shrink-0 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-5 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-black transition hover:bg-white">Start Audit</a>
         </div>
 
@@ -63,7 +63,7 @@ export function AxiomSiteHeader() {
                 </a>
               ))}
               <div className="grid grid-cols-2 gap-2 pt-2">
-                <a href="/login" className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f]/35 bg-black px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:text-[#9ed39f]">Login</a>
+                <a href="/login" className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f]/35 bg-black px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:text-[#9ed39f]">Sign In</a>
                 <a href="/signup" className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-black transition hover:bg-white">Start Audit</a>
               </div>
             </nav>
