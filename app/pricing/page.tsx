@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Metadata } from "next";
 import { AxiomSiteHeader } from "../../components/AxiomSiteHeader";
 import { getAxiomAuthContext } from "../../lib/axiom-auth";
@@ -85,16 +86,47 @@ export default async function PricingPage() {
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.11)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.11)_1px,transparent_1px)] [background-size:44px_44px]" />
 
         <div className="relative mx-auto max-w-[1280px] py-10 lg:py-16">
-          <div className="max-w-4xl">
-            <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-              Transparent pricing
-            </p>
-            <h1 className="mt-6 text-[clamp(2.8rem,6.5vw,6rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
-              Workflow architecture packages with clear scope.
-            </h1>
-            <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-              Choose the level of diagnosis, blueprinting, and implementation support your workflow needs. Every package starts with one real process and ends with a structured operating asset you can use.
-            </p>
+          <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
+                Transparent pricing
+              </p>
+              <h1 className="mt-6 max-w-4xl text-[clamp(2.55rem,5.2vw,5rem)] font-black uppercase leading-[0.92] tracking-[-0.07em] text-white">
+                Workflow architecture packages with clear scope.
+              </h1>
+              <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
+                Choose the level of diagnosis, blueprinting, and implementation support your workflow needs. Every package starts with one real process and ends with a structured operating asset you can use.
+              </p>
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <a href="/audit" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white">
+                  Start audit
+                </a>
+                <a href="/login" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/35 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-white transition hover:border-[#9ed39f] hover:text-[#9ed39f]">
+                  Client login
+                </a>
+              </div>
+            </div>
+
+            <div className="relative overflow-hidden rounded-[2rem] border border-[#9ed39f]/42 bg-[#020503] p-4 shadow-[0_28px_90px_rgba(0,0,0,0.42)] sm:p-5">
+              <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.12)_1px,transparent_1px)] [background-size:34px_34px]" />
+              <div className="relative aspect-[16/10] overflow-hidden rounded-[1.45rem] border border-[#9ed39f]/30 bg-black">
+                <Image
+                  src="/brand/axiom-architect-hero-banner.png"
+                  alt="Axiom Architect workflow architecture visual"
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 48vw, 100vw"
+                  className="object-cover object-center"
+                />
+              </div>
+              <div className="relative mt-4 grid grid-cols-3 gap-3">
+                {["Diagnose", "Blueprint", "Implement"].map((item) => (
+                  <div key={item} className="border border-[#9ed39f]/25 bg-[#061008]/86 px-3 py-4 text-center">
+                    <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{item}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="mt-12 grid gap-5 xl:grid-cols-3">
