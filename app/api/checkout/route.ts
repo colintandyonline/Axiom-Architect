@@ -4,34 +4,62 @@ import { getAxiomAuthContext } from "../../../lib/axiom-auth";
 
 export const runtime = "nodejs";
 
-type TierSlug = "workflow-audit" | "workflow-blueprint" | "custom-operating-pack";
+type ProductSlug =
+  | "workflow-audit"
+  | "workflow-blueprint"
+  | "custom-operating-pack"
+  | "workflow-stewardship"
+  | "departmental-ecosystem"
+  | "architect-residency";
 
-const tierConfig: Record<
-  TierSlug,
+const productConfig: Record<
+  ProductSlug,
   {
     name: string;
     priceEnv: string;
+    mode: "payment" | "subscription";
   }
 > = {
   "workflow-audit": {
     name: "Workflow Audit",
     priceEnv: "STRIPE_PRICE_WORKFLOW_AUDIT",
+    mode: "payment",
   },
   "workflow-blueprint": {
     name: "Workflow Blueprint",
     priceEnv: "STRIPE_PRICE_WORKFLOW_BLUEPRINT",
+    mode: "payment",
   },
   "custom-operating-pack": {
     name: "Custom Operating Pack",
     priceEnv: "STRIPE_PRICE_CUSTOM_OPERATING_PACK",
+    mode: "payment",
+  },
+  "workflow-stewardship": {
+    name: "Workflow Stewardship",
+    priceEnv: "STRIPE_PRICE_WORKFLOW_STEWARDSHIP",
+    mode: "subscription",
+  },
+  "departmental-ecosystem": {
+    name: "Departmental Ecosystem",
+    priceEnv: "STRIPE_PRICE_DEPARTMENTAL_ECOSYSTEM",
+    mode: "payment",
+  },
+  "architect-residency": {
+    name: "Architect Residency",
+    priceEnv: "STRIPE_PRICE_ARCHITECT_RESIDENCY",
+    mode: "payment",
   },
 };
 
-function isTierSlug(value: FormDataEntryValue | string | null): value is TierSlug {
+function isProductSlug(value: FormDataEntryValue | string | null): value is ProductSlug {
   return (
     value === "workflow-audit" ||
     value === "workflow-blueprint" ||
-    value === "custom-operating-pack"
+    value === "custom-operating-pack" ||
+    value === "workflow-stewardship" ||
+    value === "departmental-ecosystem" ||
+    value === "architect-residency"
   );
 }
 
@@ -53,8 +81,8 @@ function getStripeClient() {
   return new Stripe(secretKey);
 }
 
-function getPriceId(tier: TierSlug) {
-  const envName = tierConfig[tier].priceEnv;
+function getPriceId(product: ProductSlug) {
+  const envName = productConfig[product].priceEnv;
   const priceId = process.env[envName];
 
   if (!priceId) {
@@ -64,38 +92,39 @@ function getPriceId(tier: TierSlug) {
   return priceId;
 }
 
-function redirectToSignup(request: Request, tier: TierSlug, reason: string) {
+function redirectToSignup(request: Request, product: ProductSlug, reason: string) {
   const appUrl = getAppUrl(request);
-  return NextResponse.redirect(`${appUrl}/signup?tier=${tier}&account=${reason}`, 303);
+  return NextResponse.redirect(`${appUrl}/signup?tier=${product}&account=${reason}`, 303);
 }
 
 export async function POST(request: Request) {
   const formData = await request.formData();
   const tierValue = formData.get("tier");
-  const tier: TierSlug = isTierSlug(tierValue) ? tierValue : "workflow-blueprint";
-  const selectedTier = tierConfig[tier];
+  const product: ProductSlug = isProductSlug(tierValue) ? tierValue : "workflow-blueprint";
+  const selectedProduct = productConfig[product];
   const appUrl = getAppUrl(request);
   const { user, customer } = await getAxiomAuthContext();
 
   if (!user) {
-    return redirectToSignup(request, tier, "required");
+    return redirectToSignup(request, product, "required");
   }
 
   if (!customer) {
-    return redirectToSignup(request, tier, "customer-required");
+    return redirectToSignup(request, product, "customer-required");
   }
 
   if (!customer.email) {
-    return redirectToSignup(request, tier, "email-required");
+    return redirectToSignup(request, product, "email-required");
   }
 
   try {
     const stripe = getStripeClient();
-    const priceId = getPriceId(tier);
+    const priceId = getPriceId(product);
 
     const metadata = {
-      tier,
-      service_name: selectedTier.name,
+      tier: product,
+      product_slug: product,
+      service_name: selectedProduct.name,
       auth_user_id: user.id,
       axiom_customer_id: customer.id,
       customer_name: customer.full_name || user.email || "",
@@ -103,10 +132,9 @@ export async function POST(request: Request) {
       business_name: customer.business_name || "",
     };
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
+    const baseSessionConfig = {
+      mode: selectedProduct.mode,
       customer_email: customer.email,
-      customer_creation: "always",
       line_items: [
         {
           price: priceId,
@@ -114,18 +142,34 @@ export async function POST(request: Request) {
         },
       ],
       metadata,
-      payment_intent_data: {
-        metadata,
-      },
       success_url: `${appUrl}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/audit?tier=${tier}&checkout=cancelled#tiers`,
+      cancel_url: `${appUrl}/pricing?tier=${product}&checkout=cancelled`,
       custom_text: {
         submit: {
           message:
-            "After payment, your dashboard opens so you can submit your workflow.",
+            "After checkout, your dashboard opens so you can submit your workflow.",
         },
       },
-    });
+    } satisfies Stripe.Checkout.SessionCreateParams;
+
+    const session = await stripe.checkout.sessions.create(
+      selectedProduct.mode === "subscription"
+        ? {
+            ...baseSessionConfig,
+            mode: "subscription",
+            subscription_data: {
+              metadata,
+            },
+          }
+        : {
+            ...baseSessionConfig,
+            mode: "payment",
+            customer_creation: "always",
+            payment_intent_data: {
+              metadata,
+            },
+          },
+    );
 
     if (!session.url) {
       throw new Error("Stripe did not return a checkout URL");
@@ -136,7 +180,7 @@ export async function POST(request: Request) {
     console.error("Checkout session creation failed", error);
 
     return NextResponse.redirect(
-      `${appUrl}/audit?tier=${tier}&error=checkout#tiers`,
+      `${appUrl}/pricing?tier=${product}&error=checkout`,
       303,
     );
   }
