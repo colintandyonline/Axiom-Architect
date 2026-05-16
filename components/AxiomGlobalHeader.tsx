@@ -12,5 +12,18 @@ export function AxiomGlobalHeader() {
     return null;
   }
 
-  return <AxiomSiteHeader />;
+  return (
+    <>
+      <style>{`
+        main > header:first-child {
+          display: none !important;
+        }
+
+        main > section#top {
+          padding-top: 0 !important;
+        }
+      `}</style>
+      <AxiomSiteHeader />
+    </>
+  );
 }
