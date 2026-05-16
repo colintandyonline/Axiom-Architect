@@ -8,7 +8,9 @@ export const runtime = "nodejs";
 
 type TierSlug = "workflow-audit" | "workflow-blueprint" | "custom-operating-pack";
 
-type SupabaseSignupResponse = {
+type SignupResponse = {
+  id?: string;
+  email?: string | null;
   access_token?: string;
   refresh_token?: string;
   expires_in?: number;
@@ -86,26 +88,48 @@ function signupRedirect(request: Request, tier: TierSlug, error: string) {
   return NextResponse.redirect(url, 303);
 }
 
-function auditRedirect(request: Request, tier: TierSlug, state: string) {
-  const url = new URL("/audit", request.url);
+function confirmationRedirect(request: Request, tier: TierSlug) {
+  const url = new URL("/signup", request.url);
+  url.searchParams.set("tier", tier);
+  url.searchParams.set("account", "check_email");
+  return NextResponse.redirect(url, 303);
+}
+
+function paymentRedirect(request: Request, tier: TierSlug, state: string) {
+  const url = new URL("/pricing", request.url);
   url.searchParams.set("tier", tier);
   url.searchParams.set("account", state);
-  url.hash = "tiers";
   return NextResponse.redirect(url, 303);
 }
 
 function loginRedirect(request: Request, tier: TierSlug, state: string) {
   const url = new URL("/login", request.url);
   url.searchParams.set("signup", state);
-  url.searchParams.set("redirect", `/audit?tier=${tier}&account=confirmed`);
+  url.searchParams.set("redirect", `/pricing?tier=${tier}&account=confirmed`);
   return NextResponse.redirect(url, 303);
 }
 
-function getAuthErrorText(result: SupabaseSignupResponse) {
+function getAuthErrorText(result: SignupResponse) {
   return [result.error, result.msg, result.error_description]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
+}
+
+function getCreatedUser(result: SignupResponse, email: string): AxiomAuthUser | null {
+  if (result.user?.id) {
+    return result.user;
+  }
+
+  if (result.id) {
+    return {
+      id: result.id,
+      email: result.email || email,
+      user_metadata: {},
+    };
+  }
+
+  return null;
 }
 
 async function supabaseServiceFetch<T>(path: string, options: RequestInit = {}) {
@@ -129,7 +153,7 @@ async function supabaseServiceFetch<T>(path: string, options: RequestInit = {}) 
   const responseText = await response.text();
 
   if (!response.ok) {
-    console.error("Axiom signup Supabase service request failed", response.status, responseText);
+    console.error("Axiom signup customer request failed", response.status, responseText);
     return null;
   }
 
@@ -165,8 +189,8 @@ async function linkOrCreateCustomer({
     full_name: fullName,
     business_name: businessName,
     auth_user_id: user.id,
-    account_status: existingCustomer?.account_status || "active",
-    last_login_at: new Date().toISOString(),
+    account_status: existingCustomer?.account_status || "pending_confirmation",
+    last_login_at: null,
   };
 
   if (existingCustomer) {
@@ -248,29 +272,30 @@ export async function POST(request: Request) {
         business_name: businessName,
         account_source: "account_first_signup",
       },
-      email_redirect_to: `${getAppUrl(request)}/login?signup=confirmed&redirect=${encodeURIComponent(`/audit?tier=${tier}&account=confirmed`)}`,
+      email_redirect_to: `${getAppUrl(request)}/login?signup=confirmed&redirect=${encodeURIComponent(`/pricing?tier=${tier}&account=confirmed`)}`,
     }),
   });
 
-  const result = (await response.json()) as SupabaseSignupResponse;
+  const result = (await response.json()) as SignupResponse;
+  const user = getCreatedUser(result, email);
 
-  if (!response.ok || !result.user) {
+  if (!response.ok || !user) {
     const errorText = getAuthErrorText(result);
 
     console.error("Axiom account signup failed", result.error || result.msg || result.error_description);
 
-    if (errorText.includes("already")) {
+    if (errorText.includes("already") || errorText.includes("registered") || errorText.includes("exists")) {
       return loginRedirect(request, tier, "existing");
     }
 
-    return signupRedirect(request, tier, "signup");
+    return signupRedirect(request, tier, "account-create");
   }
 
   const customer = await linkOrCreateCustomer({
     email,
     fullName,
     businessName,
-    user: result.user,
+    user,
   });
 
   if (!customer) {
@@ -278,10 +303,10 @@ export async function POST(request: Request) {
   }
 
   if (!result.access_token) {
-    return loginRedirect(request, tier, "check_email");
+    return confirmationRedirect(request, tier);
   }
 
-  const nextResponse = auditRedirect(request, tier, "created");
+  const nextResponse = paymentRedirect(request, tier, "created");
 
   return setAxiomAuthCookies(nextResponse, {
     access_token: result.access_token,
