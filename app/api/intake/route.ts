@@ -6,10 +6,35 @@ type WorkflowRecord = {
   id: string;
   customer_id: string | null;
   order_id: string | null;
-  tier_slug: string;
+  product_id: string | null;
+  intake_schema_id: string | null;
+  intake_schema_version: number | null;
+  tier_slug: string | null;
+  status: string | null;
 };
 
-const fieldNames = [
+type SchemaField = {
+  key: string;
+  label?: string;
+  type?: string;
+  required?: boolean;
+};
+
+type SchemaStage = {
+  number?: string;
+  title?: string;
+  fields?: SchemaField[];
+};
+
+type IntakeSchemaRecord = {
+  id: string;
+  version: number;
+  schema_json: {
+    stages?: SchemaStage[];
+  } | null;
+};
+
+const legacyColumnNames = [
   "business_type",
   "user_role",
   "team_size",
@@ -41,12 +66,14 @@ const fieldNames = [
   "success_definition",
 ] as const;
 
+const legacyColumnSet = new Set<string>(legacyColumnNames);
+
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !serviceRoleKey) {
-    throw new Error("Missing Supabase environment variables");
+    throw new Error("Missing database environment variables");
   }
 
   return {
@@ -78,7 +105,7 @@ async function supabaseFetch<T>(
   const responseText = await response.text();
 
   if (!response.ok) {
-    throw new Error(`Supabase request failed: ${response.status} ${responseText}`);
+    throw new Error(`Database request failed: ${response.status} ${responseText}`);
   }
 
   if (!responseText) {
@@ -108,10 +135,80 @@ function redirectToReceived(request: Request, submissionId: string) {
 
 async function getWorkflowSubmission(submissionId: string) {
   const records = await supabaseFetch<WorkflowRecord[]>(
-    `axiom_workflow_submissions?select=id,customer_id,order_id,tier_slug&id=eq.${encodeURIComponent(submissionId)}&limit=1`,
+    `axiom_workflow_submissions?select=id,customer_id,order_id,product_id,intake_schema_id,intake_schema_version,tier_slug,status&id=eq.${encodeURIComponent(submissionId)}&limit=1`,
   );
 
   return records[0] ?? null;
+}
+
+async function getSchemaById(schemaId?: string | null) {
+  if (!schemaId) {
+    return null;
+  }
+
+  const schemas = await supabaseFetch<IntakeSchemaRecord[]>(
+    `axiom_product_intake_schemas?select=id,version,schema_json&id=eq.${encodeURIComponent(schemaId)}&limit=1`,
+  );
+
+  return schemas[0] ?? null;
+}
+
+async function getActiveSchemaByProduct(productId?: string | null) {
+  if (!productId) {
+    return null;
+  }
+
+  const schemas = await supabaseFetch<IntakeSchemaRecord[]>(
+    `axiom_product_intake_schemas?select=id,version,schema_json&product_id=eq.${encodeURIComponent(productId)}&active=eq.true&limit=1`,
+  );
+
+  return schemas[0] ?? null;
+}
+
+async function getSchemaForWorkflow(workflow: WorkflowRecord) {
+  return (await getSchemaById(workflow.intake_schema_id)) || (await getActiveSchemaByProduct(workflow.product_id));
+}
+
+function getSchemaFieldKeys(schema: IntakeSchemaRecord | null) {
+  const stages = schema?.schema_json?.stages;
+
+  if (!Array.isArray(stages)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      stages.flatMap((stage) =>
+        Array.isArray(stage.fields)
+          ? stage.fields
+              .map((field) => field.key)
+              .filter((key): key is string => typeof key === "string" && key.trim().length > 0)
+          : [],
+      ),
+    ),
+  );
+}
+
+function buildStagePayload(schema: IntakeSchemaRecord | null, fieldValues: Record<string, string>) {
+  const stages = schema?.schema_json?.stages;
+
+  if (!Array.isArray(stages)) {
+    return [];
+  }
+
+  return stages.map((stage, index) => ({
+    number: stage.number || String(index + 1).padStart(2, "0"),
+    title: stage.title || `Stage ${index + 1}`,
+    fields: Array.isArray(stage.fields)
+      ? stage.fields.map((field) => ({
+          key: field.key,
+          label: field.label || field.key,
+          type: field.type || "textarea",
+          required: Boolean(field.required),
+          value: fieldValues[field.key] || "",
+        }))
+      : [],
+  }));
 }
 
 export async function POST(request: Request) {
@@ -131,55 +228,33 @@ export async function POST(request: Request) {
       return redirectToIntake(request, submissionId, "not_found");
     }
 
-    const intakeValues = Object.fromEntries(
-      fieldNames.map((fieldName) => [fieldName, cleanField(formData, fieldName)]),
-    ) as Record<(typeof fieldNames)[number], string>;
+    if (workflow.status && workflow.status !== "draft") {
+      return redirectToIntake(request, submissionId, "locked");
+    }
 
-    const intakePayload = {
-      business_context: {
-        business_type: intakeValues.business_type,
-        user_role: intakeValues.user_role,
-        team_size: intakeValues.team_size,
-        industry: intakeValues.industry,
-        business_description: intakeValues.business_description,
-      },
-      workflow_overview: {
-        workflow_title: intakeValues.workflow_title,
-        workflow_goal: intakeValues.workflow_goal,
-        people_involved: intakeValues.people_involved,
-        workflow_frequency: intakeValues.workflow_frequency,
-        workflow_trigger: intakeValues.workflow_trigger,
-      },
-      current_process: {
-        current_process_steps: intakeValues.current_process_steps,
-        tools_used: intakeValues.tools_used,
-        inputs_needed: intakeValues.inputs_needed,
-        outputs_produced: intakeValues.outputs_produced,
-        handoffs: intakeValues.handoffs,
-        information_storage: intakeValues.information_storage,
-      },
-      pain_points: {
-        workflow_slowdowns: intakeValues.workflow_slowdowns,
-        manual_repetition: intakeValues.manual_repetition,
-        mistake_points: intakeValues.mistake_points,
-        delay_causes: intakeValues.delay_causes,
-        team_or_client_frustrations: intakeValues.team_or_client_frustrations,
-      },
-      risk_and_review: {
-        failure_impact: intakeValues.failure_impact,
-        human_approval_needed: intakeValues.human_approval_needed,
-        risk_areas: intakeValues.risk_areas,
-        protected_decisions: intakeValues.protected_decisions,
-      },
-      desired_outcome: {
-        ideal_workflow: intakeValues.ideal_workflow,
-        assistant_support_requested: intakeValues.assistant_support_requested,
-        tools_open_to_using: intakeValues.tools_open_to_using,
-        success_definition: intakeValues.success_definition,
-      },
-    };
+    const schema = await getSchemaForWorkflow(workflow);
+    const fieldKeys = getSchemaFieldKeys(schema);
+
+    if (!schema || fieldKeys.length === 0) {
+      return redirectToIntake(request, submissionId, "schema_missing");
+    }
+
+    const fieldValues = Object.fromEntries(
+      fieldKeys.map((fieldName) => [fieldName, cleanField(formData, fieldName)]),
+    );
+
+    const legacyColumnValues = Object.fromEntries(
+      Object.entries(fieldValues).filter(([fieldName]) => legacyColumnSet.has(fieldName)),
+    );
 
     const submittedAt = new Date().toISOString();
+    const workflowTitle = fieldValues.workflow_title || "Untitled workflow";
+    const intakePayload = {
+      schema_id: schema.id,
+      schema_version: schema.version,
+      fields: fieldValues,
+      stages: buildStagePayload(schema, fieldValues),
+    };
 
     await supabaseFetch(
       `axiom_workflow_submissions?id=eq.${encodeURIComponent(submissionId)}`,
@@ -187,10 +262,12 @@ export async function POST(request: Request) {
         method: "PATCH",
         prefer: "return=minimal",
         body: JSON.stringify({
-          ...intakeValues,
-          workflow_title: intakeValues.workflow_title || "Untitled workflow",
+          ...legacyColumnValues,
+          workflow_title: workflowTitle,
           intake_payload: intakePayload,
-          current_stage: 7,
+          intake_schema_id: schema.id,
+          intake_schema_version: schema.version,
+          current_stage: fieldKeys.length,
           status: "submitted",
           intake_completed_at: submittedAt,
           submitted_at: submittedAt,
@@ -205,7 +282,9 @@ export async function POST(request: Request) {
         submission_id: workflow.id,
         customer_id: workflow.customer_id,
         order_id: workflow.order_id,
+        product_id: workflow.product_id,
         tier_slug: workflow.tier_slug,
+        report_schema_version: 1,
         status: "queued",
         updated_at: submittedAt,
       }),
