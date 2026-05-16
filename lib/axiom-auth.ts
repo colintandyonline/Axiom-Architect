@@ -72,6 +72,11 @@ function getSupabaseServiceConfig() {
   };
 }
 
+function getMetadataString(user: AxiomAuthUser, key: string) {
+  const value = user.user_metadata?.[key];
+  return typeof value === "string" ? value.trim() : "";
+}
+
 async function supabaseServiceFetch<T>(path: string, options: RequestInit = {}) {
   const config = getSupabaseServiceConfig();
 
@@ -93,7 +98,7 @@ async function supabaseServiceFetch<T>(path: string, options: RequestInit = {}) 
   const responseText = await response.text();
 
   if (!response.ok) {
-    console.error("Axiom auth Supabase service request failed", response.status, responseText);
+    console.error("Axiom auth customer request failed", response.status, responseText);
     return null;
   }
 
@@ -167,7 +172,8 @@ export async function getAxiomAuthContext(): Promise<AxiomAuthContext> {
     };
   }
 
-  const customer = await getLinkedAxiomCustomer(user.id);
+  const linkedCustomer = await getLinkedAxiomCustomer(user.id);
+  const customer = linkedCustomer || (await linkAuthUserToCustomerByEmail(user));
 
   return {
     user,
@@ -204,31 +210,52 @@ export async function linkAuthUserToCustomerByEmail(user: AxiomAuthUser) {
   }
 
   const existingCustomer = await getAxiomCustomerByEmail(user.email);
+  const payload = {
+    email: user.email,
+    full_name:
+      existingCustomer?.full_name ||
+      getMetadataString(user, "full_name") ||
+      user.email,
+    business_name:
+      existingCustomer?.business_name ||
+      getMetadataString(user, "business_name") ||
+      "Axiom client",
+    auth_user_id: user.id,
+    last_login_at: new Date().toISOString(),
+    account_status: "active",
+  };
 
-  if (!existingCustomer) {
-    return null;
+  if (existingCustomer) {
+    if (existingCustomer.auth_user_id && existingCustomer.auth_user_id !== user.id) {
+      return null;
+    }
+
+    const updatedCustomers = await supabaseServiceFetch<AxiomLinkedCustomer[]>(
+      `axiom_customers?id=eq.${encodeURIComponent(existingCustomer.id)}&select=id,auth_user_id,email,full_name,business_name,account_status,last_login_at`,
+      {
+        method: "PATCH",
+        headers: {
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+
+    return updatedCustomers?.[0] ?? null;
   }
 
-  if (existingCustomer.auth_user_id && existingCustomer.auth_user_id !== user.id) {
-    return null;
-  }
-
-  const updatedCustomers = await supabaseServiceFetch<AxiomLinkedCustomer[]>(
-    `axiom_customers?id=eq.${encodeURIComponent(existingCustomer.id)}&select=id,auth_user_id,email,full_name,business_name,account_status,last_login_at`,
+  const createdCustomers = await supabaseServiceFetch<AxiomLinkedCustomer[]>(
+    "axiom_customers?select=id,auth_user_id,email,full_name,business_name,account_status,last_login_at",
     {
-      method: "PATCH",
+      method: "POST",
       headers: {
         Prefer: "return=representation",
       },
-      body: JSON.stringify({
-        auth_user_id: user.id,
-        last_login_at: new Date().toISOString(),
-        account_status: existingCustomer.account_status || "active",
-      }),
+      body: JSON.stringify(payload),
     },
   );
 
-  return updatedCustomers?.[0] ?? null;
+  return createdCustomers?.[0] ?? null;
 }
 
 export function setAxiomAuthCookies(
