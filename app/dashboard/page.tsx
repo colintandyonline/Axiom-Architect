@@ -228,6 +228,9 @@ export default async function DashboardPage({
   const intakeHref = record.workflow?.id
     ? `/dashboard/intake?submission_id=${record.workflow.id}`
     : "/dashboard/intake";
+  const reportHref = record.workflow?.id
+    ? `/dashboard/report?submission_id=${record.workflow.id}`
+    : "/dashboard/report";
 
   const cards = [
     {
@@ -270,9 +273,11 @@ export default async function DashboardPage({
                     {serviceName}
                   </p>
                   <p className="m-0">
-                    {hasWorkflow
-                      ? `${businessName} is set up. Continue the workflow intake from this dashboard.`
-                      : `${businessName} is set up. Your order is attached to this account.`}
+                    {hasSubmittedIntake
+                      ? `${businessName} is set up. Your workflow intake has been submitted and the report status is ${reportStatus}.`
+                      : hasWorkflow
+                        ? `${businessName} is set up. Continue the workflow intake from this dashboard.`
+                        : `${businessName} is set up. Your order is attached to this account.`}
                   </p>
                 </div>
               ) : (
@@ -333,20 +338,28 @@ export default async function DashboardPage({
               Next step
             </p>
             <h2 className="mt-5 text-[clamp(2.1rem,4vw,3.7rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
-              {hasOrder ? (hasWorkflow ? "Continue your workflow intake." : "Start your workflow intake.") : "Choose a package to begin."}
+              {hasOrder
+                ? hasSubmittedIntake
+                  ? "View your report status."
+                  : hasWorkflow
+                    ? "Continue your workflow intake."
+                    : "Start your workflow intake."
+                : "Choose a package to begin."}
             </h2>
             <p className="mt-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
               {hasOrder
-                ? "The intake form is the source material for your diagnostic report. The stronger the workflow details, the stronger the report."
+                ? hasSubmittedIntake
+                  ? "Your workflow intake is locked and the report has moved into the status queue. Use the report page to track the next stage."
+                  : "The intake form is the source material for your diagnostic report. The stronger the workflow details, the stronger the report."
                 : "Your account is ready. Select a package, complete checkout, and your intake workspace will appear here."}
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               {hasOrder ? (
                 <a
-                  href={intakeHref}
+                  href={hasSubmittedIntake ? reportHref : intakeHref}
                   className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:min-w-72"
                 >
-                  {hasSubmittedIntake ? "Review submitted intake" : "Start workflow intake"}
+                  {hasSubmittedIntake ? "View report status" : "Start workflow intake"}
                 </a>
               ) : (
                 <a
@@ -356,12 +369,21 @@ export default async function DashboardPage({
                   View packages
                 </a>
               )}
-              <a
-                href="/logout"
-                className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/45 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black sm:min-w-44"
-              >
-                Log out
-              </a>
+              {hasSubmittedIntake ? (
+                <a
+                  href={intakeHref}
+                  className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/45 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black sm:min-w-56"
+                >
+                  Review intake
+                </a>
+              ) : (
+                <a
+                  href="/logout"
+                  className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/45 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black sm:min-w-44"
+                >
+                  Log out
+                </a>
+              )}
             </div>
           </article>
         </div>
