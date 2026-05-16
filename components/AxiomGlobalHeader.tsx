@@ -3,21 +3,14 @@
 import { usePathname } from "next/navigation";
 import { AxiomSiteHeader } from "./AxiomSiteHeader";
 
-const excludedPaths = new Set(["/", "/pricing"]);
+const publicPagePaths = new Set(["/", "/audit", "/pricing", "/about"]);
 
 export function AxiomGlobalHeader() {
   const pathname = usePathname();
 
-  if (excludedPaths.has(pathname)) {
+  if (!publicPagePaths.has(pathname)) {
     return null;
   }
 
-  return (
-    <>
-      {pathname === "/audit" ? (
-        <style>{`main > section:first-of-type { display: none !important; }`}</style>
-      ) : null}
-      <AxiomSiteHeader />
-    </>
-  );
+  return <AxiomSiteHeader />;
 }
