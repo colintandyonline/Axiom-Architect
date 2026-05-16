@@ -7,6 +7,17 @@ type CustomerRecord = {
   id: string;
 };
 
+type ProductRecord = {
+  id: string;
+  slug: string;
+  name: string;
+};
+
+type IntakeSchemaRecord = {
+  id: string;
+  version: number;
+};
+
 type OrderRecord = {
   id: string;
 };
@@ -71,7 +82,7 @@ async function supabaseFetch<T>(
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Supabase request failed: ${response.status} ${errorText}`);
+    throw new Error(`Database request failed: ${response.status} ${errorText}`);
   }
 
   if (response.status === 204) {
@@ -96,6 +107,34 @@ function getMetadataValue(
 ) {
   const value = session.metadata?.[key];
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+async function getProductBySlug(slug: string) {
+  const products = await supabaseFetch<ProductRecord[]>(
+    `axiom_products?select=id,slug,name&slug=eq.${encodeURIComponent(slug)}&active=eq.true&limit=1`,
+  );
+
+  const product = products[0];
+
+  if (!product?.id) {
+    throw new Error(`No active product found for slug: ${slug}`);
+  }
+
+  return product;
+}
+
+async function getActiveIntakeSchema(productId: string) {
+  const schemas = await supabaseFetch<IntakeSchemaRecord[]>(
+    `axiom_product_intake_schemas?select=id,version&product_id=eq.${encodeURIComponent(productId)}&active=eq.true&limit=1`,
+  );
+
+  const schema = schemas[0];
+
+  if (!schema?.id) {
+    throw new Error(`No active intake schema found for product: ${productId}`);
+  }
+
+  return schema;
 }
 
 async function upsertCustomer(session: Stripe.Checkout.Session) {
@@ -138,9 +177,16 @@ async function upsertCustomer(session: Stripe.Checkout.Session) {
   return customer;
 }
 
-async function upsertOrder(session: Stripe.Checkout.Session, customerId: string) {
-  const tier = getMetadataValue(session, "tier", "workflow-blueprint");
-  const serviceName = getMetadataValue(session, "service_name", "Workflow Blueprint");
+async function upsertOrder({
+  session,
+  customerId,
+  product,
+}: {
+  session: Stripe.Checkout.Session;
+  customerId: string;
+  product: ProductRecord;
+}) {
+  const serviceName = getMetadataValue(session, "service_name", product.name);
   const stripeCustomerId = getSessionString(session, "customer");
   const stripePaymentIntentId = getSessionString(session, "payment_intent");
 
@@ -151,10 +197,11 @@ async function upsertOrder(session: Stripe.Checkout.Session, customerId: string)
       prefer: "resolution=merge-duplicates,return=representation",
       body: JSON.stringify({
         customer_id: customerId,
+        product_id: product.id,
         stripe_checkout_session_id: session.id,
         stripe_customer_id: stripeCustomerId,
         stripe_payment_intent_id: stripePaymentIntentId,
-        tier_slug: tier,
+        tier_slug: product.slug,
         service_name: serviceName,
         amount_total: session.amount_total,
         currency: session.currency,
@@ -171,20 +218,19 @@ async function upsertOrder(session: Stripe.Checkout.Session, customerId: string)
     throw new Error("Order upsert did not return an id");
   }
 
-  return {
-    order,
-    tier,
-  };
+  return order;
 }
 
 async function createWorkflowSlot({
   customerId,
   orderId,
-  tier,
+  product,
+  schema,
 }: {
   customerId: string;
   orderId: string;
-  tier: string;
+  product: ProductRecord;
+  schema: IntakeSchemaRecord;
 }) {
   await supabaseFetch("axiom_workflow_submissions?on_conflict=order_id", {
     method: "POST",
@@ -192,7 +238,10 @@ async function createWorkflowSlot({
     body: JSON.stringify({
       customer_id: customerId,
       order_id: orderId,
-      tier_slug: tier,
+      product_id: product.id,
+      intake_schema_id: schema.id,
+      intake_schema_version: schema.version,
+      tier_slug: product.slug,
       status: "draft",
       updated_at: new Date().toISOString(),
     }),
@@ -204,13 +253,21 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
+  const tier = getMetadataValue(session, "tier", "workflow-blueprint");
+  const product = await getProductBySlug(tier);
+  const schema = await getActiveIntakeSchema(product.id);
   const customer = await upsertCustomer(session);
-  const { order, tier } = await upsertOrder(session, customer.id);
+  const order = await upsertOrder({
+    session,
+    customerId: customer.id,
+    product,
+  });
 
   await createWorkflowSlot({
     customerId: customer.id,
     orderId: order.id,
-    tier,
+    product,
+    schema,
   });
 }
 
