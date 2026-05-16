@@ -14,13 +14,14 @@ type SearchParams = {
 
 function errorMessage(error?: string) {
   const messages: Record<string, string> = {
-    config: "Account creation is not configured yet. Please check the Supabase public environment variables.",
-    "service-config": "Account creation needs the Supabase service role environment variable before it can complete.",
+    config: "Account creation is temporarily unavailable. Please contact support if this continues.",
+    "service-config": "Account creation is temporarily unavailable. Please contact support if this continues.",
     missing: "Enter your name, email, business or project name, password, and password confirmation.",
     password: "Use a password with at least 8 characters.",
     "password-match": "The two password fields do not match.",
-    signup: "Supabase could not create the account. Please try again.",
-    link: "The account was created, but it could not be linked to your Axiom customer record. Please contact support.",
+    signup: "We could not complete account creation. Please try again or log in if you already started an account.",
+    "account-create": "We could not complete account creation. Please try again or log in if you already started an account.",
+    link: "Your account was created, but we could not connect it to your client workspace. Please contact support.",
   };
 
   return error ? messages[error] || null : null;
@@ -29,7 +30,8 @@ function errorMessage(error?: string) {
 function accountNotice(account?: string) {
   const messages: Record<string, string> = {
     required: "Create your account first. Once your account is ready, you can start the audit flow.",
-    "customer-required": "Your account needs a linked customer record before checkout can continue.",
+    check_email: "Account created. Check your email and confirm your account, then log in to continue to payment.",
+    "customer-required": "Your account needs a linked client record before checkout can continue.",
     "email-required": "Your account needs an email address before checkout can continue.",
   };
 
@@ -44,6 +46,7 @@ export default async function SignupPage({
   const params = await searchParams;
   const error = errorMessage(params.error);
   const notice = accountNotice(params.account);
+  const awaitingConfirmation = params.account === "check_email";
   const context = await getAxiomAuthContext();
 
   return (
@@ -70,8 +73,8 @@ export default async function SignupPage({
                 </p>
                 <div className="mt-4 grid gap-3 text-sm leading-6 text-[#e6f6e7]/72 sm:grid-cols-3">
                   <div className="border border-[#9ed39f]/20 bg-black/35 p-4">1. Create account</div>
-                  <div className="border border-[#9ed39f]/20 bg-black/35 p-4">2. Choose audit</div>
-                  <div className="border border-[#9ed39f]/20 bg-black/35 p-4">3. Submit workflow</div>
+                  <div className="border border-[#9ed39f]/20 bg-black/35 p-4">2. Confirm email</div>
+                  <div className="border border-[#9ed39f]/20 bg-black/35 p-4">3. Continue to payment</div>
                 </div>
               </div>
             </div>
@@ -80,13 +83,26 @@ export default async function SignupPage({
               {context.user && context.customer ? (
                 <div>
                   <div className="mb-5 border border-[#9ed39f]/45 bg-[#9ed39f]/10 p-4 text-sm leading-6 text-[#e6f6e7]/80">
-                    You are already signed in. Continue to the audit page to choose your package and start.
+                    You are already signed in. Continue to pricing to choose your package and start.
                   </div>
                   <a
-                    href="/audit"
+                    href="/pricing"
                     className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
                   >
-                    Continue to audit
+                    Continue to pricing
+                  </a>
+                </div>
+              ) : awaitingConfirmation ? (
+                <div>
+                  <div className="mb-5 border border-[#9ed39f]/45 bg-[#9ed39f]/10 p-5 text-sm leading-6 text-[#e6f6e7]/84">
+                    <p className="text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Confirm your account</p>
+                    <p className="mt-3">We have sent a confirmation email. Open it, confirm your account, then log in to continue to payment.</p>
+                  </div>
+                  <a
+                    href="/login?signup=check_email&redirect=/pricing"
+                    className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
+                  >
+                    Go to login
                   </a>
                 </div>
               ) : (
