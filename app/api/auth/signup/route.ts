@@ -189,15 +189,11 @@ async function linkOrCreateCustomer({
     full_name: fullName,
     business_name: businessName,
     auth_user_id: user.id,
-    account_status: existingCustomer?.account_status || "pending_confirmation",
-    last_login_at: null,
+    account_status: "active",
+    last_login_at: new Date().toISOString(),
   };
 
   if (existingCustomer) {
-    if (existingCustomer.auth_user_id && existingCustomer.auth_user_id !== user.id) {
-      return null;
-    }
-
     const updated = await supabaseServiceFetch<AxiomCustomer[]>(
       `axiom_customers?id=eq.${encodeURIComponent(existingCustomer.id)}&select=id,auth_user_id,email,full_name,business_name,account_status,last_login_at`,
       {
@@ -239,10 +235,6 @@ export async function POST(request: Request) {
 
   if (!publicConfig) {
     return signupRedirect(request, tier, "config");
-  }
-
-  if (!getSupabaseServiceConfig()) {
-    return signupRedirect(request, tier, "service-config");
   }
 
   if (!fullName || !email || !businessName || !password || !confirmPassword) {
@@ -291,6 +283,10 @@ export async function POST(request: Request) {
     return signupRedirect(request, tier, "account-create");
   }
 
+  if (!result.access_token) {
+    return confirmationRedirect(request, tier);
+  }
+
   const customer = await linkOrCreateCustomer({
     email,
     fullName,
@@ -300,10 +296,6 @@ export async function POST(request: Request) {
 
   if (!customer) {
     return signupRedirect(request, tier, "link");
-  }
-
-  if (!result.access_token) {
-    return confirmationRedirect(request, tier);
   }
 
   const nextResponse = paymentRedirect(request, tier, "created");
