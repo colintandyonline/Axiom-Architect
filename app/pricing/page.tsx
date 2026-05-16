@@ -186,9 +186,10 @@ export default async function PricingPage() {
                     <input type="hidden" name="tier" value={tier.slug} />
                     <button
                       type="submit"
+                      style={tier.slug === "workflow-blueprint" ? { color: "#ffffff" } : undefined}
                       className={
                         tier.slug === "workflow-blueprint"
-                          ? "inline-flex min-h-14 w-full items-center justify-center border border-black bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black"
+                          ? "inline-flex min-h-14 w-full items-center justify-center border border-black bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#ffffff] transition hover:bg-[#071208]"
                           : "inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
                       }
                     >
@@ -198,9 +199,10 @@ export default async function PricingPage() {
                 ) : (
                   <a
                     href={`/signup?tier=${tier.slug}&account=required`}
+                    style={tier.slug === "workflow-blueprint" ? { color: "#ffffff" } : undefined}
                     className={
                       tier.slug === "workflow-blueprint"
-                        ? "mt-8 inline-flex min-h-14 w-full items-center justify-center border border-black bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black"
+                        ? "mt-8 inline-flex min-h-14 w-full items-center justify-center border border-black bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#ffffff] transition hover:bg-[#071208]"
                         : "mt-8 inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
                     }
                   >
