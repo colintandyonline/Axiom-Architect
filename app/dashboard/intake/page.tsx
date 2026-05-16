@@ -187,7 +187,7 @@ async function supabaseFetch<T>(path: string): Promise<T | null> {
   });
 
   if (!response.ok) {
-    console.error("Intake Supabase request failed", await response.text());
+    console.error("Intake record request failed", await response.text());
     return null;
   }
 
@@ -228,8 +228,8 @@ function fieldValue(record: IntakeRecord, fieldName: keyof IntakeRecord) {
   return typeof value === "string" ? value : "";
 }
 
-function renderField(field: Field, record: IntakeRecord) {
-  const commonClasses = "mt-2 w-full border border-[#9ed39f]/28 bg-black/55 px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-white/32 focus:border-[#9ed39f]";
+function renderField(field: Field, record: IntakeRecord, locked: boolean) {
+  const commonClasses = `mt-2 w-full border border-[#9ed39f]/28 bg-black/55 px-4 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-white/32 focus:border-[#9ed39f] ${locked ? "opacity-70" : ""}`;
   const value = fieldValue(record, field.name);
 
   return (
@@ -242,6 +242,7 @@ function renderField(field: Field, record: IntakeRecord) {
           name={field.name}
           defaultValue={value}
           placeholder={field.placeholder}
+          readOnly={locked}
           className={commonClasses}
         />
       ) : (
@@ -250,6 +251,7 @@ function renderField(field: Field, record: IntakeRecord) {
           defaultValue={value}
           placeholder={field.placeholder}
           rows={5}
+          readOnly={locked}
           className={`${commonClasses} min-h-36 resize-y`}
         />
       )}
@@ -271,6 +273,8 @@ export default async function WorkflowIntakePage({
   const isSubmitted = params.submitted === "1";
   const hasError = params.error === "1";
   const notFound = params.not_found === "1" || (!!params.submission_id && !context);
+  const isLocked = Boolean(context && context.intake.status !== "draft");
+  const reportHref = context ? `/dashboard/report?submission_id=${context.intake.id}` : "/dashboard/report";
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
@@ -291,10 +295,12 @@ export default async function WorkflowIntakePage({
           <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[0.95fr_0.75fr] lg:items-end">
             <div>
               <h1 className="max-w-5xl text-[clamp(2.65rem,6vw,5.7rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
-                Submit your workflow for diagnosis.
+                {isLocked ? "Review submitted workflow." : "Submit your workflow for diagnosis."}
               </h1>
               <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-                Work through each stage carefully. This intake becomes the source material for your report, recommendations, and future workflow blueprint.
+                {isLocked
+                  ? "This workflow intake has already been submitted and is now locked. Use the report status page to track the diagnostic report."
+                  : "Work through each stage carefully. This intake becomes the source material for your report, recommendations, and future workflow blueprint."}
               </p>
             </div>
 
@@ -328,6 +334,23 @@ export default async function WorkflowIntakePage({
               <p className="mb-0 mt-2 text-sm leading-6 text-black/72">
                 The submission status is now set to submitted. The next stage is report processing.
               </p>
+            </div>
+          )}
+
+          {isLocked && (
+            <div className="mb-8 border border-[#9ed39f]/45 bg-[#9ed39f]/10 p-5 text-[#e6f6e7]/84">
+              <p className="m-0 text-lg font-black uppercase tracking-[-0.02em] text-white">
+                Intake locked
+              </p>
+              <p className="mb-0 mt-2 text-sm leading-6 text-[#e6f6e7]/72">
+                This workflow has already been submitted. New submissions are disabled so the report source material remains stable.
+              </p>
+              <a
+                href={reportHref}
+                className="mt-5 inline-flex min-h-12 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.16em] text-black transition hover:bg-white"
+              >
+                View report status
+              </a>
             </div>
           )}
 
@@ -375,7 +398,7 @@ export default async function WorkflowIntakePage({
                     </p>
                   </div>
                   <div className="grid gap-5">
-                    {stage.fields.map((field) => renderField(field, context.intake))}
+                    {stage.fields.map((field) => renderField(field, context.intake, isLocked))}
                   </div>
                 </section>
               ))}
@@ -394,17 +417,26 @@ export default async function WorkflowIntakePage({
                     <strong className="text-white">Tier purchased:</strong> {context.order?.service_name || context.intake.tier_slug}
                   </p>
                   <p className="m-0">
-                    <strong className="text-white">Workflow title:</strong> Entered above and saved into the audit record.
+                    <strong className="text-white">Workflow title:</strong> {context.intake.workflow_title || "Entered above and saved into the audit record."}
                   </p>
                   <p className="m-0">
                     <strong className="text-white">Delivery expectation:</strong> Report generation begins after the intake is submitted.
                   </p>
-                  <button
-                    type="submit"
-                    className="mt-4 inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:w-fit"
-                  >
-                    Submit workflow intake
-                  </button>
+                  {isLocked ? (
+                    <a
+                      href={reportHref}
+                      className="mt-4 inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:w-fit"
+                    >
+                      View report status
+                    </a>
+                  ) : (
+                    <button
+                      type="submit"
+                      className="mt-4 inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:w-fit"
+                    >
+                      Submit workflow intake
+                    </button>
+                  )}
                 </div>
               </section>
             </form>
