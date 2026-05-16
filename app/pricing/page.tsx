@@ -4,7 +4,7 @@ import { getAxiomAuthContext } from "../../lib/axiom-auth";
 export const metadata: Metadata = {
   title: "Pricing | Axiom Architect",
   description:
-    "Review real Axiom Architect pricing before creating an account or starting checkout.",
+    "Clear Axiom Architect pricing for workflow audits, workflow blueprints, and custom operating packs.",
 };
 
 type TierSlug = "workflow-audit" | "workflow-blueprint" | "custom-operating-pack";
@@ -39,7 +39,7 @@ const tiers: Array<{
     slug: "workflow-blueprint",
     name: "Workflow Blueprint",
     price: "$149",
-    label: "Recommended operating plan",
+    label: "Recommended plan",
     summary:
       "For clients who want the diagnostic plus a structured future-state workflow, review gates, assistant roles, and implementation sequence.",
     includes: [
@@ -103,10 +103,10 @@ export default async function PricingPage() {
               Transparent pricing
             </p>
             <h1 className="mt-6 text-[clamp(2.8rem,6.5vw,6rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
-              Choose the right workflow service before account creation.
+              Workflow architecture packages with clear scope.
             </h1>
             <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-              Review the price, scope, and deliverables first. Account creation comes before payment so your checkout, dashboard, intake, and report stay attached to one verified client record.
+              Choose the level of diagnosis, blueprinting, and implementation support your workflow needs. Every package starts with one real process and ends with a structured operating asset you can use.
             </p>
           </div>
 
@@ -185,7 +185,7 @@ export default async function PricingPage() {
                         : "mt-8 inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
                     }
                   >
-                    Create account first
+                    Start this package
                   </a>
                 )}
               </article>
@@ -194,10 +194,10 @@ export default async function PricingPage() {
 
           <div className="mt-10 border border-[#9ed39f]/30 bg-[#041008] p-6 text-[#e6f6e7]/78">
             <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">
-              How payment works
+              How to begin
             </p>
             <p className="mt-4 max-w-4xl text-base leading-8">
-              You create an account before checkout. Stripe payment then attaches to your authenticated Axiom customer record, and your dashboard opens with the correct order, workflow intake, and report workspace.
+              Select a package, create your secure client account, complete checkout, and submit your workflow through the dashboard. Your report workspace opens after payment is confirmed.
             </p>
           </div>
         </div>
