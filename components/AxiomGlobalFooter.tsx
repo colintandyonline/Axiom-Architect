@@ -10,6 +10,7 @@ const publicPagePaths = new Set([
   "/pricing",
   "/about",
   "/contact",
+  "/sitemap",
   "/terms",
   "/privacy",
   "/cookies",
@@ -22,6 +23,7 @@ const siteLinks = [
   { label: "Pricing", href: "/pricing" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
+  { label: "Sitemap", href: "/sitemap" },
 ];
 
 const systemLinks = [
