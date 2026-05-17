@@ -7,10 +7,34 @@ export const metadata: Metadata = {
     "Create your Axiom Architect account to start a workflow audit.",
 };
 
+type ProductSlug =
+  | "workflow-audit"
+  | "workflow-blueprint"
+  | "custom-operating-pack"
+  | "workflow-stewardship"
+  | "departmental-ecosystem"
+  | "architect-residency";
+
 type SearchParams = {
   error?: string;
   account?: string;
+  tier?: string;
 };
+
+function isProductSlug(value?: string | null): value is ProductSlug {
+  return (
+    value === "workflow-audit" ||
+    value === "workflow-blueprint" ||
+    value === "custom-operating-pack" ||
+    value === "workflow-stewardship" ||
+    value === "departmental-ecosystem" ||
+    value === "architect-residency"
+  );
+}
+
+function getSelectedTier(value?: string | null): ProductSlug {
+  return isProductSlug(value) ? value : "workflow-blueprint";
+}
 
 function errorMessage(error?: string) {
   const messages: Record<string, string> = {
@@ -44,6 +68,10 @@ export default async function SignupPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
+  const selectedTier = getSelectedTier(params.tier);
+  const pricingHref = `/pricing?tier=${selectedTier}&account=confirmed`;
+  const loginHref = `/login?redirect=${encodeURIComponent(pricingHref)}`;
+  const confirmationLoginHref = `/login?signup=check_email&redirect=${encodeURIComponent(pricingHref)}`;
   const error = errorMessage(params.error);
   const notice = accountNotice(params.account);
   const awaitingConfirmation = params.account === "check_email";
@@ -86,7 +114,7 @@ export default async function SignupPage({
                     You are already signed in. Continue to pricing to choose your package and start.
                   </div>
                   <a
-                    href="/pricing"
+                    href={pricingHref}
                     className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
                   >
                     Continue to pricing
@@ -99,7 +127,7 @@ export default async function SignupPage({
                     <p className="mt-3">We have sent a confirmation email. Open it, confirm your account, then log in to continue to payment.</p>
                   </div>
                   <a
-                    href="/login?signup=check_email&redirect=/pricing"
+                    href={confirmationLoginHref}
                     className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
                   >
                     Go to login
@@ -107,6 +135,8 @@ export default async function SignupPage({
                 </div>
               ) : (
                 <form action="/api/auth/signup" method="post">
+                  <input type="hidden" name="tier" value={selectedTier} />
+
                   {notice && (
                     <div className="mb-5 border border-[#9ed39f]/45 bg-[#9ed39f]/10 p-4 text-sm leading-6 text-[#e6f6e7]/80">
                       {notice}
@@ -149,7 +179,7 @@ export default async function SignupPage({
                   </button>
 
                   <p className="mt-5 text-sm leading-6 text-[#e6f6e7]/68">
-                    Already have an account? <a href="/login" className="text-[#9ed39f] transition hover:text-white">Log in here.</a>
+                    Already have an account? <a href={loginHref} className="text-[#9ed39f] transition hover:text-white">Log in here.</a>
                   </p>
                 </form>
               )}
