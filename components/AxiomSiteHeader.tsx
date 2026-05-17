@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 const serviceLinks = [
   { label: "Audit", href: "/audit" },
@@ -46,6 +49,43 @@ function HeaderDropdown({
 }
 
 export function AxiomSiteHeader() {
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadAuthStatus() {
+      try {
+        const response = await fetch("/api/auth/status", { cache: "no-store" });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const status = (await response.json()) as { signedIn?: boolean };
+
+        if (active) {
+          setSignedIn(Boolean(status.signedIn));
+        }
+      } catch {
+        if (active) {
+          setSignedIn(false);
+        }
+      }
+    }
+
+    loadAuthStatus();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const authHref = signedIn ? "/logout" : "/login";
+  const authLabel = signedIn ? "Log Out" : "Login";
+  const primaryHref = signedIn ? "/dashboard" : "/signup";
+  const primaryLabel = signedIn ? "Dashboard" : "Start Audit";
+
   return (
     <header className="sticky top-0 z-50 border-b border-[#9ed39f]/30 bg-black/94 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between gap-5 px-4 py-4 sm:px-6 lg:px-8">
@@ -71,9 +111,6 @@ export function AxiomSiteHeader() {
           <a className="whitespace-nowrap uppercase tracking-[0.18em] transition hover:text-white" href="/about">
             About
           </a>
-          <a className="whitespace-nowrap uppercase tracking-[0.18em] transition hover:text-white" href="/login">
-            Login
-          </a>
           <HeaderDropdown label="Core Systems" links={coreSystemLinks} external />
           <a
             className="whitespace-nowrap uppercase tracking-[0.18em] transition hover:text-white"
@@ -86,7 +123,8 @@ export function AxiomSiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 xl:flex">
-          <a href="/signup" className="inline-flex min-h-14 min-w-[15rem] shrink-0 items-center justify-center whitespace-nowrap border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.7rem] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white">Start Audit</a>
+          <a href={authHref} className="inline-flex min-h-14 min-w-[8.5rem] items-center justify-center whitespace-nowrap border border-[#9ed39f]/45 bg-[#061008] px-5 text-center text-[0.7rem] font-black uppercase tracking-[0.18em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">{authLabel}</a>
+          <a href={primaryHref} className="inline-flex min-h-14 min-w-[15rem] shrink-0 items-center justify-center whitespace-nowrap border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.7rem] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white">{primaryLabel}</a>
         </div>
 
         <details className="group relative xl:hidden">
@@ -108,7 +146,6 @@ export function AxiomSiteHeader() {
 
               <a href="/pricing" className="border border-[#9ed39f]/20 bg-[#061008] px-4 py-4 text-[0.72rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">Pricing</a>
               <a href="/about" className="border border-[#9ed39f]/20 bg-[#061008] px-4 py-4 text-[0.72rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">About</a>
-              <a href="/login" className="border border-[#9ed39f]/20 bg-[#061008] px-4 py-4 text-[0.72rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">Login</a>
 
               <div className="border border-[#9ed39f]/22 bg-black/60 p-2">
                 <p className="px-2 pb-2 text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Core Systems</p>
@@ -122,7 +159,10 @@ export function AxiomSiteHeader() {
               </div>
 
               <a href="https://axiom-studio.co/" target="_blank" rel="noreferrer" className="border border-[#9ed39f]/20 bg-[#061008] px-4 py-4 text-[0.72rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">Axiom Studio</a>
-              <a href="/signup" className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-black transition hover:bg-white">Start Audit</a>
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <a href={authHref} className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f]/45 bg-[#061008] px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">{authLabel}</a>
+                <a href={primaryHref} className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-black transition hover:bg-white">{primaryLabel}</a>
+              </div>
             </nav>
           </div>
         </details>
