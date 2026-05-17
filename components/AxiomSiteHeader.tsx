@@ -1,10 +1,9 @@
 import Image from "next/image";
 
-const navLinks = [
+const serviceLinks = [
   { label: "Audit", href: "/audit" },
   { label: "Method", href: "/#method" },
   { label: "Deliverables", href: "/#deliverables" },
-  { label: "Services", href: "/#services" },
 ];
 
 const coreSystemLinks = [
@@ -14,20 +13,28 @@ const coreSystemLinks = [
   { label: "Operating Packs", href: "https://axiom-studio.co/collections/operating-packs" },
 ];
 
-function CoreSystemsMenu() {
+function HeaderDropdown({
+  label,
+  links,
+  external = false,
+}: {
+  label: string;
+  links: Array<{ label: string; href: string }>;
+  external?: boolean;
+}) {
   return (
     <details className="group relative">
       <summary className="flex cursor-pointer list-none items-center gap-2 whitespace-nowrap uppercase tracking-[0.18em] text-[#9ed39f] transition hover:text-white [&::-webkit-details-marker]:hidden">
-        Core Systems
+        {label}
         <span className="text-[0.88rem] transition group-open:rotate-180">⌄</span>
       </summary>
       <div className="absolute left-1/2 top-[calc(100%+1rem)] z-50 grid min-w-72 -translate-x-1/2 gap-2 border border-[#9ed39f]/35 bg-black/98 p-3 shadow-[0_26px_80px_rgba(0,0,0,0.58)]">
-        {coreSystemLinks.map((link) => (
+        {links.map((link) => (
           <a
             key={link.href}
             href={link.href}
-            target="_blank"
-            rel="noreferrer"
+            target={external ? "_blank" : undefined}
+            rel={external ? "noreferrer" : undefined}
             className="border border-[#9ed39f]/18 bg-[#061008] px-4 py-3 text-[0.72rem] font-black uppercase tracking-[0.14em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
           >
             {link.label}
@@ -57,16 +64,17 @@ export function AxiomSiteHeader() {
         </a>
 
         <nav aria-label="Main navigation" className="hidden items-center gap-8 text-[0.74rem] font-black text-[#9ed39f] xl:flex">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              className="whitespace-nowrap uppercase tracking-[0.18em] transition hover:text-white"
-              href={link.href}
-            >
-              {link.label}
-            </a>
-          ))}
-          <CoreSystemsMenu />
+          <HeaderDropdown label="Services" links={serviceLinks} />
+          <a className="whitespace-nowrap uppercase tracking-[0.18em] transition hover:text-white" href="/pricing">
+            Pricing
+          </a>
+          <a className="whitespace-nowrap uppercase tracking-[0.18em] transition hover:text-white" href="/about">
+            About
+          </a>
+          <a className="whitespace-nowrap uppercase tracking-[0.18em] transition hover:text-white" href="/login">
+            Login
+          </a>
+          <HeaderDropdown label="Core Systems" links={coreSystemLinks} external />
           <a
             className="whitespace-nowrap uppercase tracking-[0.18em] transition hover:text-white"
             href="https://axiom-studio.co/"
@@ -87,15 +95,20 @@ export function AxiomSiteHeader() {
           </summary>
           <div className="absolute right-0 top-[calc(100%+0.75rem)] max-h-[calc(100vh-7rem)] w-[min(90vw,24rem)] overflow-y-auto border border-[#9ed39f]/35 bg-black p-3 shadow-[0_28px_80px_rgba(0,0,0,0.46)]">
             <nav aria-label="Mobile navigation" className="grid gap-2">
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="border border-[#9ed39f]/20 bg-[#061008] px-4 py-4 text-[0.72rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
-                >
-                  {link.label}
-                </a>
-              ))}
+              <div className="border border-[#9ed39f]/22 bg-black/60 p-2">
+                <p className="px-2 pb-2 text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Services</p>
+                <div className="grid gap-2">
+                  {serviceLinks.map((link) => (
+                    <a key={link.href} href={link.href} className="border border-[#9ed39f]/18 bg-[#061008] px-3 py-3 text-[0.68rem] font-black uppercase tracking-[0.13em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              <a href="/pricing" className="border border-[#9ed39f]/20 bg-[#061008] px-4 py-4 text-[0.72rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">Pricing</a>
+              <a href="/about" className="border border-[#9ed39f]/20 bg-[#061008] px-4 py-4 text-[0.72rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">About</a>
+              <a href="/login" className="border border-[#9ed39f]/20 bg-[#061008] px-4 py-4 text-[0.72rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">Login</a>
 
               <div className="border border-[#9ed39f]/22 bg-black/60 p-2">
                 <p className="px-2 pb-2 text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Core Systems</p>
