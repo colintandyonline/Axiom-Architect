@@ -79,6 +79,7 @@ function BrandLockup({ compact = false, onNavigate }: { compact?: boolean; onNav
 export function AxiomSiteHeader() {
   const [signedIn, setSignedIn] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -153,7 +154,8 @@ export function AxiomSiteHeader() {
       <style>{`
         @media (min-width: 1024px) {
           body {
-            padding-left: 23rem;
+            padding-left: ${desktopSidebarOpen ? "23rem" : "0"};
+            transition: padding-left 300ms ease;
           }
         }
       `}</style>
@@ -173,9 +175,27 @@ export function AxiomSiteHeader() {
         </div>
       </header>
 
-      <aside className="fixed left-0 top-0 z-50 hidden h-dvh w-[23rem] flex-col border-r border-[#9ed39f]/30 bg-black/96 shadow-[0_0_80px_rgba(0,0,0,0.5)] lg:flex">
-        <div className="border-b border-[#9ed39f]/24 p-5">
+      <button
+        type="button"
+        onClick={() => setDesktopSidebarOpen(true)}
+        className={`fixed left-5 top-5 z-[55] hidden min-h-12 border border-[#9ed39f]/45 bg-black/92 px-5 text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] shadow-[0_18px_50px_rgba(0,0,0,0.36)] transition hover:bg-[#9ed39f] hover:text-black lg:inline-flex lg:items-center lg:justify-center ${desktopSidebarOpen ? "pointer-events-none -translate-x-8 opacity-0" : "translate-x-0 opacity-100"}`}
+        aria-label="Open sidebar navigation"
+        aria-expanded={desktopSidebarOpen}
+      >
+        Menu
+      </button>
+
+      <aside className={`fixed left-0 top-0 z-50 hidden h-dvh w-[23rem] transform flex-col border-r border-[#9ed39f]/30 bg-black/96 shadow-[0_0_80px_rgba(0,0,0,0.5)] transition-transform duration-300 lg:flex ${desktopSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex items-start justify-between gap-4 border-b border-[#9ed39f]/24 p-5">
           <BrandLockup />
+          <button
+            type="button"
+            onClick={() => setDesktopSidebarOpen(false)}
+            aria-label="Close sidebar navigation"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-[#9ed39f]/35 text-xl leading-none text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black"
+          >
+            ×
+          </button>
         </div>
 
         <nav className="grid flex-1 gap-4 overflow-y-auto p-4" aria-label="Desktop sidebar navigation">
