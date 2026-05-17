@@ -224,7 +224,7 @@ export default async function PricingPage() {
                     <input type="hidden" name="tier" value={tier.slug} />
                     <button
                       type="submit"
-                      className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-white group-hover:border-black group-hover:bg-black group-hover:text-white"
+                      className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-black hover:text-white group-hover:!border-black group-hover:!bg-black group-hover:!text-white"
                     >
                       Continue to checkout
                     </button>
@@ -232,7 +232,7 @@ export default async function PricingPage() {
                 ) : (
                   <a
                     href={`/signup?tier=${tier.slug}&account=required`}
-                    className="mt-8 inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-white group-hover:border-black group-hover:bg-black group-hover:text-white"
+                    className="mt-8 inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-black hover:text-white group-hover:!border-black group-hover:!bg-black group-hover:!text-white"
                   >
                     Start this package
                   </a>
