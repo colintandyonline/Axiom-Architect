@@ -9,6 +9,7 @@ const publicPagePaths = new Set([
   "/pricing",
   "/about",
   "/contact",
+  "/sitemap",
   "/terms",
   "/privacy",
   "/cookies",
