@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AxiomGlobalFooter } from "../components/AxiomGlobalFooter";
 import { AxiomGlobalHeader } from "../components/AxiomGlobalHeader";
 import "./globals.css";
 
@@ -22,6 +23,7 @@ export default function RootLayout({
       <body>
         <AxiomGlobalHeader />
         {children}
+        <AxiomGlobalFooter />
         <script
           dangerouslySetInnerHTML={{
             __html: `
