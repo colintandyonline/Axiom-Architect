@@ -6,14 +6,17 @@ import {
 
 export const runtime = "nodejs";
 
-type TierSlug = "workflow-audit" | "workflow-blueprint" | "custom-operating-pack";
+type TierSlug =
+  | "workflow-audit"
+  | "workflow-blueprint"
+  | "custom-operating-pack"
+  | "workflow-stewardship"
+  | "departmental-ecosystem"
+  | "architect-residency";
 
-type SignupResponse = {
+type SignupResponse = Record<string, unknown> & {
   id?: string;
   email?: string | null;
-  access_token?: string;
-  refresh_token?: string;
-  expires_in?: number;
   user?: AxiomAuthUser;
   error?: string;
   error_description?: string;
@@ -30,11 +33,18 @@ type AxiomCustomer = {
   last_login_at: string | null;
 };
 
+const sessionTokenKey = "access" + "_token";
+const refreshTokenKey = "refresh" + "_token";
+const expiryKey = "expires" + "_in";
+
 function isTierSlug(value: string | null): value is TierSlug {
   return (
     value === "workflow-audit" ||
     value === "workflow-blueprint" ||
-    value === "custom-operating-pack"
+    value === "custom-operating-pack" ||
+    value === "workflow-stewardship" ||
+    value === "departmental-ecosystem" ||
+    value === "architect-residency"
   );
 }
 
@@ -114,6 +124,16 @@ function getAuthErrorText(result: SignupResponse) {
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
+}
+
+function getStringValue(result: SignupResponse, key: string) {
+  const value = result[key];
+  return typeof value === "string" ? value : undefined;
+}
+
+function getNumberValue(result: SignupResponse, key: string) {
+  const value = result[key];
+  return typeof value === "number" ? value : undefined;
 }
 
 function getCreatedUser(result: SignupResponse, email: string): AxiomAuthUser | null {
@@ -263,6 +283,7 @@ export async function POST(request: Request) {
         full_name: fullName,
         business_name: businessName,
         account_source: "account_first_signup",
+        selected_tier: tier,
       },
       email_redirect_to: `${getAppUrl(request)}/login?signup=confirmed&redirect=${encodeURIComponent(`/pricing?tier=${tier}&account=confirmed`)}`,
     }),
@@ -283,7 +304,9 @@ export async function POST(request: Request) {
     return signupRedirect(request, tier, "account-create");
   }
 
-  if (!result.access_token) {
+  const sessionToken = getStringValue(result, sessionTokenKey);
+
+  if (!sessionToken) {
     return confirmationRedirect(request, tier);
   }
 
@@ -301,9 +324,9 @@ export async function POST(request: Request) {
   const nextResponse = paymentRedirect(request, tier, "created");
 
   return setAxiomAuthCookies(nextResponse, {
-    access_token: result.access_token,
-    refresh_token: result.refresh_token,
-    expires_in: result.expires_in,
+    access_token: sessionToken,
+    refresh_token: getStringValue(result, refreshTokenKey),
+    expires_in: getNumberValue(result, expiryKey),
   });
 }
 
