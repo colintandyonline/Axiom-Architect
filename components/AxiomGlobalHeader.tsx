@@ -15,10 +15,14 @@ const publicPagePaths = new Set([
   "/refund-policy",
 ]);
 
+function isPublicPagePath(pathname: string) {
+  return publicPagePaths.has(pathname) || pathname.startsWith("/products/");
+}
+
 export function AxiomGlobalHeader() {
   const pathname = usePathname();
 
-  if (!publicPagePaths.has(pathname)) {
+  if (!isPublicPagePath(pathname)) {
     return null;
   }
 

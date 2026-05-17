@@ -220,22 +220,38 @@ export default async function PricingPage() {
                 </ul>
 
                 {isSignedIn ? (
-                  <form action="/api/checkout" method="post" className="mt-8">
-                    <input type="hidden" name="tier" value={tier.slug} />
-                    <button
-                      type="submit"
+                  <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                    <a
+                      href={`/products/${tier.slug}`}
+                      className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f]/45 bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 hover:border-black hover:bg-white hover:text-black group-hover:!border-black group-hover:!bg-white group-hover:!text-black"
+                    >
+                      Learn more
+                    </a>
+                    <form action="/api/checkout" method="post">
+                      <input type="hidden" name="tier" value={tier.slug} />
+                      <button
+                        type="submit"
+                        className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-black hover:text-white group-hover:!border-black group-hover:!bg-black group-hover:!text-white"
+                      >
+                        Continue to checkout
+                      </button>
+                    </form>
+                  </div>
+                ) : (
+                  <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                    <a
+                      href={`/products/${tier.slug}`}
+                      className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f]/45 bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 hover:border-black hover:bg-white hover:text-black group-hover:!border-black group-hover:!bg-white group-hover:!text-black"
+                    >
+                      Learn more
+                    </a>
+                    <a
+                      href={`/signup?tier=${tier.slug}&account=required`}
                       className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-black hover:text-white group-hover:!border-black group-hover:!bg-black group-hover:!text-white"
                     >
-                      Continue to checkout
-                    </button>
-                  </form>
-                ) : (
-                  <a
-                    href={`/signup?tier=${tier.slug}&account=required`}
-                    className="mt-8 inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-black hover:text-white group-hover:!border-black group-hover:!bg-black group-hover:!text-white"
-                  >
-                    Start this package
-                  </a>
+                      Start this package
+                    </a>
+                  </div>
                 )}
               </article>
             ))}

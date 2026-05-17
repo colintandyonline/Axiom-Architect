@@ -39,6 +39,10 @@ const legalLinks = [
   { label: "Refund / Service Delivery", href: "/refund-policy" },
 ];
 
+function isPublicPagePath(pathname: string) {
+  return publicPagePaths.has(pathname) || pathname.startsWith("/products/");
+}
+
 function FooterColumn({
   title,
   links,
@@ -109,7 +113,7 @@ export function AxiomGlobalFooter() {
     };
   }, []);
 
-  if (!publicPagePaths.has(pathname)) {
+  if (!isPublicPagePath(pathname)) {
     return null;
   }
 
