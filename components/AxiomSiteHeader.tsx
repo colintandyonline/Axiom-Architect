@@ -25,6 +25,13 @@ const coreSystemLinks = [
   { label: "Operating Packs", href: "https://axiom-studio.co/collections/operating-packs" },
 ];
 
+const legalLinks = [
+  { label: "Terms", href: "/terms" },
+  { label: "Privacy", href: "/privacy" },
+  { label: "Cookies", href: "/cookies" },
+  { label: "Refund Policy", href: "/refund-policy" },
+];
+
 function MenuSection({
   title,
   links,
@@ -204,6 +211,7 @@ export function AxiomSiteHeader() {
           <MenuSection title="Services" links={serviceLinks} />
           {accountActions}
           <MenuSection title="Core Systems" links={coreSystemLinks} external />
+          <MenuSection title="Legal" links={legalLinks} />
           <section className="border border-[#9ed39f]/20 bg-[#061008]/58 p-3">
             <p className="px-1 pb-3 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">
               Axiom Studio
@@ -247,6 +255,7 @@ export function AxiomSiteHeader() {
           <MenuSection title="Services" links={serviceLinks} onNavigate={closeMenu} />
           {accountActions}
           <MenuSection title="Core Systems" links={coreSystemLinks} external onNavigate={closeMenu} />
+          <MenuSection title="Legal" links={legalLinks} onNavigate={closeMenu} />
 
           <section className="border border-[#9ed39f]/20 bg-[#061008]/58 p-3">
             <p className="px-1 pb-3 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">
