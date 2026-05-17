@@ -234,12 +234,20 @@ function TierCard({ tier }: { tier: (typeof tiers)[number] }) {
         ))}
       </ul>
 
-      <a
-        href={tier.href}
-        className="mt-8 inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-white group-hover:border-black group-hover:bg-black group-hover:text-white"
-      >
-        {tier.slug === "architect-residency" ? "Start residency" : "Buy now"}
-      </a>
+      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <a
+          href={`/products/${tier.slug}`}
+          className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f]/45 bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 hover:border-black hover:bg-white hover:text-black group-hover:!border-black group-hover:!bg-white group-hover:!text-black"
+        >
+          Learn more
+        </a>
+        <a
+          href={tier.href}
+          className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-black hover:text-white group-hover:!border-black group-hover:!bg-black group-hover:!text-white"
+        >
+          {tier.slug === "architect-residency" ? "Start residency" : "Buy now"}
+        </a>
+      </div>
     </article>
   );
 }
