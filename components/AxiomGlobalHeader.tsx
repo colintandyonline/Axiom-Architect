@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { AxiomSiteHeader } from "./AxiomSiteHeader";
 
-const publicPagePaths = new Set(["/", "/audit", "/pricing", "/about"]);
+const publicPagePaths = new Set(["/", "/audit", "/pricing", "/about", "/contact"]);
 
 export function AxiomGlobalHeader() {
   const pathname = usePathname();
