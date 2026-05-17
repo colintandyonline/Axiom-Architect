@@ -33,10 +33,10 @@ function MenuSection({
   title: string;
   links: Array<{ label: string; href: string }>;
   external?: boolean;
-  onNavigate: () => void;
+  onNavigate?: () => void;
 }) {
   return (
-    <section className="border border-[#9ed39f]/22 bg-[#061008]/60 p-3">
+    <section className="border border-[#9ed39f]/20 bg-[#061008]/58 p-3">
       <p className="px-1 pb-3 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">
         {title}
       </p>
@@ -48,13 +48,31 @@ function MenuSection({
             target={external ? "_blank" : undefined}
             rel={external ? "noreferrer" : undefined}
             onClick={onNavigate}
-            className="border border-[#9ed39f]/18 bg-black px-4 py-4 text-[0.72rem] font-black uppercase tracking-[0.15em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
+            className="border border-[#9ed39f]/16 bg-black px-4 py-4 text-[0.72rem] font-black uppercase tracking-[0.14em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
           >
             {link.label}
           </a>
         ))}
       </div>
     </section>
+  );
+}
+
+function BrandLockup({ compact = false, onNavigate }: { compact?: boolean; onNavigate?: () => void }) {
+  return (
+    <a href="/" onClick={onNavigate} aria-label="Axiom Architect home" className="flex min-w-0 items-center gap-3">
+      <span className={compact ? "relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden border border-[#9ed39f]/40 bg-black" : "relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden border border-[#9ed39f]/40 bg-black shadow-[0_0_22px_rgba(158,211,159,0.15)]"}>
+        <Image src="/brand/axiom-logo.png" alt="" width={compact ? 48 : 64} height={compact ? 48 : 64} priority={!compact} className="h-full w-full object-contain" />
+      </span>
+      <span className="min-w-0">
+        <span className={compact ? "block text-[0.78rem] font-black uppercase tracking-[0.2em] text-white" : "block text-[0.92rem] font-black uppercase tracking-[0.22em] text-white"}>
+          Axiom Architect
+        </span>
+        <span className={compact ? "mt-1 block text-[0.58rem] uppercase tracking-[0.16em] text-[#9ed39f]/78" : "mt-2 block text-[0.62rem] uppercase tracking-[0.17em] text-[#9ed39f]/82"}>
+          {compact ? "Intelligent work systems" : "The architecture behind intelligent work"}
+        </span>
+      </span>
+    </a>
   );
 }
 
@@ -106,24 +124,43 @@ export function AxiomSiteHeader() {
   const primaryHref = signedIn ? "/dashboard" : "/signup";
   const primaryLabel = signedIn ? "Dashboard" : "Start Audit";
 
+  const accountActions = (
+    <section className="border border-[#9ed39f]/20 bg-[#061008]/58 p-3">
+      <p className="px-1 pb-3 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">
+        Account
+      </p>
+      <div className="grid gap-2">
+        <a
+          href={primaryHref}
+          onClick={closeMenu}
+          className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-black transition hover:bg-white"
+        >
+          {primaryLabel}
+        </a>
+        <a
+          href={authHref}
+          onClick={closeMenu}
+          className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f]/45 bg-black px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
+        >
+          {authLabel}
+        </a>
+      </div>
+    </section>
+  );
+
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-[#9ed39f]/30 bg-black/94 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <a href="/" aria-label="Axiom Architect home" className="flex min-w-0 items-center gap-4">
-            <span className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden border border-[#9ed39f]/40 bg-black shadow-[0_0_22px_rgba(158,211,159,0.15)]">
-              <Image src="/brand/axiom-logo.png" alt="" width={64} height={64} priority className="h-full w-full object-contain" />
-            </span>
-            <span className="min-w-0">
-              <span className="block max-w-[calc(100vw-11rem)] text-[0.88rem] font-black uppercase tracking-[0.22em] text-white sm:max-w-none sm:text-[0.98rem] sm:tracking-[0.28em]">
-                Axiom Architect
-              </span>
-              <span className="mt-2 hidden text-[0.7rem] uppercase tracking-[0.24em] text-[#9ed39f]/86 sm:block">
-                The architecture behind intelligent work
-              </span>
-            </span>
-          </a>
+      <style>{`
+        @media (min-width: 1024px) {
+          body {
+            padding-left: 23rem;
+          }
+        }
+      `}</style>
 
+      <header className="sticky top-0 z-50 border-b border-[#9ed39f]/30 bg-black/94 backdrop-blur-xl lg:hidden">
+        <div className="mx-auto flex w-full items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          <BrandLockup />
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
@@ -136,30 +173,44 @@ export function AxiomSiteHeader() {
         </div>
       </header>
 
+      <aside className="fixed left-0 top-0 z-50 hidden h-dvh w-[23rem] flex-col border-r border-[#9ed39f]/30 bg-black/96 shadow-[0_0_80px_rgba(0,0,0,0.5)] lg:flex">
+        <div className="border-b border-[#9ed39f]/24 p-5">
+          <BrandLockup />
+        </div>
+
+        <nav className="grid flex-1 gap-4 overflow-y-auto p-4" aria-label="Desktop sidebar navigation">
+          <MenuSection title="Main" links={mainLinks} />
+          <MenuSection title="Services" links={serviceLinks} />
+          {accountActions}
+          <MenuSection title="Core Systems" links={coreSystemLinks} external />
+          <section className="border border-[#9ed39f]/20 bg-[#061008]/58 p-3">
+            <p className="px-1 pb-3 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">
+              Axiom Studio
+            </p>
+            <a
+              href="https://axiom-studio.co/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-12 w-full items-center justify-center border border-[#9ed39f]/45 bg-black px-4 text-center text-[0.68rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
+            >
+              Visit Axiom Studio
+            </a>
+          </section>
+        </nav>
+      </aside>
+
       <div
-        className={`fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm transition-opacity duration-200 ${menuOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        className={`fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm transition-opacity duration-200 lg:hidden ${menuOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
         onClick={closeMenu}
         aria-hidden="true"
       />
 
       <aside
-        className={`fixed right-0 top-0 z-[90] flex h-dvh w-[min(92vw,28rem)] transform flex-col border-l border-[#9ed39f]/35 bg-black shadow-[0_0_90px_rgba(0,0,0,0.62)] transition-transform duration-300 ${menuOpen ? "translate-x-0" : "translate-x-full"}`}
-        aria-label="Site navigation"
+        className={`fixed right-0 top-0 z-[90] flex h-dvh w-[min(92vw,28rem)] transform flex-col border-l border-[#9ed39f]/35 bg-black shadow-[0_0_90px_rgba(0,0,0,0.62)] transition-transform duration-300 lg:hidden ${menuOpen ? "translate-x-0" : "translate-x-full"}`}
+        aria-label="Mobile site navigation"
       >
         <div className="flex items-center justify-between gap-4 border-b border-[#9ed39f]/24 p-5">
-          <a href="/" onClick={closeMenu} className="flex min-w-0 items-center gap-3">
-            <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden border border-[#9ed39f]/40 bg-black">
-              <Image src="/brand/axiom-logo.png" alt="" width={48} height={48} className="h-full w-full object-contain" />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-[0.78rem] font-black uppercase tracking-[0.2em] text-white">
-                Axiom Architect
-              </span>
-              <span className="mt-1 block text-[0.58rem] uppercase tracking-[0.16em] text-[#9ed39f]/78">
-                Intelligent work systems
-              </span>
-            </span>
-          </a>
+          <BrandLockup compact onNavigate={closeMenu} />
           <button
             type="button"
             onClick={closeMenu}
@@ -173,32 +224,10 @@ export function AxiomSiteHeader() {
         <nav className="grid flex-1 gap-4 overflow-y-auto p-4" aria-label="Sidebar navigation">
           <MenuSection title="Main" links={mainLinks} onNavigate={closeMenu} />
           <MenuSection title="Services" links={serviceLinks} onNavigate={closeMenu} />
-
-          <section className="border border-[#9ed39f]/22 bg-[#061008]/60 p-3">
-            <p className="px-1 pb-3 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">
-              Account
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <a
-                href={authHref}
-                onClick={closeMenu}
-                className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f]/45 bg-black px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
-              >
-                {authLabel}
-              </a>
-              <a
-                href={primaryHref}
-                onClick={closeMenu}
-                className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-4 text-center text-[0.66rem] font-black uppercase tracking-[0.16em] text-black transition hover:bg-white"
-              >
-                {primaryLabel}
-              </a>
-            </div>
-          </section>
-
+          {accountActions}
           <MenuSection title="Core Systems" links={coreSystemLinks} external onNavigate={closeMenu} />
 
-          <section className="border border-[#9ed39f]/22 bg-[#061008]/60 p-3">
+          <section className="border border-[#9ed39f]/20 bg-[#061008]/58 p-3">
             <p className="px-1 pb-3 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">
               Axiom Studio
             </p>
