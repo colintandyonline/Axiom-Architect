@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const mainLinks = [
@@ -85,6 +86,7 @@ function BrandLockup({ compact = false, onNavigate }: { compact?: boolean; onNav
 }
 
 export function AxiomSiteHeader() {
+  const pathname = usePathname();
   const [signedIn, setSignedIn] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
@@ -120,6 +122,10 @@ export function AxiomSiteHeader() {
   }, []);
 
   useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
 
     return () => {
@@ -128,6 +134,8 @@ export function AxiomSiteHeader() {
   }, [menuOpen]);
 
   const closeMenu = () => setMenuOpen(false);
+  const closeDesktopSidebar = () => setDesktopSidebarOpen(false);
+  const openDesktopSidebar = () => setDesktopSidebarOpen(true);
   const authHref = signedIn ? "/logout" : "/login";
   const authLabel = signedIn ? "Log Out" : "Login";
   const primaryHref = signedIn ? "/dashboard" : "/signup";
@@ -185,7 +193,7 @@ export function AxiomSiteHeader() {
 
       <button
         type="button"
-        onClick={() => setDesktopSidebarOpen(true)}
+        onClick={openDesktopSidebar}
         className={`fixed left-5 top-5 z-[55] hidden min-h-12 border border-[#9ed39f]/45 bg-black/92 px-5 text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] shadow-[0_18px_50px_rgba(0,0,0,0.36)] transition hover:bg-[#9ed39f] hover:text-black lg:inline-flex lg:items-center lg:justify-center ${desktopSidebarOpen ? "pointer-events-none -translate-x-8 opacity-0" : "translate-x-0 opacity-100"}`}
         aria-label="Open sidebar navigation"
         aria-expanded={desktopSidebarOpen}
@@ -198,7 +206,7 @@ export function AxiomSiteHeader() {
           <BrandLockup />
           <button
             type="button"
-            onClick={() => setDesktopSidebarOpen(false)}
+            onClick={closeDesktopSidebar}
             aria-label="Close sidebar navigation"
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center border border-[#9ed39f]/35 text-xl leading-none text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black"
           >
