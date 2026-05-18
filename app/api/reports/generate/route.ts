@@ -202,6 +202,17 @@ async function patchReport(reportId: string, payload: Record<string, unknown>) {
   });
 }
 
+async function markReportGenerationFailed(reportId: string) {
+  try {
+    await patchReport(reportId, {
+      status: "failed",
+      updated_at: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Failed to mark report generation as failed", error);
+  }
+}
+
 function getProductSlug(report: ReportRecord, submission: WorkflowSubmissionRecord, order: OrderRecord | null) {
   const slug = report.tier_slug || submission.tier_slug || order?.tier_slug;
 
@@ -333,6 +344,8 @@ ${JSON.stringify(source, null, 2)}`;
 }
 
 export async function POST(request: Request) {
+  let activeReportId: string | null = null;
+
   try {
     if (getProvidedToken(request) !== getGenerationToken()) {
       return unauthorized();
@@ -340,6 +353,7 @@ export async function POST(request: Request) {
 
     const body = await readRequestBody(request);
     const report = await getQueuedReport(body.report_id);
+    activeReportId = report?.id ?? null;
 
     if (!report) {
       return NextResponse.json({
@@ -350,10 +364,7 @@ export async function POST(request: Request) {
     }
 
     if (!report.submission_id) {
-      await patchReport(report.id, {
-        status: "failed",
-        updated_at: new Date().toISOString(),
-      });
+      await markReportGenerationFailed(report.id);
 
       return NextResponse.json(
         {
@@ -373,10 +384,7 @@ export async function POST(request: Request) {
     const submission = await getWorkflowSubmission(report.submission_id);
 
     if (!submission) {
-      await patchReport(report.id, {
-        status: "failed",
-        updated_at: new Date().toISOString(),
-      });
+      await markReportGenerationFailed(report.id);
 
       return NextResponse.json(
         {
@@ -435,6 +443,10 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Axiom report generation failed", error);
+
+    if (activeReportId) {
+      await markReportGenerationFailed(activeReportId);
+    }
 
     return NextResponse.json(
       {
