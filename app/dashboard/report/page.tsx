@@ -4,9 +4,9 @@ import { getAxiomAuthContext } from "../../../lib/axiom-auth";
 import type { AxiomReportJson } from "../../../lib/axiom-report-types";
 
 export const metadata: Metadata = {
-  title: "Report Status | Axiom Architect",
+  title: "Workflow Report | Axiom Architect",
   description:
-    "View the status of your Axiom Architect workflow audit report.",
+    "View your Axiom Architect workflow report, recommendations, review gates, and implementation priorities.",
 };
 
 export const dynamic = "force-dynamic";
@@ -136,7 +136,7 @@ function labelFromStatus(status?: string | null) {
 
 function formatDate(value?: string | null) {
   if (!value) {
-    return "Not recorded yet";
+    return "Not prepared yet";
   }
 
   return new Intl.DateTimeFormat("en-GB", {
@@ -256,7 +256,7 @@ function WaitingReportState({
     {
       label: "02",
       title: "Report processing",
-      text: `Current report status: ${reportStatus}.`,
+      text: `Current stage: ${reportStatus}.`,
       state: hasWorkflow ? "active" : "pending",
     },
     {
@@ -272,13 +272,13 @@ function WaitingReportState({
       <div className="mx-auto grid max-w-[1280px] gap-8 lg:grid-cols-[0.82fr_1fr]">
         <article className={panelClass}>
           <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-            Report output
+            Report preparation
           </p>
           <h2 className="mt-5 text-[clamp(2.1rem,4vw,3.7rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
-            Diagnostic blueprint waiting for generation.
+            Your workflow report is being prepared.
           </h2>
           <p className="mt-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
-            The finished report will contain the current workflow diagnosis, bottlenecks, automation suitability, assistant opportunities, review gates, and implementation sequence.
+            Once ready, this page will show your workflow diagnosis, automation suitability, human review gates, and recommended implementation sequence.
           </p>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             <a
@@ -344,7 +344,7 @@ function RenderGeneratedReport({
       <div className="mx-auto grid max-w-[1280px] gap-8">
         {reportStatus === "Needs Review" && (
           <div className="rounded-[1.25rem] border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5 text-sm leading-7 text-[#e6f6e7]/78">
-            This report has been generated and is marked for review before final delivery.
+            This report is going through final checks before delivery.
           </div>
         )}
 
@@ -371,7 +371,7 @@ function RenderGeneratedReport({
         )}
 
         {scorecard && (
-          <SectionShell eyebrow="Scorecard" title="Workflow readiness and report confidence">
+          <SectionShell eyebrow="Scorecard" title="Workflow readiness and operating confidence">
             <div className="grid gap-5 lg:grid-cols-[0.38fr_1fr]">
               <div className="rounded-[1.25rem] border border-[#9ed39f]/24 bg-[#9ed39f] p-5 text-black">
                 <p className="text-[0.7rem] font-black uppercase tracking-[0.18em] text-black/70">
@@ -480,7 +480,7 @@ function RenderGeneratedReport({
                 <div className="mt-4"><ListBlock items={safeArray(automation.suitable_later)} /></div>
               </div>
               <div className="border border-[#9ed39f]/22 bg-black/38 p-5">
-                <h3 className="text-lg font-black uppercase tracking-[-0.04em] text-white">Not recommended</h3>
+                <h3 className="text-lg font-black uppercase tracking-[-0.04em] text-white">Keep human-controlled</h3>
                 <div className="mt-4"><ListBlock items={safeArray(automation.not_recommended)} /></div>
               </div>
             </div>
@@ -579,10 +579,10 @@ function RenderGeneratedReport({
 
         <div className="grid gap-8 lg:grid-cols-2">
           {upgrade && (
-            <SectionShell eyebrow="Upgrade recommendation" title="Suggested next step">
+            <SectionShell eyebrow="Next step" title="Suggested next move">
               <p className="text-base leading-8 text-[#e6f6e7]/80 sm:text-lg">{upgrade.recommendation}</p>
               <p className="mt-4 text-sm leading-7 text-[#e6f6e7]/72">
-                <strong className="text-[#9ed39f]">Why now or why not:</strong> {upgrade.why_now_or_why_not}
+                <strong className="text-[#9ed39f]">Why this is suggested:</strong> {upgrade.why_now_or_why_not}
               </p>
               <div className="mt-5">
                 <ListBlock items={safeArray(upgrade.evidence)} />
@@ -594,7 +594,7 @@ function RenderGeneratedReport({
           )}
 
           {diagnosis && (
-            <SectionShell eyebrow="Transparency" title="Assumptions and missing information">
+            <SectionShell eyebrow="Context" title="Assumptions and missing information">
               <div className="grid gap-5">
                 <div>
                   <h3 className="text-lg font-black uppercase tracking-[-0.04em] text-white">Assumptions</h3>
@@ -611,7 +611,7 @@ function RenderGeneratedReport({
 
         {delivery && (
           <section className="rounded-[1.5rem] border border-[#9ed39f]/35 bg-[#9ed39f] p-6 text-black sm:p-8">
-            <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-black/70">Delivery note</p>
+            <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-black/70">Client note</p>
             <h2 className="mt-3 text-[clamp(1.8rem,3vw,3rem)] font-black uppercase leading-[0.95] tracking-[-0.06em]">
               What this report means now
             </h2>
@@ -619,8 +619,8 @@ function RenderGeneratedReport({
               {delivery.client_expectation_note || delivery.dashboard_summary}
             </p>
             <div className="mt-6 flex flex-wrap gap-3 text-[0.68rem] font-black uppercase tracking-[0.15em]">
-              <span className="border border-black/25 px-3 py-2">PDF: {delivery.pdf_ready ? "Ready" : "Not ready"}</span>
-              <span className="border border-black/25 px-3 py-2">Email: {delivery.email_ready ? "Ready" : "Not ready"}</span>
+              <span className="border border-black/25 px-3 py-2">Dashboard report available</span>
+              <span className="border border-black/25 px-3 py-2">PDF version {delivery.pdf_ready ? "available" : "preparing"}</span>
             </div>
           </section>
         )}
@@ -663,9 +663,9 @@ export default async function ReportStatusPage({
       ? "Your workflow report is in progress."
       : "No report is active yet.";
   const heroCopy = canRenderReport
-    ? context.report?.client_summary || reportJson?.delivery?.dashboard_summary || "Your generated report is available below."
+    ? context.report?.client_summary || reportJson?.delivery?.dashboard_summary || "Your workflow report is available below."
     : hasWorkflow
-      ? "The intake has been received. This page tracks the report record before the finished blueprint is delivered."
+      ? "Your intake has been received. This page will update when the workflow report is ready."
       : "Complete the workflow intake first, then the report status will appear here.";
 
   return (
@@ -674,7 +674,7 @@ export default async function ReportStatusPage({
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.11)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.11)_1px,transparent_1px)] [background-size:44px_44px]" />
         <div className="relative mx-auto max-w-[1280px]">
           <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-            Report dashboard
+            Workflow report
           </p>
           <div className="mt-6 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
             <div>
@@ -698,8 +698,8 @@ export default async function ReportStatusPage({
             ["Package", serviceName],
             ["Intake", intakeStatus],
             ["Report", reportStatus],
-            ["Quality", context.report?.quality_score !== null && context.report?.quality_score !== undefined ? `${context.report.quality_score}/12` : "Pending"],
-            ["Updated", reportUpdated],
+            ["Review", context.report?.quality_status === "ready" ? "Reviewed" : context.report?.quality_status === "needs_fixes" ? "Review needed" : context.report?.quality_status === "blocked" ? "Revision needed" : "Pending"],
+            ["Prepared", reportUpdated],
           ].map(([label, value]) => (
             <article key={label} className="rounded-[1.25rem] border border-black bg-[#061009] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.26)]">
               <span className="mb-5 block h-2 w-2 bg-[#9ed39f]" />
