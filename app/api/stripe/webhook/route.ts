@@ -79,6 +79,56 @@ function getSupabaseConfig() {
   };
 }
 
+function classifyWebhookError(error: unknown) {
+  const message = error instanceof Error ? error.message : "Unknown webhook error";
+
+  if (message.includes("Missing STRIPE_SECRET_KEY")) {
+    return "missing_stripe_secret_key";
+  }
+
+  if (message.includes("Missing STRIPE_WEBHOOK_SECRET")) {
+    return "missing_stripe_webhook_secret";
+  }
+
+  if (message.includes("Missing NEXT_PUBLIC_SUPABASE_URL")) {
+    return "missing_supabase_url";
+  }
+
+  if (message.includes("Missing SUPABASE_SERVICE_ROLE_KEY")) {
+    return "missing_supabase_service_role_key";
+  }
+
+  if (message.includes("No active product found")) {
+    return "missing_active_product";
+  }
+
+  if (message.includes("No active intake schema found")) {
+    return "missing_active_intake_schema";
+  }
+
+  if (message.includes("missing a valid Axiom product slug")) {
+    return "missing_valid_product_slug";
+  }
+
+  if (message.includes("missing customer email")) {
+    return "missing_customer_email";
+  }
+
+  if (message.includes("Customer upsert did not return")) {
+    return "customer_upsert_failed";
+  }
+
+  if (message.includes("Order upsert did not return")) {
+    return "order_upsert_failed";
+  }
+
+  if (message.includes("Database request failed")) {
+    return "database_request_failed";
+  }
+
+  return "webhook_handler_failed";
+}
+
 async function supabaseFetch<T>(
   path: string,
   options: RequestInit & { prefer?: string } = {},
@@ -317,8 +367,26 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 }
 
 export async function POST(request: Request) {
-  const stripe = getStripeClient();
-  const webhookSecret = getWebhookSecret();
+  let stripe: Stripe;
+  let webhookSecret: string;
+
+  try {
+    stripe = getStripeClient();
+    webhookSecret = getWebhookSecret();
+  } catch (error) {
+    const code = classifyWebhookError(error);
+
+    console.error("Stripe webhook setup failed", { code, error });
+
+    return NextResponse.json(
+      {
+        error: "Webhook setup failed",
+        code,
+      },
+      { status: 500 },
+    );
+  }
+
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");
 
@@ -353,7 +421,16 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Stripe webhook handling failed", error);
-    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
+    const code = classifyWebhookError(error);
+
+    console.error("Stripe webhook handling failed", { code, error });
+
+    return NextResponse.json(
+      {
+        error: "Webhook handler failed",
+        code,
+      },
+      { status: 500 },
+    );
   }
 }
