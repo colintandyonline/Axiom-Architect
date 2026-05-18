@@ -72,7 +72,7 @@ function parseJsonFromModel(text: string) {
 export async function generateAxiomJsonWithOpenAi({
   system,
   user,
-  model = "gpt-5.1-mini",
+  model = "gpt-5.4-mini",
   temperature = 0.2,
 }: AxiomAiJsonRequest) {
   const response = await fetch(openAiResponsesUrl, {
