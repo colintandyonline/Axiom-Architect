@@ -36,6 +36,7 @@ type AxiomCustomer = {
 const sessionTokenKey = "access" + "_token";
 const refreshTokenKey = "refresh" + "_token";
 const expiryKey = "expires" + "_in";
+const productionAppUrl = "https://www.axiom-architect.co";
 
 function isTierSlug(value: string | null): value is TierSlug {
   return (
@@ -79,11 +80,28 @@ function getSupabaseServiceConfig() {
 }
 
 function getAppUrl(request: Request) {
-  return (
+  const configuredUrl =
     process.env.APP_URL?.replace(/\/$/, "") ||
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    new URL(request.url).origin
-  );
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+
+  if (configuredUrl) {
+    return configuredUrl;
+  }
+
+  const requestUrl = new URL(request.url);
+
+  if (requestUrl.hostname.endsWith(".vercel.app")) {
+    return productionAppUrl;
+  }
+
+  return requestUrl.origin;
+}
+
+function getPostSignupRedirectUrl(request: Request, tier: TierSlug) {
+  const url = new URL("/login", getAppUrl(request));
+  url.searchParams.set("signup", "confirmed");
+  url.searchParams.set("redirect", `/pricing?tier=${tier}&account=confirmed`);
+  return url.toString();
 }
 
 function cleanField(formData: FormData, name: string) {
@@ -92,28 +110,28 @@ function cleanField(formData: FormData, name: string) {
 }
 
 function signupRedirect(request: Request, tier: TierSlug, error: string) {
-  const url = new URL("/signup", request.url);
+  const url = new URL("/signup", getAppUrl(request));
   url.searchParams.set("tier", tier);
   url.searchParams.set("error", error);
   return NextResponse.redirect(url, 303);
 }
 
 function confirmationRedirect(request: Request, tier: TierSlug) {
-  const url = new URL("/signup", request.url);
+  const url = new URL("/signup", getAppUrl(request));
   url.searchParams.set("tier", tier);
   url.searchParams.set("account", "check_email");
   return NextResponse.redirect(url, 303);
 }
 
 function paymentRedirect(request: Request, tier: TierSlug, state: string) {
-  const url = new URL("/pricing", request.url);
+  const url = new URL("/pricing", getAppUrl(request));
   url.searchParams.set("tier", tier);
   url.searchParams.set("account", state);
   return NextResponse.redirect(url, 303);
 }
 
 function loginRedirect(request: Request, tier: TierSlug, state: string) {
-  const url = new URL("/login", request.url);
+  const url = new URL("/login", getAppUrl(request));
   url.searchParams.set("signup", state);
   url.searchParams.set("redirect", `/pricing?tier=${tier}&account=confirmed`);
   return NextResponse.redirect(url, 303);
@@ -269,7 +287,11 @@ export async function POST(request: Request) {
     return signupRedirect(request, tier, "password-match");
   }
 
-  const response = await fetch(`${publicConfig.url}/auth/v1/signup`, {
+  const postSignupRedirectUrl = getPostSignupRedirectUrl(request, tier);
+  const signupUrl = new URL(`${publicConfig.url}/auth/v1/signup`);
+  signupUrl.searchParams.set("redirect_to", postSignupRedirectUrl);
+
+  const response = await fetch(signupUrl.toString(), {
     method: "POST",
     cache: "no-store",
     headers: {
@@ -285,7 +307,7 @@ export async function POST(request: Request) {
         account_source: "account_first_signup",
         selected_tier: tier,
       },
-      email_redirect_to: `${getAppUrl(request)}/login?signup=confirmed&redirect=${encodeURIComponent(`/pricing?tier=${tier}&account=confirmed`)}`,
+      email_redirect_to: postSignupRedirectUrl,
     }),
   });
 
@@ -331,6 +353,6 @@ export async function POST(request: Request) {
 }
 
 export function GET(request: Request) {
-  const url = new URL("/signup", request.url);
+  const url = new URL("/signup", getAppUrl(request));
   return NextResponse.redirect(url, 303);
 }
