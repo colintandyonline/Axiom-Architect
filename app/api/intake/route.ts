@@ -34,39 +34,9 @@ type IntakeSchemaRecord = {
   } | null;
 };
 
-const legacyColumnNames = [
-  "business_type",
-  "user_role",
-  "team_size",
-  "industry",
-  "business_description",
-  "workflow_title",
-  "workflow_goal",
-  "people_involved",
-  "workflow_frequency",
-  "workflow_trigger",
-  "current_process_steps",
-  "tools_used",
-  "inputs_needed",
-  "outputs_produced",
-  "handoffs",
-  "information_storage",
-  "workflow_slowdowns",
-  "manual_repetition",
-  "mistake_points",
-  "delay_causes",
-  "team_or_client_frustrations",
-  "failure_impact",
-  "human_approval_needed",
-  "risk_areas",
-  "protected_decisions",
-  "ideal_workflow",
-  "assistant_support_requested",
-  "tools_open_to_using",
-  "success_definition",
-] as const;
-
-const legacyColumnSet = new Set<string>(legacyColumnNames);
+type AuditReportRecord = {
+  id: string;
+};
 
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -211,6 +181,43 @@ function buildStagePayload(schema: IntakeSchemaRecord | null, fieldValues: Recor
   }));
 }
 
+async function queueAuditReport(workflow: WorkflowRecord, submittedAt: string) {
+  const existingReports = await supabaseFetch<AuditReportRecord[]>(
+    `axiom_audit_reports?select=id&submission_id=eq.${encodeURIComponent(workflow.id)}&limit=1`,
+  );
+
+  const existingReport = existingReports[0];
+  const reportPayload = {
+    submission_id: workflow.id,
+    customer_id: workflow.customer_id,
+    order_id: workflow.order_id,
+    product_id: workflow.product_id,
+    tier_slug: workflow.tier_slug,
+    report_schema_version: 1,
+    status: "queued",
+    updated_at: submittedAt,
+  };
+
+  if (existingReport?.id) {
+    await supabaseFetch(
+      `axiom_audit_reports?id=eq.${encodeURIComponent(existingReport.id)}`,
+      {
+        method: "PATCH",
+        prefer: "return=minimal",
+        body: JSON.stringify(reportPayload),
+      },
+    );
+
+    return;
+  }
+
+  await supabaseFetch("axiom_audit_reports", {
+    method: "POST",
+    prefer: "return=minimal",
+    body: JSON.stringify(reportPayload),
+  });
+}
+
 export async function POST(request: Request) {
   const formData = await request.formData();
   const submissionId = cleanField(formData, "submission_id");
@@ -243,10 +250,6 @@ export async function POST(request: Request) {
       fieldKeys.map((fieldName) => [fieldName, cleanField(formData, fieldName)]),
     );
 
-    const legacyColumnValues = Object.fromEntries(
-      Object.entries(fieldValues).filter(([fieldName]) => legacyColumnSet.has(fieldName)),
-    );
-
     const submittedAt = new Date().toISOString();
     const workflowTitle = fieldValues.workflow_title || "Untitled workflow";
     const intakePayload = {
@@ -262,33 +265,17 @@ export async function POST(request: Request) {
         method: "PATCH",
         prefer: "return=minimal",
         body: JSON.stringify({
-          ...legacyColumnValues,
           workflow_title: workflowTitle,
           intake_payload: intakePayload,
           intake_schema_id: schema.id,
           intake_schema_version: schema.version,
-          current_stage: fieldKeys.length,
           status: "submitted",
-          intake_completed_at: submittedAt,
-          submitted_at: submittedAt,
+          updated_at: submittedAt,
         }),
       },
     );
 
-    await supabaseFetch("axiom_audit_reports?on_conflict=submission_id", {
-      method: "POST",
-      prefer: "resolution=merge-duplicates,return=minimal",
-      body: JSON.stringify({
-        submission_id: workflow.id,
-        customer_id: workflow.customer_id,
-        order_id: workflow.order_id,
-        product_id: workflow.product_id,
-        tier_slug: workflow.tier_slug,
-        report_schema_version: 1,
-        status: "queued",
-        updated_at: submittedAt,
-      }),
-    });
+    await queueAuditReport(workflow, submittedAt);
 
     return redirectToReceived(request, submissionId);
   } catch (error) {
