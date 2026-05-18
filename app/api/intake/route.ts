@@ -38,6 +38,13 @@ type AuditReportRecord = {
   id: string;
 };
 
+const universalWorkflowTitleField: SchemaField = {
+  key: "workflow_title",
+  label: "Workflow name",
+  type: "input",
+  required: true,
+};
+
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -139,6 +146,20 @@ async function getSchemaForWorkflow(workflow: WorkflowRecord) {
   return (await getSchemaById(workflow.intake_schema_id)) || (await getActiveSchemaByProduct(workflow.product_id));
 }
 
+function schemaHasWorkflowTitle(schema: IntakeSchemaRecord | null) {
+  const stages = schema?.schema_json?.stages;
+
+  if (!Array.isArray(stages)) {
+    return false;
+  }
+
+  return stages.some((stage) =>
+    Array.isArray(stage.fields)
+      ? stage.fields.some((field) => field.key === universalWorkflowTitleField.key)
+      : false,
+  );
+}
+
 function getSchemaFieldKeys(schema: IntakeSchemaRecord | null) {
   const stages = schema?.schema_json?.stages;
 
@@ -146,7 +167,7 @@ function getSchemaFieldKeys(schema: IntakeSchemaRecord | null) {
     return [];
   }
 
-  return Array.from(
+  const fieldKeys = Array.from(
     new Set(
       stages.flatMap((stage) =>
         Array.isArray(stage.fields)
@@ -157,6 +178,12 @@ function getSchemaFieldKeys(schema: IntakeSchemaRecord | null) {
       ),
     ),
   );
+
+  if (!fieldKeys.includes(universalWorkflowTitleField.key)) {
+    return [universalWorkflowTitleField.key, ...fieldKeys];
+  }
+
+  return fieldKeys;
 }
 
 function buildStagePayload(schema: IntakeSchemaRecord | null, fieldValues: Record<string, string>) {
@@ -166,19 +193,26 @@ function buildStagePayload(schema: IntakeSchemaRecord | null, fieldValues: Recor
     return [];
   }
 
-  return stages.map((stage, index) => ({
-    number: stage.number || String(index + 1).padStart(2, "0"),
-    title: stage.title || `Stage ${index + 1}`,
-    fields: Array.isArray(stage.fields)
-      ? stage.fields.map((field) => ({
-          key: field.key,
-          label: field.label || field.key,
-          type: field.type || "textarea",
-          required: Boolean(field.required),
-          value: fieldValues[field.key] || "",
-        }))
-      : [],
-  }));
+  const shouldInjectWorkflowTitle = !schemaHasWorkflowTitle(schema);
+
+  return stages.map((stage, index) => {
+    const stageFields = Array.isArray(stage.fields) ? stage.fields : [];
+    const fields = shouldInjectWorkflowTitle && index === 0
+      ? [universalWorkflowTitleField, ...stageFields]
+      : stageFields;
+
+    return {
+      number: stage.number || String(index + 1).padStart(2, "0"),
+      title: stage.title || `Stage ${index + 1}`,
+      fields: fields.map((field) => ({
+        key: field.key,
+        label: field.label || field.key,
+        type: field.type || "textarea",
+        required: Boolean(field.required),
+        value: fieldValues[field.key] || "",
+      })),
+    };
+  });
 }
 
 async function queueAuditReport(workflow: WorkflowRecord, submittedAt: string) {
@@ -251,12 +285,19 @@ export async function POST(request: Request) {
     );
 
     const submittedAt = new Date().toISOString();
-    const workflowTitle = fieldValues.workflow_title || "Untitled workflow";
+    const workflowTitle =
+      cleanField(formData, universalWorkflowTitleField.key) ||
+      fieldValues.workflow_title ||
+      "Untitled workflow";
+    const intakeFieldValues = {
+      ...fieldValues,
+      workflow_title: workflowTitle,
+    };
     const intakePayload = {
       schema_id: schema.id,
       schema_version: schema.version,
-      fields: fieldValues,
-      stages: buildStagePayload(schema, fieldValues),
+      fields: intakeFieldValues,
+      stages: buildStagePayload(schema, intakeFieldValues),
     };
 
     await supabaseFetch(

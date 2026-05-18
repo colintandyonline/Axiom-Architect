@@ -76,6 +76,14 @@ type IntakeContext = {
   schema: IntakeSchemaRecord | null;
 };
 
+const universalWorkflowTitleField: SchemaField = {
+  key: "workflow_title",
+  label: "Workflow name",
+  type: "input",
+  placeholder: "Example: Seller verification workflow, monthly reporting process, customer onboarding sequence",
+  required: true,
+};
+
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -172,6 +180,20 @@ async function getIntakeContext(submissionId?: string): Promise<IntakeContext | 
   };
 }
 
+function schemaHasWorkflowTitle(schema?: IntakeSchemaRecord | null) {
+  const stages = schema?.schema_json?.stages;
+
+  if (!Array.isArray(stages)) {
+    return false;
+  }
+
+  return stages.some((stage) =>
+    Array.isArray(stage.fields)
+      ? stage.fields.some((field) => field.key === universalWorkflowTitleField.key)
+      : false,
+  );
+}
+
 function getSchemaStages(schema?: IntakeSchemaRecord | null): SchemaStage[] {
   const stages = schema?.schema_json?.stages;
 
@@ -179,15 +201,24 @@ function getSchemaStages(schema?: IntakeSchemaRecord | null): SchemaStage[] {
     return [];
   }
 
+  const shouldInjectWorkflowTitle = !schemaHasWorkflowTitle(schema);
+
   return stages
-    .map((stage, index) => ({
-      number: stage.number || String(index + 1).padStart(2, "0"),
-      title: stage.title || `Stage ${index + 1}`,
-      description: stage.description || "Complete the fields for this stage.",
-      fields: Array.isArray(stage.fields)
+    .map((stage, index) => {
+      const fields = Array.isArray(stage.fields)
         ? stage.fields.filter((field) => Boolean(field.key && field.label))
-        : [],
-    }))
+        : [];
+      const stageFields = shouldInjectWorkflowTitle && index === 0
+        ? [universalWorkflowTitleField, ...fields]
+        : fields;
+
+      return {
+        number: stage.number || String(index + 1).padStart(2, "0"),
+        title: stage.title || `Stage ${index + 1}`,
+        description: stage.description || "Complete the fields for this stage.",
+        fields: stageFields,
+      };
+    })
     .filter((stage) => stage.fields.length > 0);
 }
 
