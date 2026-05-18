@@ -3,6 +3,14 @@ import Stripe from "stripe";
 
 export const runtime = "nodejs";
 
+type ProductSlug =
+  | "workflow-audit"
+  | "workflow-blueprint"
+  | "custom-operating-pack"
+  | "workflow-stewardship"
+  | "departmental-ecosystem"
+  | "architect-residency";
+
 type CustomerRecord = {
   id: string;
 };
@@ -21,6 +29,17 @@ type IntakeSchemaRecord = {
 type OrderRecord = {
   id: string;
 };
+
+function isProductSlug(value: string | null | undefined): value is ProductSlug {
+  return (
+    value === "workflow-audit" ||
+    value === "workflow-blueprint" ||
+    value === "custom-operating-pack" ||
+    value === "workflow-stewardship" ||
+    value === "departmental-ecosystem" ||
+    value === "architect-residency"
+  );
+}
 
 function getStripeClient() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -109,7 +128,28 @@ function getMetadataValue(
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
-async function getProductBySlug(slug: string) {
+function getCheckoutProductSlug(session: Stripe.Checkout.Session) {
+  const tier = getMetadataValue(session, "tier") || getMetadataValue(session, "product_slug");
+
+  return isProductSlug(tier) ? tier : null;
+}
+
+function isAxiomCheckoutSession(session: Stripe.Checkout.Session) {
+  const metadata = session.metadata ?? {};
+  const productSlug = getCheckoutProductSlug(session);
+
+  return Boolean(
+    productSlug &&
+      (metadata.tier ||
+        metadata.product_slug ||
+        metadata.auth_user_id ||
+        metadata.axiom_customer_id ||
+        metadata.customer_email ||
+        metadata.service_name),
+  );
+}
+
+async function getProductBySlug(slug: ProductSlug) {
   const products = await supabaseFetch<ProductRecord[]>(
     `axiom_products?select=id,slug,name&slug=eq.${encodeURIComponent(slug)}&active=eq.true&limit=1`,
   );
@@ -253,7 +293,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
-  const tier = getMetadataValue(session, "tier", "workflow-blueprint");
+  const tier = getCheckoutProductSlug(session);
+
+  if (!tier) {
+    throw new Error("Checkout session is missing a valid Axiom product slug");
+  }
+
   const product = await getProductBySlug(tier);
   const schema = await getActiveIntakeSchema(product.id);
   const customer = await upsertCustomer(session);
@@ -292,7 +337,18 @@ export async function POST(request: Request) {
 
   try {
     if (event.type === "checkout.session.completed") {
-      await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+      const session = event.data.object as Stripe.Checkout.Session;
+
+      if (!isAxiomCheckoutSession(session)) {
+        console.warn("Ignoring non-Axiom checkout.session.completed event", {
+          eventId: event.id,
+          sessionId: session.id,
+        });
+
+        return NextResponse.json({ received: true, ignored: true });
+      }
+
+      await handleCheckoutCompleted(session);
     }
 
     return NextResponse.json({ received: true });
