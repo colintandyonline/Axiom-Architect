@@ -126,6 +126,10 @@ function classifyWebhookError(error: unknown) {
     return "database_request_failed";
   }
 
+  if (message.includes("Unexpected end of JSON input")) {
+    return "empty_database_response";
+  }
+
   return "webhook_handler_failed";
 }
 
@@ -149,16 +153,17 @@ async function supabaseFetch<T>(
     headers,
   });
 
+  const responseText = await response.text();
+
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Database request failed: ${response.status} ${errorText}`);
+    throw new Error(`Database request failed: ${response.status} ${responseText}`);
   }
 
-  if (response.status === 204) {
+  if (!responseText) {
     return undefined as T;
   }
 
-  return (await response.json()) as T;
+  return JSON.parse(responseText) as T;
 }
 
 function getSessionString(
