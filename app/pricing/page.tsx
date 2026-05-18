@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { AxiomSiteHeader } from "../../components/AxiomSiteHeader";
 import { ProductSystemVisual } from "../../components/ProductSystemVisual";
 import { getAxiomAuthContext } from "../../lib/axiom-auth";
 
@@ -145,7 +144,6 @@ export default async function PricingPage() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
-      <AxiomSiteHeader />
       <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(158,211,159,0.18),#041008_34%,#000_76%)] px-4 py-10 sm:px-6 lg:px-8">
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.11)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.11)_1px,transparent_1px)] [background-size:44px_44px]" />
 
