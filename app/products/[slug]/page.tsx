@@ -22,7 +22,7 @@ type ProductInfo = {
   questions: string[];
   deliverables: string[];
   process: string[];
-  boundaries: string[];
+  guidance: string[];
 };
 
 const products: Record<ProductSlug, ProductInfo> = {
@@ -33,18 +33,18 @@ const products: Record<ProductSlug, ProductInfo> = {
     price: "$49",
     headline: "A clear diagnostic for one messy workflow.",
     summary:
-      "Workflow Audit is the entry point for turning a real operational process into a structured diagnosis. It maps what happens now, where the workflow slows down, where AI may help, where automation would be unsafe, and what the next practical steps should be.",
+      "Workflow Audit turns one unclear process into a practical diagnosis. It shows what is slowing the workflow down, where AI may help, what needs human review, and what should happen next.",
     outcome:
-      "You finish with a clear read on one workflow: what is broken, what can be improved, what should stay human, and what should happen next.",
+      "You finish with a clear read on one workflow: what is broken, what can be improved, what should stay human, and what to do next.",
     bestFor: [
       "A single workflow that feels slow, inconsistent, manual, or hard to explain.",
       "A founder, operator, consultant, or small team that wants clarity before buying tools or building automations.",
       "A process that already exists but has never been properly mapped.",
-      "A first step before committing to a deeper blueprint or operating pack.",
+      "A first step before moving into a deeper blueprint or operating pack.",
     ],
     questions: [
       "Where is this workflow losing time or quality?",
-      "Which parts could AI support without taking over judgement?",
+      "Which parts could AI support without replacing judgement?",
       "Where are the risk points, approval gates, and handoffs?",
       "What should be fixed first before tools are added?",
     ],
@@ -58,15 +58,15 @@ const products: Record<ProductSlug, ProductInfo> = {
       "Branded audit report.",
     ],
     process: [
-      "Choose the Workflow Audit package and complete checkout.",
-      "Submit one workflow through the structured dashboard intake.",
-      "The workflow is reviewed against process, risk, handoff, tool, and AI-support criteria.",
-      "A diagnostic report is produced so you can decide what to change next.",
+      "Choose Workflow Audit and complete checkout.",
+      "Submit one workflow through your dashboard intake.",
+      "Axiom reviews the workflow for clarity, risk, handoffs, AI support, and improvement potential.",
+      "Your dashboard receives a focused diagnostic report.",
     ],
-    boundaries: [
-      "This is a diagnostic, not a full implementation build.",
-      "It does not configure your tools or write a complete operating manual.",
-      "It focuses on one workflow, not a full department or business-wide system.",
+    guidance: [
+      "Use the report to decide what to fix first.",
+      "Share it with anyone involved in the workflow so everyone works from the same map.",
+      "Move into a Blueprint when you are ready for a fuller implementation plan.",
     ],
   },
   "workflow-blueprint": {
@@ -76,7 +76,7 @@ const products: Record<ProductSlug, ProductInfo> = {
     price: "$149",
     headline: "A practical implementation plan for improving one workflow.",
     summary:
-      "Workflow Blueprint builds on the diagnostic layer and turns the findings into a future-state operating plan. It defines the improved workflow, where AI support belongs, which review gates protect quality, what tools may be useful, and how the change can be introduced over a realistic 30-day sequence.",
+      "Workflow Blueprint turns diagnosis into a future-state operating plan. It shows how the workflow should run, where AI support belongs, which review gates protect quality, and what sequence makes the change realistic.",
     outcome:
       "You finish with a clear implementation blueprint that shows how the workflow should operate, who or what supports each stage, and how to move from current state to future state.",
     bestFor: [
@@ -104,13 +104,13 @@ const products: Record<ProductSlug, ProductInfo> = {
     process: [
       "Choose Workflow Blueprint and complete checkout.",
       "Submit the workflow intake with enough operational detail for diagnosis and planning.",
-      "The workflow is mapped into current-state and future-state views.",
-      "You receive a blueprint that can guide tool setup, team briefing, or the next implementation phase.",
+      "Axiom maps the workflow into current-state and future-state views.",
+      "Your dashboard receives a blueprint you can use to plan the next improvement phase.",
     ],
-    boundaries: [
-      "This is an implementation plan, not a done-for-you technical build.",
-      "It does not guarantee that a third-party tool will support every recommendation exactly.",
-      "It should be reviewed before being applied to regulated, financial, legal, or safety-critical workflows.",
+    guidance: [
+      "Use the blueprint to align your team before changing tools or process steps.",
+      "Start with the first 7-day actions before moving into larger workflow changes.",
+      "Use the review gates as protection before adding automation.",
     ],
   },
   "custom-operating-pack": {
@@ -120,7 +120,7 @@ const products: Record<ProductSlug, ProductInfo> = {
     price: "$399",
     headline: "A reusable operating system for one important workflow.",
     summary:
-      "Custom Operating Pack turns the workflow plan into usable operating assets. It is for clients who need more than a report: a protocol, assistant guidance, reusable instruction blocks, workbook-style implementation support, handoff notes, and quality-control checkpoints.",
+      "Custom Operating Pack turns your workflow plan into usable operating assets: protocol, assistant guidance, reusable instruction blocks, handoff notes, workbook-style guidance, and quality-control checkpoints.",
     outcome:
       "You finish with a practical operating pack that can help you run, brief, delegate, or standardise the workflow with more consistency.",
     bestFor: [
@@ -148,13 +148,13 @@ const products: Record<ProductSlug, ProductInfo> = {
     process: [
       "Choose Custom Operating Pack and complete checkout.",
       "Submit the workflow details, current process, tools, handoffs, and desired operating outcome.",
-      "The workflow is converted into a structured protocol and supporting operating assets.",
-      "You receive a pack designed to be reused, shared, and improved over time.",
+      "Axiom converts the workflow into a structured protocol and supporting operating assets.",
+      "Your dashboard receives a pack designed to be reused, shared, and improved over time.",
     ],
-    boundaries: [
-      "This creates operating assets, not a custom software application.",
-      "It does not replace staff training, legal review, or regulated compliance procedures.",
-      "Tool implementation may still require separate setup work depending on your stack.",
+    guidance: [
+      "Use the pack as the operating source of truth for the workflow.",
+      "Use the assistant guidance to keep AI support consistent.",
+      "Use the checkpoints to protect quality before outputs are used.",
     ],
   },
   "workflow-stewardship": {
@@ -164,7 +164,7 @@ const products: Record<ProductSlug, ProductInfo> = {
     price: "$299/mo",
     headline: "Monthly stewardship for workflows that keep changing.",
     summary:
-      "Workflow Stewardship is an ongoing monthly review service for active AI-supported workflows. Each month, the client submits what changed, what broke, what improved, what tools shifted, and what decisions need review. Axiom turns that evidence into a monthly stewardship brief with updated priorities, safer automation boundaries, and next-step guidance.",
+      "Workflow Stewardship gives active AI-supported workflows a monthly review rhythm. Each cycle captures what changed, what broke, what improved, and what needs attention next.",
     outcome:
       "You finish each monthly cycle with a clear stewardship brief: what changed, what needs attention, what should be updated, what should remain human-controlled, and what Axiom recommends before the next review cycle.",
     bestFor: [
@@ -177,31 +177,28 @@ const products: Record<ProductSlug, ProductInfo> = {
       "What changed in the workflow this month?",
       "Which errors, delays, edge cases, or exceptions repeated?",
       "Do any AI tools, automations, or review gates need updating?",
-      "What should the client submit before the next monthly review?",
-      "Which actions should happen before the next billing cycle?",
+      "What should be prepared before the next monthly review?",
     ],
     deliverables: [
-      "Monthly stewardship intake request in the client dashboard.",
-      "Monthly review of workflow changes, errors, bottlenecks, and recurring exceptions.",
+      "Monthly stewardship intake request in the dashboard.",
+      "Review of workflow changes, errors, bottlenecks, and recurring exceptions.",
       "Updated action priorities for the next 7 and 30 days.",
       "AI/tool change scan for relevant workflow improvements.",
       "Human review gate and risk-control check.",
       "Dashboard-visible stewardship brief and cycle status.",
-      "Stored review history so each cycle builds on the previous one.",
+      "Review history so each cycle builds on the previous one.",
       "Light email support for minor workflow questions during the active subscription.",
     ],
     process: [
       "Choose Workflow Stewardship and complete subscription checkout.",
       "Submit the starting workflow through the dashboard intake so Axiom has a baseline.",
-      "Each month, the dashboard asks for a stewardship update: changes, issues, metrics, tool updates, incidents, and decisions needing review.",
-      "Axiom reviews the new evidence against the previous report, current AI/tool changes, risk boundaries, and operating priorities.",
-      "The dashboard receives a monthly stewardship brief with updated guidance, required client actions, and what Axiom can help with next.",
+      "Each month, the dashboard asks for changes, issues, metrics, tool updates, incidents, and decisions needing review.",
+      "Your dashboard receives a monthly stewardship brief with updated guidance and next actions.",
     ],
-    boundaries: [
-      "This is ongoing advisory, review, and operating guidance; it is not unlimited implementation labour.",
-      "Major rebuilds, new software systems, custom integrations, migrations, or hands-on tool setup may require separate scope.",
-      "A monthly subscription does not guarantee commercial outcomes, uptime, speed improvements, or third-party tool performance.",
-      "The client remains responsible for providing accurate monthly updates, internal approvals, compliance review, and final business decisions.",
+    guidance: [
+      "Use the monthly update window to capture real workflow changes while they are fresh.",
+      "Keep examples, issues, and decisions ready before the next cycle opens.",
+      "Use each stewardship brief as the next operating checkpoint for the workflow.",
     ],
   },
   "departmental-ecosystem": {
@@ -211,7 +208,7 @@ const products: Record<ProductSlug, ProductInfo> = {
     price: "$999",
     headline: "A connected operating model for a team or department.",
     summary:
-      "Departmental Ecosystem is for mapping several workflows together rather than treating each process in isolation. It looks at up to five core workflows, handoffs between people or functions, shared data sources, tool dependencies, review points, and the operating model needed to make the department work as one system.",
+      "Departmental Ecosystem maps several workflows together so your team can see how work moves across people, tools, data, handoffs, and decisions.",
     outcome:
       "You finish with a department-level architecture map that shows how workflows connect, where responsibility sits, where AI support belongs, and what sequence makes implementation realistic.",
     bestFor: [
@@ -236,14 +233,14 @@ const products: Record<ProductSlug, ProductInfo> = {
     ],
     process: [
       "Choose Departmental Ecosystem and complete checkout.",
-      "Submit department context, core workflows, team structure, tools, and current failure points.",
-      "The workflows are mapped together as one operating ecosystem.",
-      "You receive a connected roadmap that helps the team improve in sequence rather than through isolated fixes.",
+      "Submit department context, core workflows, team structure, tools, and current friction points.",
+      "Axiom maps the workflows together as one operating ecosystem.",
+      "Your dashboard receives a connected roadmap that helps the team improve in sequence rather than through isolated fixes.",
     ],
-    boundaries: [
-      "This maps and designs a departmental operating model; it is not a full enterprise transformation programme.",
-      "It covers up to five core workflows unless separately scoped.",
-      "Technical implementation, migrations, and custom builds may require separate project work.",
+    guidance: [
+      "Use the map to reduce confusion between workflows, teams, and tools.",
+      "Start with the highest-friction handoffs before wider process changes.",
+      "Use the roadmap as a quarterly operating reference.",
     ],
   },
   "architect-residency": {
@@ -251,22 +248,22 @@ const products: Record<ProductSlug, ProductInfo> = {
     name: "Axiom Enterprise Architecture System",
     label: "Flagship enterprise product",
     price: "$2,499",
-    headline: "A flagship enterprise architecture system for complex workflows.",
+    headline: "A flagship architecture system for complex workflows.",
     summary:
-      "Axiom Enterprise Architecture System is the top-tier Axiom Architect product. It is a fixed-price, dashboard-delivered architecture package for complex workflow systems that need enterprise-level structure, dependency mapping, automation boundaries, risk controls, tool-stack guidance, and a complete operating roadmap.",
+      "Axiom Enterprise Architecture System is the top-tier Axiom Architect product. It turns complex workflow information into a clear enterprise operating map, showing how the system should be structured, where risk controls belong, where AI can support safely, and what sequence should come next.",
     outcome:
-      "You finish with a detailed enterprise architecture roadmap that clarifies how the workflow system should be structured, where risk and review gates belong, where AI or automation can safely support the operation, and what implementation sequence should come next.",
+      "You finish with a premium enterprise architecture roadmap that gives you a clearer system map, safer automation boundaries, stronger review gates, and a practical route from current workflow complexity to a more controlled operating model.",
     bestFor: [
       "Complex workflow systems that need deeper analysis than a single audit, blueprint, or operating pack.",
-      "Businesses that want a premium enterprise-style architecture report without arranging live sessions or on-site delivery.",
-      "Operations involving multiple tools, handoffs, dependencies, risks, decision points, or customer-facing consequences.",
-      "Clients who need a flagship dashboard-delivered roadmap before deciding whether to scope separate implementation work.",
+      "Businesses with multiple tools, handoffs, teams, decisions, risks, or customer-facing consequences.",
+      "Operators who need a premium architecture roadmap before changing systems, tools, or process ownership.",
+      "Teams that want clarity on what to improve first, what to protect, and where AI support belongs.",
     ],
     questions: [
-      "How should this workflow system be structured at an enterprise level?",
-      "Which dependencies, handoffs, tools, data flows, and risk points need to be controlled?",
-      "Where can AI or automation support the system without taking over sensitive decisions?",
-      "What sequence should be followed before any technical build, team rollout, or wider operational change?",
+      "How should this workflow system be structured at a higher level?",
+      "Which dependencies, handoffs, tools, data flows, and risk points need clearer control?",
+      "Where can AI or automation support the system safely?",
+      "What implementation sequence gives the business the cleanest path forward?",
     ],
     deliverables: [
       "Expanded enterprise intake sequence.",
@@ -280,15 +277,15 @@ const products: Record<ProductSlug, ProductInfo> = {
     ],
     process: [
       "Choose Axiom Enterprise Architecture System and complete checkout.",
-      "Submit the expanded enterprise intake through the client dashboard.",
+      "Submit the expanded enterprise intake through your dashboard.",
       "Axiom reviews the workflow system for complexity, risk, dependencies, tool fit, automation suitability, and operating sequence.",
-      "Your dashboard receives a flagship architecture report with guidance, boundaries, and a practical enterprise implementation roadmap.",
+      "Your dashboard receives a flagship architecture report with a system map, control points, and practical roadmap.",
     ],
-    boundaries: [
-      "This product is delivered through the dashboard and does not include on-site work.",
-      "It does not include live workshops, team training sessions, or 1:1 consulting calls unless separately agreed in writing.",
-      "It does not include hands-on tool setup, custom software development, integrations, migrations, or managed implementation unless separately scoped.",
-      "The client remains responsible for internal approvals, compliance review, staff training, tool access, and final business decisions.",
+    guidance: [
+      "Use the roadmap to align leadership, operations, tools, and workflow ownership around one clear system view.",
+      "Use the risk gates to decide what should stay human-reviewed before automation is introduced.",
+      "Use the implementation sequence to prioritise what changes first, what waits, and what needs further planning.",
+      "Use the report as the foundation for future operating packs, stewardship, or separate implementation work if needed.",
     ],
   },
 };
@@ -413,7 +410,7 @@ export default async function ProductDetailPage({
               Core outcome
             </p>
             <h2 className="mt-5 text-[clamp(2.1rem,4vw,3.7rem)] font-black uppercase leading-[0.92] tracking-[-0.06em]">
-              What this product helps the client understand.
+              What this gives you.
             </h2>
           </div>
           <p className="border border-black/24 bg-[#b8efb9]/45 p-5 text-base leading-8 text-black/74 sm:text-lg">
@@ -435,16 +432,16 @@ export default async function ProductDetailPage({
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
           <div>
             <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-              Scope control
+              How to use it
             </p>
             <h2 className="mt-5 max-w-3xl text-[clamp(2.1rem,4vw,3.7rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
-              Clear boundaries keep the service useful.
+              Turn the report into a cleaner operating path.
             </h2>
             <p className="mt-5 max-w-2xl text-base leading-8 text-[#e6f6e7]/72 sm:text-lg">
-              Each Axiom Architect product is designed to solve a specific level of workflow problem. The right tier depends on whether you need diagnosis, planning, operating assets, ongoing optimisation, ecosystem design, or flagship enterprise architecture guidance.
+              Use your Axiom report as a practical reference for decisions, priorities, review gates, AI support, and workflow improvement. It gives you a clearer way to move forward without guessing what should change first.
             </p>
           </div>
-          <DetailList title="What this product does not automatically include" items={product.boundaries} />
+          <DetailList title="Recommended use" items={product.guidance} />
         </div>
       </section>
 
@@ -458,7 +455,7 @@ export default async function ProductDetailPage({
               Ready to start {product.name}?
             </h2>
             <p className="mt-5 max-w-3xl text-base leading-8 text-black/74 sm:text-lg">
-              Create a secure client account, complete checkout, and submit the intake matched to this product.
+              Create your secure account, complete checkout, and submit the intake matched to this package.
             </p>
           </div>
           <a
