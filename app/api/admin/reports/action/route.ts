@@ -129,7 +129,6 @@ export async function POST(request: Request) {
     if (action === "approve") {
       await patchReport(reportId, {
         status: "approved",
-        approved_at: now,
         updated_at: now,
       });
       return redirectBack(request, "success", action);
