@@ -248,44 +248,44 @@ const products: Record<ProductSlug, ProductInfo> = {
   },
   "architect-residency": {
     slug: "architect-residency",
-    name: "Architect Residency",
-    label: "Premium automated system design",
-    price: "$2,499+",
-    headline: "Premium automated architecture for complex workflow systems.",
+    name: "Axiom Enterprise Architecture System",
+    label: "Flagship enterprise product",
+    price: "$2,499",
+    headline: "A flagship enterprise architecture system for complex workflows.",
     summary:
-      "Architect Residency is the highest automated Axiom Architect package. It is designed for complex workflows that need a deeper intake, broader system review, dependency mapping, automation boundaries, implementation sequencing, and a premium dashboard-delivered architecture report without live consulting commitments.",
+      "Axiom Enterprise Architecture System is the top-tier Axiom Architect product. It is a fixed-price, dashboard-delivered architecture package for complex workflow systems that need enterprise-level structure, dependency mapping, automation boundaries, risk controls, tool-stack guidance, and a complete operating roadmap.",
     outcome:
-      "You finish with a detailed architecture roadmap that clarifies how the workflow system should be structured, what should be improved first, where AI or automation can safely support the system, and what should remain human-controlled.",
+      "You finish with a detailed enterprise architecture roadmap that clarifies how the workflow system should be structured, where risk and review gates belong, where AI or automation can safely support the operation, and what implementation sequence should come next.",
     bestFor: [
-      "Complex workflows that need deeper structured analysis than a single audit or blueprint.",
-      "Businesses that want a premium architecture report without arranging live sessions or on-site delivery.",
-      "Operations involving multiple tools, handoffs, dependencies, risks, or decision points.",
-      "Clients who need a dashboard-delivered roadmap before deciding whether to scope separate implementation work.",
+      "Complex workflow systems that need deeper analysis than a single audit, blueprint, or operating pack.",
+      "Businesses that want a premium enterprise-style architecture report without arranging live sessions or on-site delivery.",
+      "Operations involving multiple tools, handoffs, dependencies, risks, decision points, or customer-facing consequences.",
+      "Clients who need a flagship dashboard-delivered roadmap before deciding whether to scope separate implementation work.",
     ],
     questions: [
-      "How should this workflow system be structured at a higher level?",
-      "Which dependencies, handoffs, tools, and risk points need to be controlled?",
+      "How should this workflow system be structured at an enterprise level?",
+      "Which dependencies, handoffs, tools, data flows, and risk points need to be controlled?",
       "Where can AI or automation support the system without taking over sensitive decisions?",
-      "What sequence should be followed before any technical build or wider rollout?",
+      "What sequence should be followed before any technical build, team rollout, or wider operational change?",
     ],
     deliverables: [
-      "Expanded premium intake sequence.",
-      "Complex workflow and system dependency review.",
-      "Current-state and future-state architecture map.",
-      "Advanced automation suitability map.",
+      "Expanded enterprise intake sequence.",
+      "Complex workflow and dependency architecture review.",
+      "Current-state and future-state system map.",
+      "Advanced AI and automation suitability model.",
       "Risk, exception, and human review gate design.",
       "Tool stack and data-flow architecture guidance.",
-      "Implementation roadmap and rollout sequence.",
+      "Enterprise implementation roadmap.",
       "Dashboard-delivered architecture report.",
     ],
     process: [
-      "Choose Architect Residency and complete checkout.",
-      "Submit the expanded premium intake through the client dashboard.",
+      "Choose Axiom Enterprise Architecture System and complete checkout.",
+      "Submit the expanded enterprise intake through the client dashboard.",
       "Axiom reviews the workflow system for complexity, risk, dependencies, tool fit, automation suitability, and operating sequence.",
-      "Your dashboard receives a premium architecture report with guidance, boundaries, and a practical implementation roadmap.",
+      "Your dashboard receives a flagship architecture report with guidance, boundaries, and a practical enterprise implementation roadmap.",
     ],
     boundaries: [
-      "This package is delivered through the dashboard and does not include on-site work.",
+      "This product is delivered through the dashboard and does not include on-site work.",
       "It does not include live workshops, team training sessions, or 1:1 consulting calls unless separately agreed in writing.",
       "It does not include hands-on tool setup, custom software development, integrations, migrations, or managed implementation unless separately scoped.",
       "The client remains responsible for internal approvals, compliance review, staff training, tool access, and final business decisions.",
@@ -398,7 +398,7 @@ export default async function ProductDetailPage({
                 <p className="mt-3 text-xl font-black uppercase tracking-[-0.04em] text-white">{product.name}</p>
               </div>
               <div className="border border-[#9ed39f]/28 bg-[#061008]/88 p-5">
-                <p className="text-[0.6rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Starting at</p>
+                <p className="text-[0.6rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Fixed price</p>
                 <p className="mt-3 text-3xl font-black tracking-[-0.06em] text-white">{product.price}</p>
               </div>
             </div>
@@ -441,7 +441,7 @@ export default async function ProductDetailPage({
               Clear boundaries keep the service useful.
             </h2>
             <p className="mt-5 max-w-2xl text-base leading-8 text-[#e6f6e7]/72 sm:text-lg">
-              Each Axiom Architect product is designed to solve a specific level of workflow problem. The right tier depends on whether you need diagnosis, planning, operating assets, ongoing optimisation, ecosystem design, or automated architecture guidance.
+              Each Axiom Architect product is designed to solve a specific level of workflow problem. The right tier depends on whether you need diagnosis, planning, operating assets, ongoing optimisation, ecosystem design, or flagship enterprise architecture guidance.
             </p>
           </div>
           <DetailList title="What this product does not automatically include" items={product.boundaries} />
