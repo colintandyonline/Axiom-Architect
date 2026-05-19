@@ -46,7 +46,7 @@ const productConfig: Record<
     mode: "payment",
   },
   "architect-residency": {
-    name: "Architect Residency",
+    name: "Architect Residency — Automated Architecture Package",
     priceEnv: "STRIPE_PRICE_ARCHITECT_RESIDENCY",
     mode: "payment",
   },
