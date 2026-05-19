@@ -396,9 +396,14 @@ export default async function AdminDashboardPage() {
                           View intake
                         </a>
                         {linkedReport && (
-                          <a href={`/dashboard/report?submission_id=${workflow.id}`} className={reportButtonClass}>
-                            View report
-                          </a>
+                          <>
+                            <a href={`/dashboard/report?submission_id=${workflow.id}`} className={reportButtonClass}>
+                              View report
+                            </a>
+                            <a href={`/admin/reports/${linkedReport.id}`} className={reportPrimaryButtonClass}>
+                              Review report
+                            </a>
+                          </>
                         )}
                       </div>
                     </article>
@@ -457,6 +462,9 @@ export default async function AdminDashboardPage() {
                       <p><strong className="text-[#9ed39f]">Updated:</strong> {formatDate(report.generated_at || report.updated_at)}</p>
                     </div>
                     <div className="mt-5 flex flex-wrap gap-3">
+                      <a href={`/admin/reports/${report.id}`} className={reportPrimaryButtonClass}>
+                        Review report
+                      </a>
                       {report.submission_id && (
                         <a href={`/dashboard/intake?submission_id=${report.submission_id}`} className={reportButtonClass}>
                           View intake
