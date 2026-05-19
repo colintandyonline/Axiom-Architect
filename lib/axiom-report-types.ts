@@ -111,8 +111,30 @@ export type AxiomQualityControl = {
   reviewer_notes: string[];
 };
 
+export type AxiomImprovementSummary = {
+  headline: string;
+  before_state: string;
+  improved_state: string;
+  value_created: string;
+  core_improvements: {
+    area: string;
+    client_input_used: string;
+    improvement_made: string;
+    why_it_matters: string;
+  }[];
+};
+
+export type AxiomClientActionBrief = {
+  first_priority: string;
+  next_7_days: string[];
+  next_30_days: string[];
+  do_not_automate_yet: string[];
+  decision_points_for_client: string[];
+  where_axiom_can_help_next: string[];
+};
+
 export type AxiomReportJson = {
-  schema_version: 1;
+  schema_version: 2;
   product_slug: AxiomProductSlug;
   report_type: AxiomReportType;
   report_status: AxiomReportStatus;
@@ -129,6 +151,8 @@ export type AxiomReportJson = {
     intake_schema_version: number | null;
     submitted_at: string | null;
   };
+  improvement_summary: AxiomImprovementSummary;
+  client_action_brief: AxiomClientActionBrief;
   executive_summary: {
     headline: string;
     plain_english_summary: string;
