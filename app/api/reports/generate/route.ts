@@ -57,7 +57,22 @@ const productReportTypeMap: Record<AxiomProductSlug, AxiomReportType> = {
   "custom-operating-pack": "operating_pack",
   "workflow-stewardship": "optimisation_review",
   "departmental-ecosystem": "ecosystem_architecture",
-  "architect-residency": "deployment_scope",
+  "architect-residency": "enterprise_architecture_system",
+};
+
+const productReportFocusMap: Record<AxiomProductSlug, string> = {
+  "workflow-audit":
+    "Create a focused diagnostic report for one workflow. Prioritise bottlenecks, risk points, AI-support opportunities, and immediate next steps.",
+  "workflow-blueprint":
+    "Create an implementation blueprint. Prioritise future-state workflow design, review gates, tool fit, and a staged 30-day operating plan.",
+  "custom-operating-pack":
+    "Create an operating-pack style report. Prioritise reusable protocol, assistant guidance, handoff rules, quality checkpoints, and operating consistency.",
+  "workflow-stewardship":
+    "Create an ongoing optimisation review. Prioritise what changed, what needs attention, which gates need updating, and what should happen before the next monthly cycle.",
+  "departmental-ecosystem":
+    "Create a departmental ecosystem architecture report. Prioritise connected workflows, handoffs, shared data, interdependencies, ownership, and quarter-level sequencing.",
+  "architect-residency":
+    "Create an Axiom Enterprise Architecture System report. This is the flagship fixed-price product, not a residency, deployment service, live consulting package, training programme, or on-site engagement. Prioritise enterprise system structure, workflow dependencies, data flows, tool-stack fit, risk controls, human review gates, automation boundaries, and a practical implementation roadmap. Do not use the terms residency, on-site, workshop, training session, 1:1, direct oversight, deployment partnership, or live operations in the client-facing report.",
 };
 
 const allowedProductSlugs = new Set<AxiomProductSlug>(Object.keys(productReportTypeMap) as AxiomProductSlug[]);
@@ -249,6 +264,7 @@ Rules:
 - Keep the report premium, useful, and operational — not motivational or generic.
 - Do not recommend automating sensitive approval decisions without review gates.
 - Do not pressure an upgrade. Recommend a next product only when the evidence supports it.
+- Do not use internal/admin/product-building language in client-facing report text.
 
 Most important report rule:
 The report must lead with what Axiom Architect has improved or clarified for the client. Do not simply repeat their intake back to them. Convert messy input into a clearer workflow model, action path, and safer operating structure.
@@ -297,6 +313,7 @@ function buildUserPrompt({
       schema_version: 2,
       product_slug: productSlug,
       report_type: productReportTypeMap[productSlug],
+      product_report_focus: productReportFocusMap[productSlug],
       required_top_level_keys: [
         "schema_version",
         "product_slug",
@@ -337,6 +354,9 @@ function buildUserPrompt({
 
   return `Generate one Axiom Architect report JSON object from this source data.
 
+Product-specific focus:
+${productReportFocusMap[productSlug]}
+
 The report must follow this exact TypeScript-compatible JSON shape:
 
 {
@@ -369,6 +389,7 @@ Content requirements:
 - Create at least 3 next_7_days actions and 3 next_30_days actions.
 - The first_priority must be specific enough for the client to act on without asking what it means.
 - The delivery.dashboard_summary must explain the value of the report, not just restate the workflow title.
+- For Axiom Enterprise Architecture System reports, emphasise enterprise structure, dependency clarity, risk gates, automation boundaries, data/tool flows, and implementation sequencing.
 
 Source data:
 ${JSON.stringify(source, null, 2)}`;
