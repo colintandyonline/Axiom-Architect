@@ -12,7 +12,7 @@ export type AxiomReportType =
   | "operating_pack"
   | "optimisation_review"
   | "ecosystem_architecture"
-  | "deployment_scope";
+  | "enterprise_architecture_system";
 
 export type AxiomHumanReviewLevel = "low" | "medium" | "high" | "critical";
 
