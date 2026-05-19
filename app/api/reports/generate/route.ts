@@ -250,13 +250,33 @@ Rules:
 - Do not recommend automating sensitive approval decisions without review gates.
 - Do not pressure an upgrade. Recommend a next product only when the evidence supports it.
 
+Most important report rule:
+The report must lead with what Axiom Architect has improved or clarified for the client. Do not simply repeat their intake back to them. Convert messy input into a clearer workflow model, action path, and safer operating structure.
+
+Improvement summary requirement:
+- improvement_summary.before_state must summarise the messy or risky state implied by the intake.
+- improvement_summary.improved_state must state how Axiom has reframed the workflow into a clearer operating model.
+- improvement_summary.value_created must explain the practical value created by the report.
+- improvement_summary.core_improvements must each connect one client input to one specific improvement made by Axiom and why it matters.
+
+Client action brief requirement:
+- client_action_brief.first_priority must be the single most important action the client should take first.
+- next_7_days must include practical actions the client can do immediately.
+- next_30_days must include staged actions that build on the first week.
+- do_not_automate_yet must protect the client from risky automation.
+- decision_points_for_client must state what the client needs to decide before implementation.
+- where_axiom_can_help_next must describe concrete service support Axiom can provide next.
+
+Scorecard rule:
+The scorecard is supporting evidence only. It must explain readiness in plain English and must not make the report feel like a pass/fail grade.
+
 Quality scoring:
 - quality_control.clarity, completeness, evidence, assumptions, risk_control, and actionability must each be 0, 1, or 2.
 - quality_control.total must equal those six scores added together.
 - quality_control.status must be ready for 10-12, needs_fixes for 7-9, or blocked for 0-6.
 
 Client outcome requirement:
-The final report must tell the client what is happening, why it matters, what should change, what should stay human-controlled, and what to do next.`;
+The final report must tell the client what Axiom improved, why it matters, what should change, what should stay human-controlled, and what to do next.`;
 }
 
 function buildUserPrompt({
@@ -274,7 +294,7 @@ function buildUserPrompt({
 }) {
   const source = {
     target_report_schema: {
-      schema_version: 1,
+      schema_version: 2,
       product_slug: productSlug,
       report_type: productReportTypeMap[productSlug],
       required_top_level_keys: [
@@ -285,6 +305,8 @@ function buildUserPrompt({
         "generated_at",
         "client",
         "submission",
+        "improvement_summary",
+        "client_action_brief",
         "executive_summary",
         "current_state",
         "diagnosis",
@@ -318,13 +340,15 @@ function buildUserPrompt({
 The report must follow this exact TypeScript-compatible JSON shape:
 
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "product_slug": "${productSlug}",
   "report_type": "${productReportTypeMap[productSlug]}",
   "report_status": "generated",
   "generated_at": "ISO timestamp",
   "client": { "name": string|null, "email": string|null, "business_name": string|null },
   "submission": { "id": string, "workflow_title": string, "tier_slug": "${productSlug}", "intake_schema_version": number|null, "submitted_at": string|null },
+  "improvement_summary": { "headline": string, "before_state": string, "improved_state": string, "value_created": string, "core_improvements": [{ "area": string, "client_input_used": string, "improvement_made": string, "why_it_matters": string }] },
+  "client_action_brief": { "first_priority": string, "next_7_days": string[], "next_30_days": string[], "do_not_automate_yet": string[], "decision_points_for_client": string[], "where_axiom_can_help_next": string[] },
   "executive_summary": { "headline": string, "plain_english_summary": string, "strongest_opportunity": string, "primary_constraint": string, "next_best_action": string },
   "current_state": { "workflow_purpose": string, "current_workflow_map": string[], "tools_and_systems": string[], "human_roles": string[], "known_constraints": string[] },
   "diagnosis": { "findings": [{ "title": string, "observation": string, "evidence": string[], "implication": string, "recommended_response": string }], "assumptions": string[], "missing_information": string[] },
@@ -338,6 +362,13 @@ The report must follow this exact TypeScript-compatible JSON shape:
   "quality_control": { "clarity": number, "completeness": number, "evidence": number, "assumptions": number, "risk_control": number, "actionability": number, "total": number, "status": "ready"|"needs_fixes"|"blocked", "reviewer_notes": string[] },
   "delivery": { "dashboard_summary": string, "client_expectation_note": string, "pdf_ready": false, "email_ready": false }
 }
+
+Content requirements:
+- Create at least 4 core_improvements.
+- Each core_improvement must say what client input was used, what improvement was made, and why that matters.
+- Create at least 3 next_7_days actions and 3 next_30_days actions.
+- The first_priority must be specific enough for the client to act on without asking what it means.
+- The delivery.dashboard_summary must explain the value of the report, not just restate the workflow title.
 
 Source data:
 ${JSON.stringify(source, null, 2)}`;
@@ -424,6 +455,7 @@ export async function POST(request: Request) {
     await patchReport(report.id, {
       status,
       report_json: reportJson,
+      report_schema_version: reportJson.schema_version,
       quality_score: reportJson.quality_control.total,
       quality_status: reportJson.quality_control.status,
       reviewer_notes: reportJson.quality_control.reviewer_notes,
