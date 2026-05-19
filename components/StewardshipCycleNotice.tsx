@@ -32,7 +32,7 @@ function getPlacementCopy(placement: StewardshipCycleNoticeProps["placement"], c
   if (!cycle.baselineSubmitted) {
     return {
       title: "Submit your baseline workflow first.",
-      body: "This opens the first Stewardship cycle. After the baseline report is prepared, your next monthly update window will be scheduled.",
+      body: "This opens the first Stewardship cycle. After your baseline review is prepared, your next monthly update window will be scheduled.",
       cta: "Start baseline intake",
     };
   }
@@ -40,7 +40,7 @@ function getPlacementCopy(placement: StewardshipCycleNoticeProps["placement"], c
   if (cycle.canSubmitUpdate) {
     return {
       title: "Your monthly update window is open.",
-      body: "Submit workflow changes, errors, examples, metrics, tool changes, and decisions that need review. Axiom will use this as the source material for the next stewardship brief.",
+      body: "Submit workflow changes, errors, examples, tool changes, and decisions that need review. Axiom will use your update to prepare the next stewardship brief.",
       cta: "Submit monthly update",
     };
   }
@@ -48,7 +48,7 @@ function getPlacementCopy(placement: StewardshipCycleNoticeProps["placement"], c
   if (placement === "intake") {
     return {
       title: "Monthly update not open yet.",
-      body: `The next Stewardship update can be submitted from ${cycle.nextSubmissionOpensAtLabel}. Until then, use this page to review the current baseline and collect evidence for the next cycle.`,
+      body: `The next Stewardship update can be submitted from ${cycle.nextSubmissionOpensAtLabel}. Until then, review the current baseline and collect evidence for the next cycle.`,
       cta: "View latest brief",
     };
   }
@@ -63,7 +63,7 @@ function getPlacementCopy(placement: StewardshipCycleNoticeProps["placement"], c
 
   return {
     title: "Next Stewardship update date.",
-    body: `Your next monthly update window opens on ${cycle.nextSubmissionOpensAtLabel}. Prepare changes, examples, metrics, errors, and decisions that need review before then.`,
+    body: `Your next monthly update window opens on ${cycle.nextSubmissionOpensAtLabel}. Prepare changes, examples, errors, and decisions that need review before then.`,
     cta: "Review intake",
   };
 }
@@ -129,7 +129,7 @@ export function StewardshipCycleNotice({ placement = "dashboard" }: StewardshipC
               <p className="mt-3 text-lg font-black uppercase tracking-[-0.035em] text-white">{cycle.label}</p>
             </article>
             <article className="border border-[#9ed39f]/22 bg-black/38 p-4">
-              <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Last review anchor</p>
+              <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Latest review date</p>
               <p className="mt-3 text-lg font-black uppercase tracking-[-0.035em] text-white">{cycle.anchorDateLabel}</p>
             </article>
             <article className="border border-[#9ed39f]/22 bg-black/38 p-4">
@@ -144,7 +144,7 @@ export function StewardshipCycleNotice({ placement = "dashboard" }: StewardshipC
 
         <div className="mt-6 flex flex-col gap-3 border-t border-[#9ed39f]/18 pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="m-0 text-sm leading-6 text-[#e6f6e7]/68">
-            Monthly updates are gated so each brief has a stable review period. Early submissions stay locked until the next cycle opens.
+            Monthly updates open once per review period so each brief has a clear timeline. Prepare your examples and changes before the next update date.
           </p>
           <a
             href={ctaHref}
