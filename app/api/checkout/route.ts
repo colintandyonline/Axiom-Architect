@@ -47,7 +47,7 @@ const productConfig: Record<
   },
   "architect-residency": {
     name: "Axiom Enterprise Architecture System",
-    priceEnv: "STRIPE_PRICE_ARCHITECT_RESIDENCY",
+    priceEnv: "STRIPE_PRICE_ENTERPRISE_ARCHITECTURE_SYSTEM",
     mode: "payment",
   },
 };
