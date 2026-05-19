@@ -160,14 +160,6 @@ function workflowTitle(workflow?: WorkflowRecord | null) {
   return workflow.workflow_title || "Untitled workflow";
 }
 
-function canGenerate(status?: string | null) {
-  return ["queued", "failed", "revision_requested"].includes(status || "");
-}
-
-function canRegenerate(status?: string | null) {
-  return ["generated", "needs_review", "approved", "delivered"].includes(status || "");
-}
-
 function canApprove(status?: string | null) {
   return ["generated", "needs_review"].includes(status || "");
 }
@@ -240,7 +232,7 @@ export default async function AdminDashboardPage() {
                 Signed in as {adminEmail}
               </p>
               <p className="mb-0 mt-3">
-                Admin review, report generation, approval, and delivery controls stay inside this console. Customer dashboard pages stay separate.
+                Report creation runs from the client submission flow. This console is for review, approval, revision requests, and delivery.
               </p>
             </div>
           </div>
@@ -387,7 +379,7 @@ export default async function AdminDashboardPage() {
 
           <Section id="reports" eyebrow="Report operations" title="Admin report queue">
             <p className="mb-6 max-w-4xl text-sm leading-7 text-white/66">
-              These controls use the internal admin report record. The customer dashboard route is not linked here because it depends on the customer account session.
+              Reports are created from the submitted intake flow. Admin work starts here: review, approve, request revision, or deliver.
             </p>
             <div className="grid gap-4 lg:grid-cols-2">
               {data.reports.map((report) => {
@@ -414,11 +406,8 @@ export default async function AdminDashboardPage() {
                       <a href={`/admin/reports/${report.id}`} className={primaryButtonClass}>
                         Review report
                       </a>
-                      {canGenerate(report.status) && <ReportActionForm reportId={report.id} action="generate" labelText="Generate" primary />}
-                      {canRegenerate(report.status) && <ReportActionForm reportId={report.id} action="regenerate" labelText="Regenerate" />}
                       {canApprove(report.status) && <ReportActionForm reportId={report.id} action="approve" labelText="Approve" primary />}
                       <ReportActionForm reportId={report.id} action="needs_revision" labelText="Needs revision" />
-                      <ReportActionForm reportId={report.id} action="queue" labelText="Requeue" />
                     </div>
                   </article>
                 );
@@ -443,7 +432,7 @@ export default async function AdminDashboardPage() {
               <article className="border border-[#9ed39f]/20 bg-black/36 p-5">
                 <h3 className="text-xl font-black uppercase tracking-[-0.04em] text-white">Report control</h3>
                 <p className="mt-3 text-sm leading-7 text-white/70">
-                  Admin controls are available on report cards for generation, regeneration, approval, revision requests, and queue management. Client-facing dashboard access remains separate.
+                  Admin controls focus on review, approval, revision requests, and delivery. Report generation remains part of the submission pipeline.
                 </p>
               </article>
             </div>
