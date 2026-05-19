@@ -87,18 +87,20 @@ const tiers: Array<{
   {
     slug: "workflow-stewardship",
     name: "Workflow Stewardship",
-    header: "Workflow stewardship",
+    header: "Monthly workflow stewardship",
     price: "$299/mo",
     label: "Ongoing optimisation",
     summary:
-      "Quarterly recalibration and performance tuning for core AI-supported workflows that need ongoing review and improvement.",
+      "A monthly operating review for AI-supported workflows that keep changing. Each cycle collects updates from the client, reviews drift, risks, tool changes, bottlenecks, and improvement opportunities, then turns them into a clear stewardship brief.",
     includes: [
-      "Quarterly audit of active workflows",
-      "Error logging and bottleneck analysis",
-      "Priority access for logic updates",
-      "Bi-annual tool stack reassessment",
-      "Performance efficiency dashboard",
-      "Ongoing email support for minor workflow questions",
+      "Monthly stewardship intake prompt",
+      "Review of workflow changes, errors, and bottlenecks",
+      "AI/tool update scan for relevant improvements",
+      "Updated priority list and next-step guidance",
+      "Human review gate and risk-control check",
+      "Monthly stewardship brief in the dashboard",
+      "30-day improvement window for relevant report updates",
+      "Light email support for minor workflow questions",
     ],
   },
   {
