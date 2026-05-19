@@ -89,6 +89,59 @@ function requireActionArray(
   });
 }
 
+function validateImprovementSummary(
+  issues: AxiomReportValidationIssue[],
+  value: unknown,
+) {
+  if (!isRecord(value)) {
+    addIssue(issues, "improvement_summary", "Expected improvement_summary object.");
+    return;
+  }
+
+  requireString(issues, value, "headline", "improvement_summary");
+  requireString(issues, value, "before_state", "improvement_summary");
+  requireString(issues, value, "improved_state", "improvement_summary");
+  requireString(issues, value, "value_created", "improvement_summary");
+
+  if (!Array.isArray(value.core_improvements) || value.core_improvements.length < 3) {
+    addIssue(
+      issues,
+      "improvement_summary.core_improvements",
+      "Expected at least three client-specific improvements.",
+    );
+    return;
+  }
+
+  value.core_improvements.forEach((item, index) => {
+    if (!isRecord(item)) {
+      addIssue(issues, `improvement_summary.core_improvements[${index}]`, "Expected an improvement object.");
+      return;
+    }
+
+    requireString(issues, item, "area", `improvement_summary.core_improvements[${index}]`);
+    requireString(issues, item, "client_input_used", `improvement_summary.core_improvements[${index}]`);
+    requireString(issues, item, "improvement_made", `improvement_summary.core_improvements[${index}]`);
+    requireString(issues, item, "why_it_matters", `improvement_summary.core_improvements[${index}]`);
+  });
+}
+
+function validateClientActionBrief(
+  issues: AxiomReportValidationIssue[],
+  value: unknown,
+) {
+  if (!isRecord(value)) {
+    addIssue(issues, "client_action_brief", "Expected client_action_brief object.");
+    return;
+  }
+
+  requireString(issues, value, "first_priority", "client_action_brief");
+  requireStringArray(issues, value.next_7_days, "client_action_brief.next_7_days", 3);
+  requireStringArray(issues, value.next_30_days, "client_action_brief.next_30_days", 3);
+  requireStringArray(issues, value.do_not_automate_yet, "client_action_brief.do_not_automate_yet", 1);
+  requireStringArray(issues, value.decision_points_for_client, "client_action_brief.decision_points_for_client", 2);
+  requireStringArray(issues, value.where_axiom_can_help_next, "client_action_brief.where_axiom_can_help_next", 2);
+}
+
 function validateQualityControl(
   issues: AxiomReportValidationIssue[],
   value: unknown,
@@ -134,14 +187,17 @@ export function validateAxiomReportJson(report: unknown): AxiomReportValidationR
     };
   }
 
-  if (report.schema_version !== 1) {
-    addIssue(issues, "schema_version", "Expected schema_version 1.");
+  if (report.schema_version !== 2) {
+    addIssue(issues, "schema_version", "Expected schema_version 2.");
   }
 
   requireString(issues, report, "product_slug", "report");
   requireString(issues, report, "report_type", "report");
   requireString(issues, report, "report_status", "report");
   requireString(issues, report, "generated_at", "report");
+
+  validateImprovementSummary(issues, report.improvement_summary);
+  validateClientActionBrief(issues, report.client_action_brief);
 
   const executiveSummary = report.executive_summary;
   if (!isRecord(executiveSummary)) {
