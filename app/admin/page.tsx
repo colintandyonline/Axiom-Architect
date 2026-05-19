@@ -68,6 +68,8 @@ type AdminStats = {
 
 const panelClass = "rounded-[1.5rem] border border-[#9ed39f]/30 bg-[#030804] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.24)] sm:p-7";
 const eyebrowClass = "text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]";
+const reportButtonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f]/35 bg-black px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black";
+const reportPrimaryButtonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-black transition hover:bg-white";
 
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -138,6 +140,40 @@ function statusPill(status?: string | null) {
     <span className="inline-flex w-fit border border-[#9ed39f]/35 px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#9ed39f]">
       {label(status)}
     </span>
+  );
+}
+
+function canGenerate(status?: string | null) {
+  return ["queued", "failed", "revision_requested"].includes(status || "");
+}
+
+function canRegenerate(status?: string | null) {
+  return ["generated", "needs_review", "approved", "delivered"].includes(status || "");
+}
+
+function canApprove(status?: string | null) {
+  return ["generated", "needs_review", "revision_requested"].includes(status || "");
+}
+
+function ReportActionForm({
+  reportId,
+  action,
+  labelText,
+  primary = false,
+}: {
+  reportId: string;
+  action: string;
+  labelText: string;
+  primary?: boolean;
+}) {
+  return (
+    <form action="/api/admin/reports/action" method="post">
+      <input type="hidden" name="report_id" value={reportId} />
+      <input type="hidden" name="action" value={action} />
+      <button type="submit" className={primary ? reportPrimaryButtonClass : reportButtonClass}>
+        {labelText}
+      </button>
+    </form>
   );
 }
 
@@ -345,6 +381,29 @@ export default async function AdminDashboardPage() {
                     <p><strong className="text-[#9ed39f]">Review:</strong> {label(report.quality_status)}</p>
                     <p><strong className="text-[#9ed39f]">Updated:</strong> {formatDate(report.generated_at || report.updated_at)}</p>
                   </div>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    {report.submission_id && (
+                      <a href={`/dashboard/intake?submission_id=${report.submission_id}`} className={reportButtonClass}>
+                        View intake
+                      </a>
+                    )}
+                    {report.submission_id && (
+                      <a href={`/dashboard/report?submission_id=${report.submission_id}`} className={reportButtonClass}>
+                        View report
+                      </a>
+                    )}
+                    {canGenerate(report.status) && (
+                      <ReportActionForm reportId={report.id} action="generate" labelText="Generate" primary />
+                    )}
+                    {canRegenerate(report.status) && (
+                      <ReportActionForm reportId={report.id} action="regenerate" labelText="Regenerate" />
+                    )}
+                    {canApprove(report.status) && (
+                      <ReportActionForm reportId={report.id} action="approve" labelText="Approve" primary />
+                    )}
+                    <ReportActionForm reportId={report.id} action="needs_revision" labelText="Needs revision" />
+                    <ReportActionForm reportId={report.id} action="queue" labelText="Requeue" />
+                  </div>
                 </article>
               ))}
             </div>
@@ -367,7 +426,7 @@ export default async function AdminDashboardPage() {
               <article className="border border-[#9ed39f]/20 bg-black/36 p-5">
                 <h3 className="text-xl font-black uppercase tracking-[-0.04em] text-white">Report control</h3>
                 <p className="mt-3 text-sm leading-7 text-white/70">
-                  This foundation is read-only. The next pass can add secure admin actions for generating, regenerating, approving, and delivering reports.
+                  Admin controls are now available on report cards for generation, regeneration, approval, revision requests, and queue management.
                 </p>
               </article>
             </div>
