@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getAxiomAuthContext } from "../../lib/axiom-auth";
+import { isAxiomAdminEmail } from "../../lib/axiom-admin";
 
 export const metadata: Metadata = {
   title: "Dashboard | Axiom Architect",
@@ -217,6 +218,7 @@ export default async function DashboardPage({
   const hasOrder = Boolean(record.order);
   const hasWorkflow = Boolean(record.workflow);
   const hasSubmittedIntake = Boolean(record.workflow?.id && record.workflow.status !== "draft");
+  const isAdmin = isAxiomAdminEmail(user.email) || isAxiomAdminEmail(customer.email);
   const paymentAmount = formatCurrency(record.order?.amount_total ?? null, record.order?.currency ?? null);
   const paymentStatus = labelFromStatus(record.order?.payment_status || (params.checkout === "success" ? "paid" : null));
   const workflowStatus = labelFromStatus(record.workflow?.status || "not started");
@@ -279,11 +281,29 @@ export default async function DashboardPage({
                         ? `${businessName} is set up. Continue the workflow intake from this dashboard.`
                         : `${businessName} is set up. Your order is attached to this account.`}
                   </p>
+                  {isAdmin && (
+                    <a
+                      href="/admin"
+                      className="mt-3 inline-flex w-fit border border-[#9ed39f] bg-[#9ed39f] px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
+                    >
+                      Open admin console
+                    </a>
+                  )}
                 </div>
               ) : (
-                <p className="m-0">
-                  This account has no paid audit package attached yet. Choose a package to create the order and open the intake workspace.
-                </p>
+                <div className="grid gap-4">
+                  <p className="m-0">
+                    This account has no paid audit package attached yet. Choose a package to create the order and open the intake workspace.
+                  </p>
+                  {isAdmin && (
+                    <a
+                      href="/admin"
+                      className="inline-flex w-fit border border-[#9ed39f] bg-[#9ed39f] px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white"
+                    >
+                      Open admin console
+                    </a>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -369,7 +389,14 @@ export default async function DashboardPage({
                   View packages
                 </a>
               )}
-              {hasSubmittedIntake ? (
+              {isAdmin ? (
+                <a
+                  href="/admin"
+                  className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/45 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black sm:min-w-56"
+                >
+                  Admin console
+                </a>
+              ) : hasSubmittedIntake ? (
                 <a
                   href={intakeHref}
                   className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/45 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black sm:min-w-56"
