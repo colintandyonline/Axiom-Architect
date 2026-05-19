@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import {
+  getEnterpriseArchitectureIntakeSchema,
+  isEnterpriseArchitectureSlug,
+} from "../../../lib/axiom-enterprise-intake";
+import {
   formatStewardshipDate,
   getStewardshipCycleState,
 } from "../../../lib/axiom-stewardship";
@@ -7,7 +11,7 @@ import {
 export const metadata: Metadata = {
   title: "Workflow Intake | Axiom Architect",
   description:
-    "Submit the staged workflow details needed for your Axiom Architect audit report.",
+    "Submit the workflow details needed for your Axiom Architect report.",
 };
 
 export const dynamic = "force-dynamic";
@@ -160,8 +164,14 @@ async function getSchemaById(schemaId?: string | null) {
   return schemas?.[0] ?? null;
 }
 
-async function getSchemaForIntake(intake: IntakeRecord) {
-  return (await getSchemaById(intake.intake_schema_id)) || (await getActiveSchemaByProduct(intake.product_id));
+async function getSchemaForIntake(intake: IntakeRecord): Promise<IntakeSchemaRecord | null> {
+  const storedSchema = (await getSchemaById(intake.intake_schema_id)) || (await getActiveSchemaByProduct(intake.product_id));
+
+  if (isEnterpriseArchitectureSlug(intake.tier_slug)) {
+    return getEnterpriseArchitectureIntakeSchema(storedSchema) as IntakeSchemaRecord;
+  }
+
+  return storedSchema;
 }
 
 async function getReportForIntake(submissionId: string) {
@@ -319,6 +329,7 @@ export default async function WorkflowIntakePage({
       })
     : null;
   const isStewardship = Boolean(stewardshipCycle);
+  const isEnterprise = Boolean(context && isEnterpriseArchitectureSlug(context.intake.tier_slug));
   const isLocked = Boolean(
     context &&
       context.intake.status !== "draft" &&
@@ -349,42 +360,48 @@ export default async function WorkflowIntakePage({
           <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[0.95fr_0.75fr] lg:items-end">
             <div>
               <h1 className="max-w-5xl text-[clamp(2.65rem,6vw,5.7rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
-                {isStewardship
-                  ? stewardshipCycle?.baselineSubmitted
-                    ? stewardshipCycle.canSubmitUpdate
-                      ? "Submit this month’s stewardship update."
-                      : "Monthly update window locked."
-                    : "Submit your baseline workflow."
-                  : isLocked
-                    ? "Review submitted workflow."
-                    : "Submit your workflow for diagnosis."}
+                {isEnterprise
+                  ? isLocked
+                    ? "Review submitted enterprise intake."
+                    : "Submit your enterprise architecture intake."
+                  : isStewardship
+                    ? stewardshipCycle?.baselineSubmitted
+                      ? stewardshipCycle.canSubmitUpdate
+                        ? "Submit this month’s stewardship update."
+                        : "Monthly update window locked."
+                      : "Submit your baseline workflow."
+                    : isLocked
+                      ? "Review submitted workflow."
+                      : "Submit your workflow for diagnosis."}
               </h1>
               <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-                {isStewardship
-                  ? stewardshipCycle?.guidance
-                  : isLocked
-                    ? "This workflow intake has already been submitted and is now locked. Use the report status page to track the diagnostic report."
-                    : context?.schema?.description ||
-                      "Work through each stage carefully. This intake becomes the source material for your report, recommendations, and future workflow blueprint."}
+                {isEnterprise
+                  ? "Use this form to give Axiom the full operating context for your enterprise architecture report: workflow scope, people, tools, dependencies, risk points, automation goals, and desired outcome."
+                  : isStewardship
+                    ? stewardshipCycle?.guidance
+                    : isLocked
+                      ? "This workflow intake has already been submitted. Use the report page to track progress."
+                      : context?.schema?.description ||
+                        "Work through each stage carefully. Your answers help Axiom prepare a clearer workflow report and practical next-step guidance."}
               </p>
             </div>
 
             <aside className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5">
               <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">
-                {isStewardship ? "Stewardship context" : "Audit context"}
+                {isEnterprise ? "Enterprise intake" : isStewardship ? "Stewardship context" : "Workflow context"}
               </p>
               <div className="mt-5 grid gap-3 text-sm leading-6 text-[#e6f6e7]/78">
                 <p className="m-0">
-                  <strong className="text-white">Product:</strong> {context?.order?.service_name || context?.intake.tier_slug || "Workflow audit"}
+                  <strong className="text-white">Package:</strong> {context?.order?.service_name || context?.intake.tier_slug || "Workflow audit"}
                 </p>
                 <p className="m-0">
-                  <strong className="text-white">Schema:</strong> {context?.schema ? `v${context.schema.version}` : "Not loaded"}
+                  <strong className="text-white">Form:</strong> {context?.schema ? `v${context.schema.version}` : "Not loaded"}
                 </p>
                 <p className="m-0">
                   <strong className="text-white">Business:</strong> {context?.customer?.business_name || "Not loaded"}
                 </p>
                 <p className="m-0">
-                  <strong className="text-white">Status:</strong> {stewardshipCycle?.label || (context ? formatStatus(context.intake.status) : "Missing submission")}
+                  <strong className="text-white">Status:</strong> {stewardshipCycle?.label || (context ? formatStatus(context.intake.status) : "Missing intake")}
                 </p>
                 {isStewardship && stewardshipCycle?.baselineSubmitted ? (
                   <p className="m-0">
@@ -402,12 +419,18 @@ export default async function WorkflowIntakePage({
           {isSubmitted && (
             <div className="mb-8 border border-[#9ed39f] bg-[#9ed39f] p-5 text-black">
               <p className="m-0 text-lg font-black uppercase tracking-[-0.02em]">
-                {isStewardship ? "Your stewardship update has been received." : "Your workflow audit has been received."}
+                {isEnterprise
+                  ? "Your enterprise architecture intake has been received."
+                  : isStewardship
+                    ? "Your stewardship update has been received."
+                    : "Your workflow intake has been received."}
               </p>
               <p className="mb-0 mt-2 text-sm leading-6 text-black/72">
-                {isStewardship
-                  ? "Axiom will use this update as source material for the next monthly stewardship brief."
-                  : "The submission status is now set to submitted. The next stage is report processing."}
+                {isEnterprise
+                  ? "Axiom will use your answers to prepare the enterprise architecture report in your dashboard."
+                  : isStewardship
+                    ? "Axiom will use this update to prepare the next monthly stewardship brief."
+                    : "Your intake has been received. The next stage is your Axiom review."}
               </p>
             </div>
           )}
@@ -418,7 +441,7 @@ export default async function WorkflowIntakePage({
                 Monthly update not open yet
               </p>
               <p className="mb-0 mt-2 text-sm leading-6 text-[#e6f6e7]/72">
-                This Stewardship update was not accepted because the next monthly submission window has not opened yet.
+                This monthly update cannot be submitted yet because the next review window has not opened.
               </p>
             </div>
           )}
@@ -426,12 +449,12 @@ export default async function WorkflowIntakePage({
           {isLocked && (
             <div className="mb-8 border border-[#9ed39f]/45 bg-[#9ed39f]/10 p-5 text-[#e6f6e7]/84">
               <p className="m-0 text-lg font-black uppercase tracking-[-0.02em] text-white">
-                {isStewardship ? "Stewardship update locked" : "Intake locked"}
+                {isStewardship ? "Stewardship update locked" : "Intake submitted"}
               </p>
               <p className="mb-0 mt-2 text-sm leading-6 text-[#e6f6e7]/72">
                 {isStewardship
                   ? `Your next monthly update window opens on ${nextOpenDate}. Until then, collect workflow changes, errors, examples, metrics, and decisions for the next review.`
-                  : "This workflow has already been submitted. New submissions are disabled so the report source material remains stable."}
+                  : "This intake has already been submitted. Use the report page to follow the next stage."}
               </p>
               <a
                 href={reportHref}
@@ -462,10 +485,10 @@ export default async function WorkflowIntakePage({
           {notFound && (
             <div className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-6">
               <h2 className="m-0 text-2xl font-black uppercase tracking-[-0.04em] text-white">
-                Submission not found
+                Intake not found
               </h2>
               <p className="mt-4 max-w-2xl text-base leading-7 text-[#e6f6e7]/75">
-                This page needs a valid paid workflow submission ID. Return to the dashboard and open the intake from your audit card.
+                This page needs a valid workflow intake link. Return to the dashboard and open the intake from your workspace.
               </p>
               <a
                 href="/dashboard"
@@ -479,10 +502,10 @@ export default async function WorkflowIntakePage({
           {schemaMissing && (
             <div className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-6">
               <h2 className="m-0 text-2xl font-black uppercase tracking-[-0.04em] text-white">
-                Intake schema not found
+                Intake form not available
               </h2>
               <p className="mt-4 max-w-2xl text-base leading-7 text-[#e6f6e7]/75">
-                This submission is missing its product intake schema. The product record needs an active intake schema before the form can be displayed.
+                This intake form is not available yet. Return to your dashboard and contact Axiom if this continues.
               </p>
             </div>
           )}
@@ -524,13 +547,13 @@ export default async function WorkflowIntakePage({
                 </div>
                 <div className="grid gap-4 text-sm leading-7 text-[#e6f6e7]/78">
                   <p className="m-0">
-                    <strong className="text-white">Product purchased:</strong> {context.order?.service_name || context.intake.tier_slug}
+                    <strong className="text-white">Package:</strong> {context.order?.service_name || context.intake.tier_slug}
                   </p>
                   <p className="m-0">
-                    <strong className="text-white">Workflow title:</strong> {context.intake.workflow_title || fieldValue(context.intake, "workflow_title") || "Entered above and saved into the audit record."}
+                    <strong className="text-white">Workflow title:</strong> {context.intake.workflow_title || fieldValue(context.intake, "workflow_title") || "Entered above and saved for your report."}
                   </p>
                   <p className="m-0">
-                    <strong className="text-white">Delivery expectation:</strong> {isStewardship ? "A monthly stewardship brief is prepared after the update is submitted." : "Report generation begins after the intake is submitted."}
+                    <strong className="text-white">What happens next:</strong> {isEnterprise ? "Axiom prepares your enterprise architecture report after the intake is submitted." : isStewardship ? "Axiom prepares your monthly stewardship brief after the update is submitted." : "Axiom begins preparing your report after the intake is submitted."}
                   </p>
                   {isLocked ? (
                     <a
@@ -544,11 +567,13 @@ export default async function WorkflowIntakePage({
                       type="submit"
                       className="mt-4 inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:w-fit"
                     >
-                      {isStewardship
-                        ? canSubmitMonthlyUpdate
-                          ? "Submit monthly update"
-                          : "Submit baseline intake"
-                        : "Submit workflow intake"}
+                      {isEnterprise
+                        ? "Submit enterprise intake"
+                        : isStewardship
+                          ? canSubmitMonthlyUpdate
+                            ? "Submit monthly update"
+                            : "Submit baseline intake"
+                          : "Submit workflow intake"}
                     </button>
                   )}
                 </div>
