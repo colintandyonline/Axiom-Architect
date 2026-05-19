@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getStewardshipCycleState, isWorkflowStewardship } from "../../../lib/axiom-stewardship";
 
 export const runtime = "nodejs";
 
@@ -11,6 +12,7 @@ type WorkflowRecord = {
   intake_schema_version: number | null;
   tier_slug: string | null;
   status: string | null;
+  updated_at: string | null;
 };
 
 type SchemaField = {
@@ -36,6 +38,8 @@ type IntakeSchemaRecord = {
 
 type AuditReportRecord = {
   id: string;
+  updated_at: string | null;
+  generated_at?: string | null;
 };
 
 const universalWorkflowTitleField: SchemaField = {
@@ -112,10 +116,18 @@ function redirectToReceived(request: Request, submissionId: string) {
 
 async function getWorkflowSubmission(submissionId: string) {
   const records = await supabaseFetch<WorkflowRecord[]>(
-    `axiom_workflow_submissions?select=id,customer_id,order_id,product_id,intake_schema_id,intake_schema_version,tier_slug,status&id=eq.${encodeURIComponent(submissionId)}&limit=1`,
+    `axiom_workflow_submissions?select=id,customer_id,order_id,product_id,intake_schema_id,intake_schema_version,tier_slug,status,updated_at&id=eq.${encodeURIComponent(submissionId)}&limit=1`,
   );
 
   return records[0] ?? null;
+}
+
+async function getLatestReport(workflowId: string) {
+  const reports = await supabaseFetch<AuditReportRecord[]>(
+    `axiom_audit_reports?select=id,updated_at,generated_at&submission_id=eq.${encodeURIComponent(workflowId)}&order=updated_at.desc&limit=1`,
+  );
+
+  return reports[0] ?? null;
 }
 
 async function getSchemaById(schemaId?: string | null) {
@@ -217,7 +229,7 @@ function buildStagePayload(schema: IntakeSchemaRecord | null, fieldValues: Recor
 
 async function queueAuditReport(workflow: WorkflowRecord, submittedAt: string) {
   const existingReports = await supabaseFetch<AuditReportRecord[]>(
-    `axiom_audit_reports?select=id&submission_id=eq.${encodeURIComponent(workflow.id)}&limit=1`,
+    `axiom_audit_reports?select=id,updated_at&submission_id=eq.${encodeURIComponent(workflow.id)}&limit=1`,
   );
 
   const existingReport = existingReports[0];
@@ -227,7 +239,7 @@ async function queueAuditReport(workflow: WorkflowRecord, submittedAt: string) {
     order_id: workflow.order_id,
     product_id: workflow.product_id,
     tier_slug: workflow.tier_slug,
-    report_schema_version: 1,
+    report_schema_version: 2,
     status: "queued",
     updated_at: submittedAt,
   };
@@ -252,6 +264,26 @@ async function queueAuditReport(workflow: WorkflowRecord, submittedAt: string) {
   });
 }
 
+async function canSubmitWorkflow(workflow: WorkflowRecord) {
+  if (!workflow.status || workflow.status === "draft") {
+    return true;
+  }
+
+  if (!isWorkflowStewardship(workflow.tier_slug)) {
+    return false;
+  }
+
+  const latestReport = await getLatestReport(workflow.id);
+  const cycleState = getStewardshipCycleState({
+    tierSlug: workflow.tier_slug,
+    workflowStatus: workflow.status,
+    workflowUpdatedAt: workflow.updated_at,
+    reportUpdatedAt: latestReport?.generated_at || latestReport?.updated_at,
+  });
+
+  return Boolean(cycleState?.canSubmitUpdate);
+}
+
 export async function POST(request: Request) {
   const formData = await request.formData();
   const submissionId = cleanField(formData, "submission_id");
@@ -269,7 +301,7 @@ export async function POST(request: Request) {
       return redirectToIntake(request, submissionId, "not_found");
     }
 
-    if (workflow.status && workflow.status !== "draft") {
+    if (!(await canSubmitWorkflow(workflow))) {
       return redirectToIntake(request, submissionId, "locked");
     }
 
@@ -298,6 +330,7 @@ export async function POST(request: Request) {
       schema_version: schema.version,
       fields: intakeFieldValues,
       stages: buildStagePayload(schema, intakeFieldValues),
+      stewardship_cycle_submitted_at: isWorkflowStewardship(workflow.tier_slug) ? submittedAt : undefined,
     };
 
     await supabaseFetch(
