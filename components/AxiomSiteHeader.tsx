@@ -89,7 +89,7 @@ export function AxiomSiteHeader() {
   const pathname = usePathname();
   const [signedIn, setSignedIn] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -123,6 +123,7 @@ export function AxiomSiteHeader() {
 
   useEffect(() => {
     setMenuOpen(false);
+    setDesktopSidebarOpen(false);
   }, [pathname]);
 
   useEffect(() => {
