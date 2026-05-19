@@ -1,4 +1,8 @@
 import type { Metadata } from "next";
+import {
+  formatStewardshipDate,
+  getStewardshipCycleState,
+} from "../../../lib/axiom-stewardship";
 
 export const metadata: Metadata = {
   title: "Workflow Intake | Axiom Architect",
@@ -13,6 +17,7 @@ type SearchParams = {
   submitted?: string;
   error?: string;
   not_found?: string;
+  locked?: string;
 };
 
 type IntakePayload = {
@@ -27,6 +32,7 @@ type IntakeRecord = {
   tier_slug: string | null;
   workflow_title: string | null;
   status: string;
+  updated_at: string | null;
   intake_payload: IntakePayload | null;
   [key: string]: unknown;
 };
@@ -41,6 +47,13 @@ type CustomerRecord = {
   full_name: string | null;
   business_name: string | null;
   email: string | null;
+};
+
+type AuditReportRecord = {
+  id: string;
+  status: string | null;
+  updated_at: string | null;
+  generated_at: string | null;
 };
 
 type SchemaField = {
@@ -74,6 +87,7 @@ type IntakeContext = {
   order: OrderRecord | null;
   customer: CustomerRecord | null;
   schema: IntakeSchemaRecord | null;
+  report: AuditReportRecord | null;
 };
 
 const universalWorkflowTitleField: SchemaField = {
@@ -150,6 +164,14 @@ async function getSchemaForIntake(intake: IntakeRecord) {
   return (await getSchemaById(intake.intake_schema_id)) || (await getActiveSchemaByProduct(intake.product_id));
 }
 
+async function getReportForIntake(submissionId: string) {
+  const reports = await supabaseFetch<AuditReportRecord[]>(
+    `axiom_audit_reports?select=id,status,updated_at,generated_at&submission_id=eq.${encodeURIComponent(submissionId)}&order=updated_at.desc&limit=1`,
+  );
+
+  return reports?.[0] ?? null;
+}
+
 async function getIntakeContext(submissionId?: string): Promise<IntakeContext | null> {
   if (!submissionId) {
     return null;
@@ -177,6 +199,7 @@ async function getIntakeContext(submissionId?: string): Promise<IntakeContext | 
     order: record.axiom_orders,
     customer: record.axiom_customers,
     schema: await getSchemaForIntake(record),
+    report: await getReportForIntake(record.id),
   };
 }
 
@@ -287,10 +310,25 @@ export default async function WorkflowIntakePage({
   const hasError = params.error === "1";
   const notFound = params.not_found === "1" || (!!params.submission_id && !context);
   const schemaMissing = Boolean(context && stages.length === 0);
-  const isLocked = Boolean(context && context.intake.status !== "draft");
+  const stewardshipCycle = context
+    ? getStewardshipCycleState({
+        tierSlug: context.intake.tier_slug,
+        workflowStatus: context.intake.status,
+        workflowUpdatedAt: context.intake.updated_at,
+        reportUpdatedAt: context.report?.generated_at || context.report?.updated_at,
+      })
+    : null;
+  const isStewardship = Boolean(stewardshipCycle);
+  const isLocked = Boolean(
+    context &&
+      context.intake.status !== "draft" &&
+      (!stewardshipCycle || !stewardshipCycle.canSubmitUpdate),
+  );
+  const canSubmitMonthlyUpdate = Boolean(stewardshipCycle?.baselineSubmitted && stewardshipCycle.canSubmitUpdate);
   const reportHref = context ? `/dashboard/report?submission_id=${context.intake.id}` : "/dashboard/report";
   const reviewStageNumber = String(stages.length + 1).padStart(2, "0");
   const schemaTitle = context?.schema?.title || "Workflow intake";
+  const nextOpenDate = formatStewardshipDate(stewardshipCycle?.nextSubmissionOpensAt);
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
@@ -311,19 +349,29 @@ export default async function WorkflowIntakePage({
           <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[0.95fr_0.75fr] lg:items-end">
             <div>
               <h1 className="max-w-5xl text-[clamp(2.65rem,6vw,5.7rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
-                {isLocked ? "Review submitted workflow." : "Submit your workflow for diagnosis."}
+                {isStewardship
+                  ? stewardshipCycle?.baselineSubmitted
+                    ? stewardshipCycle.canSubmitUpdate
+                      ? "Submit this month’s stewardship update."
+                      : "Monthly update window locked."
+                    : "Submit your baseline workflow."
+                  : isLocked
+                    ? "Review submitted workflow."
+                    : "Submit your workflow for diagnosis."}
               </h1>
               <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-                {isLocked
-                  ? "This workflow intake has already been submitted and is now locked. Use the report status page to track the diagnostic report."
-                  : context?.schema?.description ||
-                    "Work through each stage carefully. This intake becomes the source material for your report, recommendations, and future workflow blueprint."}
+                {isStewardship
+                  ? stewardshipCycle?.guidance
+                  : isLocked
+                    ? "This workflow intake has already been submitted and is now locked. Use the report status page to track the diagnostic report."
+                    : context?.schema?.description ||
+                      "Work through each stage carefully. This intake becomes the source material for your report, recommendations, and future workflow blueprint."}
               </p>
             </div>
 
             <aside className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5">
               <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">
-                Audit context
+                {isStewardship ? "Stewardship context" : "Audit context"}
               </p>
               <div className="mt-5 grid gap-3 text-sm leading-6 text-[#e6f6e7]/78">
                 <p className="m-0">
@@ -336,8 +384,13 @@ export default async function WorkflowIntakePage({
                   <strong className="text-white">Business:</strong> {context?.customer?.business_name || "Not loaded"}
                 </p>
                 <p className="m-0">
-                  <strong className="text-white">Status:</strong> {context ? formatStatus(context.intake.status) : "Missing submission"}
+                  <strong className="text-white">Status:</strong> {stewardshipCycle?.label || (context ? formatStatus(context.intake.status) : "Missing submission")}
                 </p>
+                {isStewardship && stewardshipCycle?.baselineSubmitted ? (
+                  <p className="m-0">
+                    <strong className="text-white">Next update opens:</strong> {nextOpenDate}
+                  </p>
+                ) : null}
               </div>
             </aside>
           </div>
@@ -349,10 +402,23 @@ export default async function WorkflowIntakePage({
           {isSubmitted && (
             <div className="mb-8 border border-[#9ed39f] bg-[#9ed39f] p-5 text-black">
               <p className="m-0 text-lg font-black uppercase tracking-[-0.02em]">
-                Your workflow audit has been received.
+                {isStewardship ? "Your stewardship update has been received." : "Your workflow audit has been received."}
               </p>
               <p className="mb-0 mt-2 text-sm leading-6 text-black/72">
-                The submission status is now set to submitted. The next stage is report processing.
+                {isStewardship
+                  ? "Axiom will use this update as source material for the next monthly stewardship brief."
+                  : "The submission status is now set to submitted. The next stage is report processing."}
+              </p>
+            </div>
+          )}
+
+          {params.locked === "1" && (
+            <div className="mb-8 border border-[#9ed39f]/45 bg-[#9ed39f]/10 p-5 text-[#e6f6e7]/84">
+              <p className="m-0 text-lg font-black uppercase tracking-[-0.02em] text-white">
+                Monthly update not open yet
+              </p>
+              <p className="mb-0 mt-2 text-sm leading-6 text-[#e6f6e7]/72">
+                This Stewardship update was not accepted because the next monthly submission window has not opened yet.
               </p>
             </div>
           )}
@@ -360,17 +426,30 @@ export default async function WorkflowIntakePage({
           {isLocked && (
             <div className="mb-8 border border-[#9ed39f]/45 bg-[#9ed39f]/10 p-5 text-[#e6f6e7]/84">
               <p className="m-0 text-lg font-black uppercase tracking-[-0.02em] text-white">
-                Intake locked
+                {isStewardship ? "Stewardship update locked" : "Intake locked"}
               </p>
               <p className="mb-0 mt-2 text-sm leading-6 text-[#e6f6e7]/72">
-                This workflow has already been submitted. New submissions are disabled so the report source material remains stable.
+                {isStewardship
+                  ? `Your next monthly update window opens on ${nextOpenDate}. Until then, collect workflow changes, errors, examples, metrics, and decisions for the next review.`
+                  : "This workflow has already been submitted. New submissions are disabled so the report source material remains stable."}
               </p>
               <a
                 href={reportHref}
                 className="mt-5 inline-flex min-h-12 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.16em] text-black transition hover:bg-white"
               >
-                View report status
+                {isStewardship ? "View latest brief" : "View report status"}
               </a>
+            </div>
+          )}
+
+          {canSubmitMonthlyUpdate && (
+            <div className="mb-8 border border-[#9ed39f] bg-[#9ed39f] p-5 text-black">
+              <p className="m-0 text-lg font-black uppercase tracking-[-0.02em]">
+                Monthly update window open
+              </p>
+              <p className="mb-0 mt-2 text-sm leading-6 text-black/72">
+                Submit the changes, errors, examples, metrics, tool updates, and decisions you want reviewed in this month’s Stewardship brief.
+              </p>
             </div>
           )}
 
@@ -440,7 +519,7 @@ export default async function WorkflowIntakePage({
                     Stage {reviewStageNumber}
                   </p>
                   <h2 className="mt-4 text-[clamp(1.65rem,3vw,2.8rem)] font-black uppercase leading-[0.95] tracking-[-0.06em] text-white">
-                    Review and submit
+                    {isStewardship ? "Review and submit update" : "Review and submit"}
                   </h2>
                 </div>
                 <div className="grid gap-4 text-sm leading-7 text-[#e6f6e7]/78">
@@ -451,21 +530,25 @@ export default async function WorkflowIntakePage({
                     <strong className="text-white">Workflow title:</strong> {context.intake.workflow_title || fieldValue(context.intake, "workflow_title") || "Entered above and saved into the audit record."}
                   </p>
                   <p className="m-0">
-                    <strong className="text-white">Delivery expectation:</strong> Report generation begins after the intake is submitted.
+                    <strong className="text-white">Delivery expectation:</strong> {isStewardship ? "A monthly stewardship brief is prepared after the update is submitted." : "Report generation begins after the intake is submitted."}
                   </p>
                   {isLocked ? (
                     <a
                       href={reportHref}
                       className="mt-4 inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:w-fit"
                     >
-                      View report status
+                      {isStewardship ? "View latest brief" : "View report status"}
                     </a>
                   ) : (
                     <button
                       type="submit"
                       className="mt-4 inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:w-fit"
                     >
-                      Submit workflow intake
+                      {isStewardship
+                        ? canSubmitMonthlyUpdate
+                          ? "Submit monthly update"
+                          : "Submit baseline intake"
+                        : "Submit workflow intake"}
                     </button>
                   )}
                 </div>
