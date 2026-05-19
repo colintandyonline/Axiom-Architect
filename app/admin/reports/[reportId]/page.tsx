@@ -233,6 +233,10 @@ function canApprove(status?: string | null) {
   return ["generated", "needs_review"].includes(status || "");
 }
 
+function canDeliver(status?: string | null) {
+  return ["approved", "delivered"].includes(status || "");
+}
+
 function workflowDisplayTitle(workflow?: WorkflowRecord | null, report?: ReportRecord | null) {
   return (
     workflow?.workflow_title ||
@@ -489,6 +493,9 @@ export default async function AdminReportReviewPage({ params, searchParams }: Pa
                 )}
                 {canApprove(report.status) && (
                   <ReportActionForm reportId={report.id} action="approve" labelText="Approve" primary />
+                )}
+                {canDeliver(report.status) && (
+                  <ReportActionForm reportId={report.id} action="deliver" labelText="Deliver report" primary />
                 )}
                 <ReportActionForm reportId={report.id} action="needs_revision" labelText="Needs revision" />
                 <ReportActionForm reportId={report.id} action="queue" labelText="Requeue" />
