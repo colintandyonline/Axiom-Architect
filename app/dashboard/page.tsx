@@ -49,6 +49,45 @@ type DashboardRecord = {
   report: AxiomAuditReport | null;
 };
 
+const stewardshipClientInputs = [
+  "What changed in the workflow since the last review.",
+  "Errors, delays, exceptions, or recurring bottlenecks noticed this month.",
+  "Any tool, AI model, automation, team, customer, or operating-rule changes.",
+  "Metrics or examples available: screenshots, logs, volumes, failed handoffs, support notes, or manual overrides.",
+  "Decisions you want Axiom to review before the next workflow update.",
+];
+
+const stewardshipReviewAreas = [
+  "Workflow drift and recurring friction.",
+  "Automation suitability and human review boundaries.",
+  "AI/tool changes that may affect the workflow.",
+  "Risk controls, exception handling, and approval gates.",
+  "Next 7-day and 30-day action priorities.",
+];
+
+const stewardshipCycle = [
+  {
+    label: "01",
+    title: "Client update window",
+    text: "You submit monthly changes, issues, examples, metrics, and decisions that need review.",
+  },
+  {
+    label: "02",
+    title: "Axiom review",
+    text: "Axiom compares the new evidence against the last report, current workflow risks, and relevant AI/tool changes.",
+  },
+  {
+    label: "03",
+    title: "Stewardship brief",
+    text: "Your dashboard is updated with the current priorities, safe automation boundaries, and next actions.",
+  },
+  {
+    label: "04",
+    title: "Stored history",
+    text: "Each review cycle should build a retained history of what changed, what was decided, and what improved.",
+  },
+];
+
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -194,6 +233,87 @@ function labelFromStatus(status?: string | null) {
   return status.replace(/_/g, " ");
 }
 
+function StewardshipServicePlan({ intakeHref, reportHref }: { intakeHref: string; reportHref: string }) {
+  return (
+    <section className="bg-black px-4 pb-16 sm:px-6 lg:px-8 lg:pb-24">
+      <div className="mx-auto max-w-[1440px] rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-8">
+        <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+          <div>
+            <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
+              Stewardship plan
+            </p>
+            <h2 className="mt-5 text-[clamp(2.1rem,4vw,4.1rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
+              Your monthly workflow review cycle.
+            </h2>
+            <p className="mt-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
+              Workflow Stewardship is an ongoing review service. Each month, you provide workflow updates and evidence. Axiom reviews what changed, checks risks and automation boundaries, and returns updated guidance so your workflow keeps improving instead of going stale.
+            </p>
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+              <a
+                href={intakeHref}
+                className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:min-w-64"
+              >
+                Submit monthly update
+              </a>
+              <a
+                href={reportHref}
+                className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/45 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black sm:min-w-56"
+              >
+                View latest brief
+              </a>
+            </div>
+          </div>
+
+          <div className="grid gap-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              {stewardshipCycle.map((step) => (
+                <article key={step.label} className="border border-[#9ed39f]/22 bg-black/38 p-5">
+                  <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">{step.label}</p>
+                  <h3 className="mt-3 text-xl font-black uppercase tracking-[-0.04em] text-white">{step.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/72">{step.text}</p>
+                </article>
+              ))}
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-2">
+              <article className="border border-[#9ed39f]/22 bg-black/38 p-5">
+                <h3 className="text-xl font-black uppercase tracking-[-0.04em] text-white">What you provide each month</h3>
+                <div className="mt-4 grid gap-3">
+                  {stewardshipClientInputs.map((item) => (
+                    <p key={item} className="m-0 flex gap-3 text-sm leading-7 text-[#e6f6e7]/74">
+                      <span className="mt-2 h-2 w-2 shrink-0 bg-[#9ed39f]" />
+                      <span>{item}</span>
+                    </p>
+                  ))}
+                </div>
+              </article>
+
+              <article className="border border-[#9ed39f]/22 bg-black/38 p-5">
+                <h3 className="text-xl font-black uppercase tracking-[-0.04em] text-white">What Axiom reviews</h3>
+                <div className="mt-4 grid gap-3">
+                  {stewardshipReviewAreas.map((item) => (
+                    <p key={item} className="m-0 flex gap-3 text-sm leading-7 text-[#e6f6e7]/74">
+                      <span className="mt-2 h-2 w-2 shrink-0 bg-[#9ed39f]" />
+                      <span>{item}</span>
+                    </p>
+                  ))}
+                </div>
+              </article>
+            </div>
+
+            <article className="border border-[#9ed39f]/22 bg-[#9ed39f]/10 p-5">
+              <h3 className="text-xl font-black uppercase tracking-[-0.04em] text-white">Data and review history</h3>
+              <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/76 sm:text-base">
+                The next backend phase should store each monthly stewardship cycle separately: client update, evidence supplied, Axiom review notes, revised action brief, report version, delivery status, and cycle dates. That gives the client a retained service history instead of a one-off report archive.
+              </p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -219,6 +339,7 @@ export default async function DashboardPage({
   const hasWorkflow = Boolean(record.workflow);
   const hasSubmittedIntake = Boolean(record.workflow?.id && record.workflow.status !== "draft");
   const isAdmin = isAxiomAdminEmail(user.email) || isAxiomAdminEmail(customer.email);
+  const isStewardship = record.order?.tier_slug === "workflow-stewardship" || record.workflow?.tier_slug === "workflow-stewardship";
   const paymentAmount = formatCurrency(record.order?.amount_total ?? null, record.order?.currency ?? null);
   const paymentStatus = labelFromStatus(record.order?.payment_status || (params.checkout === "success" ? "paid" : null));
   const workflowStatus = labelFromStatus(record.workflow?.status || "not started");
@@ -248,8 +369,12 @@ export default async function DashboardPage({
       text: hasWorkflow ? `${workflowTitle} · ${workflowStatus}` : "Your workflow intake will appear here after checkout.",
     },
     {
-      label: "Report status",
-      text: hasWorkflow ? reportStatus : "A report record is created after your intake is submitted.",
+      label: isStewardship ? "Stewardship" : "Report status",
+      text: isStewardship
+        ? "Monthly review cycle active after the baseline intake is submitted."
+        : hasWorkflow
+          ? reportStatus
+          : "A report record is created after your intake is submitted.",
     },
   ];
 
@@ -275,11 +400,13 @@ export default async function DashboardPage({
                     {serviceName}
                   </p>
                   <p className="m-0">
-                    {hasSubmittedIntake
-                      ? `${businessName} is set up. Your workflow intake has been submitted and the report status is ${reportStatus}.`
-                      : hasWorkflow
-                        ? `${businessName} is set up. Continue the workflow intake from this dashboard.`
-                        : `${businessName} is set up. Your order is attached to this account.`}
+                    {isStewardship
+                      ? `${businessName} is set up for monthly workflow stewardship. Submit the baseline intake first; after that, each monthly cycle asks for changes, issues, examples, and decisions that need review.`
+                      : hasSubmittedIntake
+                        ? `${businessName} is set up. Your workflow intake has been submitted and the report status is ${reportStatus}.`
+                        : hasWorkflow
+                          ? `${businessName} is set up. Continue the workflow intake from this dashboard.`
+                          : `${businessName} is set up. Your order is attached to this account.`}
                   </p>
                   {isAdmin && (
                     <a
@@ -347,8 +474,8 @@ export default async function DashboardPage({
                 {workflowStatus}
               </p>
               <p className="m-0 border border-[#9ed39f]/24 bg-[#9ed39f]/8 p-4">
-                <strong className="block text-[0.68rem] uppercase tracking-[0.16em] text-[#9ed39f]">Report</strong>
-                {reportStatus}
+                <strong className="block text-[0.68rem] uppercase tracking-[0.16em] text-[#9ed39f]">{isStewardship ? "Cycle" : "Report"}</strong>
+                {isStewardship ? "Monthly stewardship" : reportStatus}
               </p>
             </div>
           </article>
@@ -359,27 +486,41 @@ export default async function DashboardPage({
             </p>
             <h2 className="mt-5 text-[clamp(2.1rem,4vw,3.7rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
               {hasOrder
-                ? hasSubmittedIntake
-                  ? "View your report status."
-                  : hasWorkflow
-                    ? "Continue your workflow intake."
-                    : "Start your workflow intake."
+                ? isStewardship
+                  ? hasSubmittedIntake
+                    ? "Prepare this month’s workflow update."
+                    : "Submit the baseline workflow first."
+                  : hasSubmittedIntake
+                    ? "View your report status."
+                    : hasWorkflow
+                      ? "Continue your workflow intake."
+                      : "Start your workflow intake."
                 : "Choose a package to begin."}
             </h2>
             <p className="mt-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
               {hasOrder
-                ? hasSubmittedIntake
-                  ? "Your workflow intake is locked and the report has moved into the status queue. Use the report page to track the next stage."
-                  : "The intake form is the source material for your diagnostic report. The stronger the workflow details, the stronger the report."
+                ? isStewardship
+                  ? hasSubmittedIntake
+                    ? "Your baseline is in place. Use the monthly update flow to send changes, issues, examples, and decisions that need review before the next stewardship brief."
+                    : "The baseline intake gives Axiom the source material for your monthly stewardship cycle. After it is submitted, each monthly review can build on the previous one."
+                  : hasSubmittedIntake
+                    ? "Your workflow intake is locked and the report has moved into the status queue. Use the report page to track the next stage."
+                    : "The intake form is the source material for your diagnostic report. The stronger the workflow details, the stronger the report."
                 : "Your account is ready. Select a package, complete checkout, and your intake workspace will appear here."}
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               {hasOrder ? (
                 <a
-                  href={hasSubmittedIntake ? reportHref : intakeHref}
+                  href={hasSubmittedIntake && !isStewardship ? reportHref : intakeHref}
                   className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:min-w-72"
                 >
-                  {hasSubmittedIntake ? "View report status" : "Start workflow intake"}
+                  {isStewardship
+                    ? hasSubmittedIntake
+                      ? "Submit monthly update"
+                      : "Start baseline intake"
+                    : hasSubmittedIntake
+                      ? "View report status"
+                      : "Start workflow intake"}
                 </a>
               ) : (
                 <a
@@ -398,10 +539,10 @@ export default async function DashboardPage({
                 </a>
               ) : hasSubmittedIntake ? (
                 <a
-                  href={intakeHref}
+                  href={isStewardship ? reportHref : intakeHref}
                   className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/45 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black sm:min-w-56"
                 >
-                  Review intake
+                  {isStewardship ? "View latest brief" : "Review intake"}
                 </a>
               ) : (
                 <a
@@ -415,6 +556,8 @@ export default async function DashboardPage({
           </article>
         </div>
       </section>
+
+      {isStewardship && <StewardshipServicePlan intakeHref={intakeHref} reportHref={reportHref} />}
     </main>
   );
 }
