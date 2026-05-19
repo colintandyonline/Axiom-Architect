@@ -49,6 +49,19 @@ type ReportContext = {
   report: ReportRecord | null;
 };
 
+type ClientReportState = {
+  label: string;
+  reviewLabel: string;
+  heroTitle: string;
+  heroCopy: string;
+  waitingTitle: string;
+  waitingCopy: string;
+  stepOneState: "complete" | "pending";
+  stepTwoTitle: string;
+  stepTwoState: "active" | "complete" | "pending";
+  stepThreeState: "active" | "complete" | "pending";
+};
+
 const panelClass = "rounded-[1.5rem] border border-[#9ed39f]/30 bg-[#030804] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.24)] sm:p-7";
 const eyebrowClass = "text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]";
 const bodyClass = "text-sm leading-7 text-[#e6f6e7]/75 sm:text-base";
@@ -136,7 +149,7 @@ function labelFromStatus(status?: string | null) {
 
 function formatDate(value?: string | null) {
   if (!value) {
-    return "Not prepared yet";
+    return "Not ready yet";
   }
 
   return new Intl.DateTimeFormat("en-GB", {
@@ -157,6 +170,98 @@ function hasGeneratedReport(reportJson?: DashboardReportJson | null) {
 
 function safeArray<T>(value?: T[] | null): T[] {
   return Array.isArray(value) ? value : [];
+}
+
+function getClientReportState({
+  hasWorkflow,
+  canRenderReport,
+  report,
+  reportJson,
+}: {
+  hasWorkflow: boolean;
+  canRenderReport: boolean;
+  report?: ReportRecord | null;
+  reportJson?: DashboardReportJson | null;
+}): ClientReportState {
+  const summary = report?.client_summary || reportJson?.delivery?.dashboard_summary || "Your workflow report is available below.";
+  const status = report?.status || "";
+  const qualityStatus = report?.quality_status || "";
+  const needsRevision = status === "revision_requested" || qualityStatus === "needs_fixes" || qualityStatus === "blocked";
+
+  if (!hasWorkflow) {
+    return {
+      label: "Intake not started",
+      reviewLabel: "Not started",
+      heroTitle: "Start your workflow intake.",
+      heroCopy: "Complete your workflow intake first. Once submitted, your report status will appear here.",
+      waitingTitle: "Your report starts with the intake.",
+      waitingCopy: "The workflow intake gives Axiom Architect the source material needed to prepare your diagnostic report.",
+      stepOneState: "pending",
+      stepTwoTitle: "Report being prepared",
+      stepTwoState: "pending",
+      stepThreeState: "pending",
+    };
+  }
+
+  if (needsRevision) {
+    return {
+      label: "Revision in progress",
+      reviewLabel: "Being refined",
+      heroTitle: canRenderReport ? "Your workflow report is being refined." : "Your workflow report is being refined.",
+      heroCopy: canRenderReport
+        ? "Your report is visible below and may receive final updates after internal review."
+        : "Your intake has been received. A revision has been requested and this page will update when the report is ready.",
+      waitingTitle: "Your report is being refined.",
+      waitingCopy: "The submitted intake is in review. Any required changes will be handled before the report is marked ready.",
+      stepOneState: "complete",
+      stepTwoTitle: "Revision in progress",
+      stepTwoState: "active",
+      stepThreeState: "pending",
+    };
+  }
+
+  if (status === "delivered") {
+    return {
+      label: "Delivered",
+      reviewLabel: "Delivered",
+      heroTitle: "Your workflow report has been delivered.",
+      heroCopy: summary,
+      waitingTitle: "Your report has been delivered.",
+      waitingCopy: "Your report has been marked delivered and is available from this dashboard.",
+      stepOneState: "complete",
+      stepTwoTitle: "Report ready",
+      stepTwoState: "complete",
+      stepThreeState: "complete",
+    };
+  }
+
+  if (canRenderReport || status === "approved") {
+    return {
+      label: "Report ready",
+      reviewLabel: status === "approved" ? "Approved" : "Ready",
+      heroTitle: "Your workflow report is ready.",
+      heroCopy: summary,
+      waitingTitle: "Your report is ready.",
+      waitingCopy: "Your workflow report is available from this dashboard.",
+      stepOneState: "complete",
+      stepTwoTitle: "Report ready",
+      stepTwoState: "complete",
+      stepThreeState: "active",
+    };
+  }
+
+  return {
+    label: "Report being prepared",
+    reviewLabel: "In progress",
+    heroTitle: "Your workflow report is being prepared.",
+    heroCopy: "Your intake has been received. This page will update when the workflow report is ready.",
+    waitingTitle: "Your workflow report is being prepared.",
+    waitingCopy: "Once ready, this page will show your workflow diagnosis, automation suitability, human review gates, and recommended implementation sequence.",
+    stepOneState: "complete",
+    stepTwoTitle: "Report being prepared",
+    stepTwoState: "active",
+    stepThreeState: "pending",
+  };
 }
 
 function SectionShell({
@@ -237,33 +342,33 @@ function WaitingReportState({
   hasWorkflow,
   workflowTitle,
   intakeHref,
-  reportStatus,
+  clientState,
 }: {
   hasWorkflow: boolean;
   workflowTitle: string;
   intakeHref: string;
-  reportStatus: string;
+  clientState: ClientReportState;
 }) {
   const steps = [
     {
       label: "01",
-      title: "Workflow submitted",
+      title: "Intake submitted",
       text: hasWorkflow
         ? `${workflowTitle} has been saved as the source material for the report.`
-        : "Submit a workflow intake to start the diagnostic report process.",
-      state: hasWorkflow ? "complete" : "pending",
+        : "Submit your workflow intake to start the diagnostic report process.",
+      state: clientState.stepOneState,
     },
     {
       label: "02",
-      title: "Report processing",
-      text: `Current stage: ${reportStatus}.`,
-      state: hasWorkflow ? "active" : "pending",
+      title: clientState.stepTwoTitle,
+      text: `Current stage: ${clientState.label}.`,
+      state: clientState.stepTwoState,
     },
     {
       label: "03",
-      title: "Blueprint preparation",
+      title: "Report ready",
       text: "The finished report will organise findings, automation suitability, review gates, and implementation guidance.",
-      state: "pending",
+      state: clientState.stepThreeState,
     },
   ];
 
@@ -272,13 +377,13 @@ function WaitingReportState({
       <div className="mx-auto grid max-w-[1280px] gap-8 lg:grid-cols-[0.82fr_1fr]">
         <article className={panelClass}>
           <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-            Report preparation
+            Report status
           </p>
           <h2 className="mt-5 text-[clamp(2.1rem,4vw,3.7rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
-            Your workflow report is being prepared.
+            {clientState.waitingTitle}
           </h2>
           <p className="mt-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
-            Once ready, this page will show your workflow diagnosis, automation suitability, human review gates, and recommended implementation sequence.
+            {clientState.waitingCopy}
           </p>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row">
             <a
@@ -323,10 +428,10 @@ function WaitingReportState({
 
 function RenderGeneratedReport({
   report,
-  reportStatus,
+  clientState,
 }: {
   report: DashboardReportJson;
-  reportStatus: string;
+  clientState: ClientReportState;
 }) {
   const executive = report.executive_summary;
   const scorecard = report.scorecard;
@@ -342,12 +447,6 @@ function RenderGeneratedReport({
   return (
     <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
       <div className="mx-auto grid max-w-[1280px] gap-8">
-        {reportStatus === "Needs Review" && (
-          <div className="rounded-[1.25rem] border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5 text-sm leading-7 text-[#e6f6e7]/78">
-            This report is going through final checks before delivery.
-          </div>
-        )}
-
         {executive && (
           <SectionShell eyebrow="Executive summary" title={executive.headline || "Workflow report summary"}>
             <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
@@ -619,7 +718,7 @@ function RenderGeneratedReport({
               {delivery.client_expectation_note || delivery.dashboard_summary}
             </p>
             <div className="mt-6 flex flex-wrap gap-3 text-[0.68rem] font-black uppercase tracking-[0.15em]">
-              <span className="border border-black/25 px-3 py-2">Dashboard report available</span>
+              <span className="border border-black/25 px-3 py-2">Dashboard report {clientState.label.toLowerCase()}</span>
               <span className="border border-black/25 px-3 py-2">PDF version {delivery.pdf_ready ? "available" : "preparing"}</span>
             </div>
           </section>
@@ -648,25 +747,20 @@ export default async function ReportStatusPage({
   const context = await getReportContext(customer.id, params.submission_id);
   const reportJson = context.report?.report_json;
   const canRenderReport = hasGeneratedReport(reportJson);
-  const workflowTitle = context.workflow?.workflow_title || reportJson?.submission?.workflow_title || "No workflow intake found";
-  const serviceName = context.order?.service_name || context.workflow?.tier_slug || reportJson?.product_slug || "Workflow audit";
-  const intakeStatus = labelFromStatus(context.workflow?.status);
-  const reportStatus = labelFromStatus(context.report?.status || (context.workflow ? "queued" : "pending"));
-  const reportUpdated = formatDate(context.report?.generated_at || context.report?.updated_at);
   const hasWorkflow = Boolean(context.workflow);
+  const workflowTitle = context.workflow?.workflow_title || reportJson?.submission?.workflow_title || "Workflow intake not started";
+  const serviceName = context.order?.service_name || context.workflow?.tier_slug || reportJson?.product_slug || "Workflow audit";
+  const intakeStatus = context.workflow?.status === "draft" ? "Draft" : hasWorkflow ? "Intake submitted" : "Not started";
+  const clientState = getClientReportState({
+    hasWorkflow,
+    canRenderReport,
+    report: context.report,
+    reportJson,
+  });
+  const reportUpdated = formatDate(context.report?.generated_at || context.report?.updated_at);
   const intakeHref = context.workflow?.id
     ? `/dashboard/intake?submission_id=${context.workflow.id}`
     : "/dashboard/intake";
-  const heroTitle = canRenderReport
-    ? "Your workflow report is ready."
-    : hasWorkflow
-      ? "Your workflow report is in progress."
-      : "No report is active yet.";
-  const heroCopy = canRenderReport
-    ? context.report?.client_summary || reportJson?.delivery?.dashboard_summary || "Your workflow report is available below."
-    : hasWorkflow
-      ? "Your intake has been received. This page will update when the workflow report is ready."
-      : "Complete the workflow intake first, then the report status will appear here.";
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
@@ -679,14 +773,14 @@ export default async function ReportStatusPage({
           <div className="mt-6 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
             <div>
               <h1 className="max-w-5xl text-[clamp(2.55rem,6vw,5.8rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
-                {heroTitle}
+                {clientState.heroTitle}
               </h1>
             </div>
             <div className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
               <p className="m-0 text-2xl font-black uppercase leading-tight tracking-[-0.04em] text-white">
                 {workflowTitle}
               </p>
-              <p className="mb-0 mt-3">{heroCopy}</p>
+              <p className="mb-0 mt-3">{clientState.heroCopy}</p>
             </div>
           </div>
         </div>
@@ -697,8 +791,8 @@ export default async function ReportStatusPage({
           {[
             ["Package", serviceName],
             ["Intake", intakeStatus],
-            ["Report", reportStatus],
-            ["Review", context.report?.quality_status === "ready" ? "Reviewed" : context.report?.quality_status === "needs_fixes" ? "Review needed" : context.report?.quality_status === "blocked" ? "Revision needed" : "Pending"],
+            ["Report", clientState.label],
+            ["Review", clientState.reviewLabel],
             ["Prepared", reportUpdated],
           ].map(([label, value]) => (
             <article key={label} className="rounded-[1.25rem] border border-black bg-[#061009] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.26)]">
@@ -713,13 +807,13 @@ export default async function ReportStatusPage({
       </section>
 
       {canRenderReport && reportJson ? (
-        <RenderGeneratedReport report={reportJson} reportStatus={reportStatus} />
+        <RenderGeneratedReport report={reportJson} clientState={clientState} />
       ) : (
         <WaitingReportState
           hasWorkflow={hasWorkflow}
           workflowTitle={workflowTitle}
           intakeHref={intakeHref}
-          reportStatus={reportStatus}
+          clientState={clientState}
         />
       )}
     </main>
