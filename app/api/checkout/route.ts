@@ -46,7 +46,7 @@ const productConfig: Record<
     mode: "payment",
   },
   "architect-residency": {
-    name: "Architect Residency — Automated Architecture Package",
+    name: "Axiom Enterprise Architecture System",
     priceEnv: "STRIPE_PRICE_ARCHITECT_RESIDENCY",
     mode: "payment",
   },
