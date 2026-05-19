@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  getEnterpriseArchitectureIntakeSchema,
+  isEnterpriseArchitectureSlug,
+} from "../../../lib/axiom-enterprise-intake";
 import { getStewardshipCycleState, isWorkflowStewardship } from "../../../lib/axiom-stewardship";
 
 export const runtime = "nodejs";
@@ -154,8 +158,16 @@ async function getActiveSchemaByProduct(productId?: string | null) {
   return schemas[0] ?? null;
 }
 
-async function getSchemaForWorkflow(workflow: WorkflowRecord) {
-  return (await getSchemaById(workflow.intake_schema_id)) || (await getActiveSchemaByProduct(workflow.product_id));
+async function getSchemaForWorkflow(workflow: WorkflowRecord): Promise<IntakeSchemaRecord | null> {
+  const storedSchema =
+    (await getSchemaById(workflow.intake_schema_id)) ||
+    (await getActiveSchemaByProduct(workflow.product_id));
+
+  if (isEnterpriseArchitectureSlug(workflow.tier_slug)) {
+    return getEnterpriseArchitectureIntakeSchema(storedSchema) as IntakeSchemaRecord;
+  }
+
+  return storedSchema;
 }
 
 function schemaHasWorkflowTitle(schema: IntakeSchemaRecord | null) {
@@ -330,6 +342,7 @@ export async function POST(request: Request) {
       schema_version: schema.version,
       fields: intakeFieldValues,
       stages: buildStagePayload(schema, intakeFieldValues),
+      enterprise_architecture_submitted_at: isEnterpriseArchitectureSlug(workflow.tier_slug) ? submittedAt : undefined,
       stewardship_cycle_submitted_at: isWorkflowStewardship(workflow.tier_slug) ? submittedAt : undefined,
     };
 
