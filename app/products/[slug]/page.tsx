@@ -249,44 +249,46 @@ const products: Record<ProductSlug, ProductInfo> = {
   "architect-residency": {
     slug: "architect-residency",
     name: "Architect Residency",
-    label: "High-touch deployment",
+    label: "Premium automated system design",
     price: "$2,499+",
-    headline: "A guided architecture partnership for serious implementation.",
+    headline: "Premium automated architecture for complex workflow systems.",
     summary:
-      "Architect Residency is the high-touch service for clients who need more than reports and templates. It supports guided deployment, workshops, training, technical oversight, leadership strategy, first-run operational review, and custom system design where the workflow requires a deeper partnership.",
+      "Architect Residency is the highest automated Axiom Architect package. It is designed for complex workflows that need a deeper intake, broader system review, dependency mapping, automation boundaries, implementation sequencing, and a premium dashboard-delivered architecture report without live consulting commitments.",
     outcome:
-      "You finish with guided implementation support and a clearer path from workflow design to real operational deployment.",
+      "You finish with a detailed architecture roadmap that clarifies how the workflow system should be structured, what should be improved first, where AI or automation can safely support the system, and what should remain human-controlled.",
     bestFor: [
-      "A business or team ready to implement a serious workflow system.",
-      "Leaders who need strategic oversight, workshops, and guided deployment.",
-      "Operations involving legacy tools, custom integrations, or team-wide adoption.",
-      "Clients who need direct architecture support rather than self-guided implementation.",
+      "Complex workflows that need deeper structured analysis than a single audit or blueprint.",
+      "Businesses that want a premium architecture report without arranging live sessions or on-site delivery.",
+      "Operations involving multiple tools, handoffs, dependencies, risks, or decision points.",
+      "Clients who need a dashboard-delivered roadmap before deciding whether to scope separate implementation work.",
     ],
     questions: [
-      "What does this system need to look like in live operations?",
-      "Which tools, APIs, edge functions, or custom components may be required?",
-      "How should the team be trained and onboarded?",
-      "What needs to be watched during first-run deployment?",
+      "How should this workflow system be structured at a higher level?",
+      "Which dependencies, handoffs, tools, and risk points need to be controlled?",
+      "Where can AI or automation support the system without taking over sensitive decisions?",
+      "What sequence should be followed before any technical build or wider rollout?",
     ],
     deliverables: [
-      "Live remote implementation workshop.",
-      "On-site option by arrangement.",
-      "Legacy hardware or software integration planning.",
-      "Team-wide training and onboarding sessions.",
-      "Direct oversight of first-run live operations.",
-      "Custom-coded private edge functions or APIs where required.",
-      "1:1 leadership strategy sessions.",
+      "Expanded premium intake sequence.",
+      "Complex workflow and system dependency review.",
+      "Current-state and future-state architecture map.",
+      "Advanced automation suitability map.",
+      "Risk, exception, and human review gate design.",
+      "Tool stack and data-flow architecture guidance.",
+      "Implementation roadmap and rollout sequence.",
+      "Dashboard-delivered architecture report.",
     ],
     process: [
-      "Choose Architect Residency and submit the initial scope through the intake flow.",
-      "The project is reviewed for complexity, risks, tools, people, and implementation requirements.",
-      "A deployment approach is agreed before deep implementation support begins.",
-      "The residency then supports rollout, training, oversight, and operating-system refinement.",
+      "Choose Architect Residency and complete checkout.",
+      "Submit the expanded premium intake through the client dashboard.",
+      "Axiom reviews the workflow system for complexity, risk, dependencies, tool fit, automation suitability, and operating sequence.",
+      "Your dashboard receives a premium architecture report with guidance, boundaries, and a practical implementation roadmap.",
     ],
     boundaries: [
-      "The listed price is a starting point; final scope can vary by complexity.",
-      "Complex custom builds, travel, on-site work, or integrations may require separate agreement.",
-      "Residency support does not remove the client's responsibility for internal approval, compliance, and business decisions.",
+      "This package is delivered through the dashboard and does not include on-site work.",
+      "It does not include live workshops, team training sessions, or 1:1 consulting calls unless separately agreed in writing.",
+      "It does not include hands-on tool setup, custom software development, integrations, migrations, or managed implementation unless separately scoped.",
+      "The client remains responsible for internal approvals, compliance review, staff training, tool access, and final business decisions.",
     ],
   },
 };
@@ -439,7 +441,7 @@ export default async function ProductDetailPage({
               Clear boundaries keep the service useful.
             </h2>
             <p className="mt-5 max-w-2xl text-base leading-8 text-[#e6f6e7]/72 sm:text-lg">
-              Each Axiom Architect product is designed to solve a specific level of workflow problem. The right tier depends on whether you need diagnosis, planning, operating assets, ongoing optimisation, ecosystem design, or guided deployment.
+              Each Axiom Architect product is designed to solve a specific level of workflow problem. The right tier depends on whether you need diagnosis, planning, operating assets, ongoing optimisation, ecosystem design, or automated architecture guidance.
             </p>
           </div>
           <DetailList title="What this product does not automatically include" items={product.boundaries} />
