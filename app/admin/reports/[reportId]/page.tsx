@@ -221,20 +221,16 @@ function statusPill(status?: string | null) {
   );
 }
 
-function canGenerate(status?: string | null) {
-  return ["queued", "failed", "revision_requested"].includes(status || "");
-}
-
-function canRegenerate(status?: string | null) {
-  return ["generated", "needs_review", "approved", "delivered"].includes(status || "");
-}
-
 function canApprove(status?: string | null) {
   return ["generated", "needs_review"].includes(status || "");
 }
 
 function canDeliver(status?: string | null) {
   return ["approved", "delivered"].includes(status || "");
+}
+
+function deliveryLabel(status?: string | null) {
+  return status === "delivered" ? "Resend delivery email" : "Deliver report";
 }
 
 function workflowDisplayTitle(workflow?: WorkflowRecord | null, report?: ReportRecord | null) {
@@ -444,7 +440,7 @@ export default async function AdminReportReviewPage({ params, searchParams }: Pa
                 {workflowTitle}
               </p>
               <p className="mb-0 mt-3">
-                Signed in as {adminEmail}. Review the linked intake, customer, order, generated JSON, quality notes, and operational controls before delivery.
+                Signed in as {adminEmail}. Report creation runs from the submitted intake flow; this page is for review, approval, revision requests, and delivery.
               </p>
             </div>
           </div>
@@ -485,20 +481,13 @@ export default async function AdminReportReviewPage({ params, searchParams }: Pa
                 <DetailCard labelText="Last update" value={formatDate(report.updated_at)} />
               </div>
               <div className="flex flex-wrap gap-3 lg:max-w-[28rem] lg:justify-end">
-                {canGenerate(report.status) && (
-                  <ReportActionForm reportId={report.id} action="generate" labelText="Generate" primary />
-                )}
-                {canRegenerate(report.status) && (
-                  <ReportActionForm reportId={report.id} action="regenerate" labelText="Regenerate" />
-                )}
                 {canApprove(report.status) && (
                   <ReportActionForm reportId={report.id} action="approve" labelText="Approve" primary />
                 )}
                 {canDeliver(report.status) && (
-                  <ReportActionForm reportId={report.id} action="deliver" labelText="Deliver report" primary />
+                  <ReportActionForm reportId={report.id} action="deliver" labelText={deliveryLabel(report.status)} primary />
                 )}
                 <ReportActionForm reportId={report.id} action="needs_revision" labelText="Needs revision" />
-                <ReportActionForm reportId={report.id} action="queue" labelText="Requeue" />
               </div>
             </div>
           </SectionShell>
@@ -547,18 +536,9 @@ export default async function AdminReportReviewPage({ params, searchParams }: Pa
             ) : (
               <p className={bodyClass}>No linked workflow intake answers were found for this report.</p>
             )}
-            <div className="mt-6 flex flex-wrap gap-3">
-              {workflow?.id && (
-                <a href={`/dashboard/intake?submission_id=${workflow.id}`} className={buttonClass}>
-                  View client intake
-                </a>
-              )}
-              {workflow?.id && (
-                <a href={`/dashboard/report?submission_id=${workflow.id}`} className={buttonClass}>
-                  View client report
-                </a>
-              )}
-            </div>
+            <p className="mt-6 border border-[#9ed39f]/18 bg-black/34 p-4 text-sm leading-7 text-[#e6f6e7]/72">
+              Client dashboard access is intentionally separate from the admin review screen and depends on the client account session.
+            </p>
           </SectionShell>
 
           <SectionShell eyebrow="Generated report" title="Report JSON payload">
