@@ -5,7 +5,7 @@ import { getAxiomAuthContext } from "../../lib/axiom-auth";
 export const metadata: Metadata = {
   title: "Pricing | Axiom Architect",
   description:
-    "Clear Axiom Architect pricing for workflow audits, workflow blueprints, operating packs, retainers, departmental systems, and automated architecture packages.",
+    "Clear Axiom Architect pricing for workflow audits, workflow blueprints, operating packs, retainers, departmental systems, and flagship enterprise architecture systems.",
 };
 
 type ProductSlug =
@@ -122,19 +122,20 @@ const tiers: Array<{
   },
   {
     slug: "architect-residency",
-    name: "Architect Residency",
-    header: "Automated architecture package",
-    price: "$2,499+",
-    label: "Premium automated system design",
+    name: "Axiom Enterprise Architecture System",
+    header: "Flagship enterprise architecture",
+    price: "$2,499",
+    label: "Flagship enterprise product",
     summary:
-      "A fully dashboard-delivered premium architecture package for complex workflows that need deeper analysis, system mapping, automation boundaries, implementation sequencing, and a complete operating roadmap without live consulting commitments.",
+      "A fixed-price flagship architecture package for complex workflow systems that need enterprise-level structure, dependency mapping, automation boundaries, risk controls, tool-stack guidance, and a complete dashboard-delivered operating roadmap.",
     includes: [
-      "Expanded premium intake sequence",
-      "Complex workflow and system dependency review",
-      "Advanced automation suitability map",
+      "Expanded enterprise intake sequence",
+      "Complex workflow and dependency architecture review",
+      "Current-state and future-state system map",
+      "Advanced AI and automation suitability model",
       "Risk, exception, and human review gate design",
       "Tool stack and data-flow architecture guidance",
-      "Implementation roadmap and rollout sequence",
+      "Enterprise implementation roadmap",
       "Dashboard-delivered architecture report",
     ],
   },
@@ -159,7 +160,7 @@ export default async function PricingPage() {
                 Workflow architecture packages with clear upgrade paths.
               </h1>
               <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-                Start with diagnosis, move into implementation planning, build operating assets, then scale into ongoing support, departmental architecture, or premium automated system design.
+                Start with diagnosis, move into implementation planning, build operating assets, then scale into ongoing support, departmental architecture, or a fixed-price flagship enterprise architecture system.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <a href="/signup" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white">
