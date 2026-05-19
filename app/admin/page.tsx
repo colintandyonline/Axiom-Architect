@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { requireAxiomAdmin } from "../../lib/axiom-admin";
 
 export const metadata: Metadata = {
@@ -11,7 +12,6 @@ export const dynamic = "force-dynamic";
 
 type CustomerRecord = {
   id: string;
-  auth_user_id: string | null;
   email: string | null;
   full_name: string | null;
   business_name: string | null;
@@ -22,7 +22,6 @@ type CustomerRecord = {
 
 type OrderRecord = {
   id: string;
-  customer_id: string | null;
   tier_slug: string | null;
   service_name: string | null;
   amount_total: number | null;
@@ -34,8 +33,6 @@ type OrderRecord = {
 
 type WorkflowRecord = {
   id: string;
-  customer_id: string | null;
-  order_id: string | null;
   tier_slug: string | null;
   workflow_title: string | null;
   status: string | null;
@@ -45,8 +42,6 @@ type WorkflowRecord = {
 type ReportRecord = {
   id: string;
   submission_id: string | null;
-  customer_id: string | null;
-  order_id: string | null;
   tier_slug: string | null;
   status: string | null;
   quality_score: number | null;
@@ -56,20 +51,17 @@ type ReportRecord = {
   updated_at: string | null;
 };
 
-type AdminStats = {
-  customers: number;
-  orders: number;
-  paidOrders: number;
-  submittedWorkflows: number;
-  queuedReports: number;
-  generatedReports: number;
-  revenueCents: number;
+type AdminData = {
+  customers: CustomerRecord[];
+  orders: OrderRecord[];
+  workflows: WorkflowRecord[];
+  reports: ReportRecord[];
 };
 
 const panelClass = "rounded-[1.5rem] border border-[#9ed39f]/30 bg-[#030804] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.24)] sm:p-7";
 const eyebrowClass = "text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]";
-const reportButtonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f]/35 bg-black px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black";
-const reportPrimaryButtonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-black transition hover:bg-white";
+const buttonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f]/35 bg-black px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black";
+const primaryButtonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-black transition hover:bg-white";
 
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -79,10 +71,7 @@ function getSupabaseConfig() {
     return null;
   }
 
-  return {
-    url: url.replace(/\/$/, ""),
-    serviceRoleKey,
-  };
+  return { url: url.replace(/\/$/, ""), serviceRoleKey };
 }
 
 async function supabaseFetch<T>(path: string): Promise<T | null> {
@@ -109,6 +98,34 @@ async function supabaseFetch<T>(path: string): Promise<T | null> {
   return (await response.json()) as T;
 }
 
+async function getAdminData(): Promise<AdminData> {
+  const [customers, orders, workflows, reports] = await Promise.all([
+    supabaseFetch<CustomerRecord[]>(
+      "axiom_customers?select=id,email,full_name,business_name,account_status,created_at,last_login_at&order=created_at.desc&limit=50",
+    ),
+    supabaseFetch<OrderRecord[]>(
+      "axiom_orders?select=id,tier_slug,service_name,amount_total,currency,payment_status,status,created_at&order=created_at.desc&limit=50",
+    ),
+    supabaseFetch<WorkflowRecord[]>(
+      "axiom_workflow_submissions?select=id,tier_slug,workflow_title,status,updated_at&order=updated_at.desc&limit=100",
+    ),
+    supabaseFetch<ReportRecord[]>(
+      "axiom_audit_reports?select=id,submission_id,tier_slug,status,quality_score,quality_status,client_summary,generated_at,updated_at&order=updated_at.desc&limit=50",
+    ),
+  ]);
+
+  return {
+    customers: customers || [],
+    orders: orders || [],
+    workflows: workflows || [],
+    reports: reports || [],
+  };
+}
+
+function label(value?: string | null) {
+  return value ? value.replace(/_/g, " ") : "—";
+}
+
 function formatDate(value?: string | null) {
   if (!value) {
     return "—";
@@ -120,19 +137,11 @@ function formatDate(value?: string | null) {
   }).format(new Date(value));
 }
 
-function formatCurrency(cents: number, currency = "usd") {
+function formatCurrency(cents = 0, currency = "usd") {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currency.toUpperCase(),
   }).format(cents / 100);
-}
-
-function label(value?: string | null) {
-  if (!value) {
-    return "—";
-  }
-
-  return value.replace(/_/g, " ");
 }
 
 function statusPill(status?: string | null) {
@@ -141,6 +150,14 @@ function statusPill(status?: string | null) {
       {label(status)}
     </span>
   );
+}
+
+function workflowTitle(workflow?: WorkflowRecord | null) {
+  if (!workflow) {
+    return "Linked workflow not found";
+  }
+
+  return workflow.workflow_title || "Untitled workflow";
 }
 
 function canGenerate(status?: string | null) {
@@ -155,100 +172,18 @@ function canApprove(status?: string | null) {
   return ["generated", "needs_review"].includes(status || "");
 }
 
-function workflowDisplayTitle(workflow?: WorkflowRecord | null) {
-  if (!workflow) {
-    return "Linked workflow not found";
-  }
-
-  return workflow.workflow_title || "Untitled draft workflow";
-}
-
-function EmptyState({ text }: { text: string }) {
-  return (
-    <div className="border border-[#9ed39f]/20 bg-black/36 p-5 text-sm leading-7 text-white/68">
-      {text}
-    </div>
-  );
-}
-
-function ReportActionForm({
-  reportId,
-  action,
-  labelText,
-  primary = false,
-}: {
-  reportId: string;
-  action: string;
-  labelText: string;
-  primary?: boolean;
-}) {
-  return (
-    <form action="/api/admin/reports/action" method="post">
-      <input type="hidden" name="report_id" value={reportId} />
-      <input type="hidden" name="action" value={action} />
-      <button type="submit" className={primary ? reportPrimaryButtonClass : reportButtonClass}>
-        {labelText}
-      </button>
-    </form>
-  );
-}
-
-async function getAdminData() {
-  const [customers, orders, workflows, reports] = await Promise.all([
-    supabaseFetch<CustomerRecord[]>(
-      "axiom_customers?select=id,auth_user_id,email,full_name,business_name,account_status,created_at,last_login_at&order=created_at.desc&limit=50",
-    ),
-    supabaseFetch<OrderRecord[]>(
-      "axiom_orders?select=id,customer_id,tier_slug,service_name,amount_total,currency,payment_status,status,created_at&order=created_at.desc&limit=50",
-    ),
-    supabaseFetch<WorkflowRecord[]>(
-      "axiom_workflow_submissions?select=id,customer_id,order_id,tier_slug,workflow_title,status,updated_at&order=updated_at.desc&limit=100",
-    ),
-    supabaseFetch<ReportRecord[]>(
-      "axiom_audit_reports?select=id,submission_id,customer_id,order_id,tier_slug,status,quality_score,quality_status,client_summary,generated_at,updated_at&order=updated_at.desc&limit=50",
-    ),
-  ]);
-
-  const customerRows = customers || [];
-  const orderRows = orders || [];
-  const workflowRows = workflows || [];
-  const reportRows = reports || [];
-
-  const stats: AdminStats = {
-    customers: customerRows.length,
-    orders: orderRows.length,
-    paidOrders: orderRows.filter((order) => order.payment_status === "paid").length,
-    submittedWorkflows: workflowRows.filter((workflow) => workflow.status && workflow.status !== "draft").length,
-    queuedReports: reportRows.filter((report) => ["queued", "generating", "needs_review"].includes(report.status || "")).length,
-    generatedReports: reportRows.filter((report) => ["generated", "approved", "delivered"].includes(report.status || "")).length,
-    revenueCents: orderRows
-      .filter((order) => order.payment_status === "paid")
-      .reduce((sum, order) => sum + (order.amount_total || 0), 0),
-  };
-
-  return {
-    customers: customerRows,
-    orders: orderRows,
-    workflows: workflowRows,
-    reports: reportRows,
-    stats,
-  };
-}
-
-function StatCard({ labelText, value, helper }: { labelText: string; value: string; helper: string }) {
+function StatCard({ title, value, helper }: { title: string; value: string; helper: string }) {
   return (
     <article className="rounded-[1.25rem] border border-black bg-[#061009] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.26)]">
       <span className="mb-5 block h-2 w-2 bg-[#9ed39f]" />
-      <h2 className="text-lg font-black uppercase tracking-[0.02em] text-[#9ed39f]">
-        {labelText}
-      </h2>
+      <h2 className="text-lg font-black uppercase tracking-[0.02em] text-[#9ed39f]">{title}</h2>
       <p className="mt-4 text-3xl font-black uppercase tracking-[-0.055em] text-white">{value}</p>
       <p className="mt-3 text-sm leading-6 text-white/68">{helper}</p>
     </article>
   );
 }
 
-function Section({ id, eyebrow, title, children }: { id: string; eyebrow: string; title: string; children: React.ReactNode }) {
+function Section({ id, eyebrow, title, children }: { id: string; eyebrow: string; title: string; children: ReactNode }) {
   return (
     <section id={id} className={panelClass}>
       <p className={eyebrowClass}>{eyebrow}</p>
@@ -257,6 +192,18 @@ function Section({ id, eyebrow, title, children }: { id: string; eyebrow: string
       </h2>
       <div className="mt-6">{children}</div>
     </section>
+  );
+}
+
+function ReportActionForm({ reportId, action, labelText, primary = false }: { reportId: string; action: string; labelText: string; primary?: boolean }) {
+  return (
+    <form action="/api/admin/reports/action" method="post">
+      <input type="hidden" name="report_id" value={reportId} />
+      <input type="hidden" name="action" value={action} />
+      <button type="submit" className={primary ? primaryButtonClass : buttonClass}>
+        {labelText}
+      </button>
+    </form>
   );
 }
 
@@ -271,6 +218,10 @@ export default async function AdminDashboardPage() {
   );
   const submittedWorkflows = data.workflows.filter((workflow) => workflow.status && workflow.status !== "draft");
   const draftWorkflows = data.workflows.filter((workflow) => !workflow.status || workflow.status === "draft");
+  const paidOrders = data.orders.filter((order) => order.payment_status === "paid");
+  const revenueCents = paidOrders.reduce((sum, order) => sum + (order.amount_total || 0), 0);
+  const queuedReports = data.reports.filter((report) => ["queued", "generating", "needs_review"].includes(report.status || "")).length;
+  const generatedReports = data.reports.filter((report) => ["generated", "approved", "delivered"].includes(report.status || "")).length;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
@@ -281,17 +232,15 @@ export default async function AdminDashboardPage() {
             Internal console
           </p>
           <div className="mt-6 grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
-            <div>
-              <h1 className="max-w-5xl text-[clamp(2.65rem,6vw,5.8rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
-                Axiom operations dashboard.
-              </h1>
-            </div>
+            <h1 className="max-w-5xl text-[clamp(2.65rem,6vw,5.8rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
+              Axiom operations dashboard.
+            </h1>
             <div className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
               <p className="m-0 text-2xl font-black uppercase leading-tight tracking-[-0.04em] text-white">
                 Signed in as {adminEmail}
               </p>
               <p className="mb-0 mt-3">
-                Monitor customers, orders, workflow submissions, report status, revenue, and operational readiness from one protected console.
+                Admin review, report generation, approval, and delivery controls stay inside this console. Customer dashboard pages stay separate.
               </p>
             </div>
           </div>
@@ -317,12 +266,12 @@ export default async function AdminDashboardPage() {
 
       <section id="overview" className="bg-[#9ed39f] px-4 py-14 text-white sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-6">
-          <StatCard labelText="Clients" value={String(data.stats.customers)} helper="Recent customer records" />
-          <StatCard labelText="Orders" value={String(data.stats.orders)} helper="Recent order records" />
-          <StatCard labelText="Paid" value={String(data.stats.paidOrders)} helper="Paid orders in view" />
-          <StatCard labelText="Revenue" value={formatCurrency(data.stats.revenueCents)} helper="Paid revenue in view" />
-          <StatCard labelText="Submissions" value={String(data.stats.submittedWorkflows)} helper="Submitted workflows" />
-          <StatCard labelText="Reports" value={`${data.stats.generatedReports}/${data.stats.queuedReports}`} helper="Generated / active queue" />
+          <StatCard title="Clients" value={String(data.customers.length)} helper="Recent customer records" />
+          <StatCard title="Orders" value={String(data.orders.length)} helper="Recent order records" />
+          <StatCard title="Paid" value={String(paidOrders.length)} helper="Paid orders in view" />
+          <StatCard title="Revenue" value={formatCurrency(revenueCents)} helper="Paid revenue in view" />
+          <StatCard title="Submissions" value={String(submittedWorkflows.length)} helper="Submitted workflows" />
+          <StatCard title="Reports" value={`${generatedReports}/${queuedReports}`} helper="Generated / active queue" />
         </div>
       </section>
 
@@ -385,25 +334,21 @@ export default async function AdminDashboardPage() {
                         {statusPill(workflow.status)}
                       </div>
                       <h3 className="mt-3 text-xl font-black uppercase leading-tight tracking-[-0.04em] text-white">
-                        {workflowDisplayTitle(workflow)}
+                        {workflowTitle(workflow)}
                       </h3>
                       <div className="mt-4 grid gap-3 text-sm leading-7 text-white/68 sm:grid-cols-2">
                         <p><strong className="text-[#9ed39f]">Workflow updated:</strong> {formatDate(workflow.updated_at)}</p>
                         <p><strong className="text-[#9ed39f]">Linked report:</strong> {label(linkedReport?.status)}</p>
                       </div>
                       <div className="mt-5 flex flex-wrap gap-3">
-                        <a href={`/dashboard/intake?submission_id=${workflow.id}`} className={reportButtonClass}>
-                          View intake
-                        </a>
-                        {linkedReport && (
-                          <>
-                            <a href={`/dashboard/report?submission_id=${workflow.id}`} className={reportButtonClass}>
-                              View report
-                            </a>
-                            <a href={`/admin/reports/${linkedReport.id}`} className={reportPrimaryButtonClass}>
-                              Review report
-                            </a>
-                          </>
+                        {linkedReport ? (
+                          <a href={`/admin/reports/${linkedReport.id}`} className={primaryButtonClass}>
+                            Review report
+                          </a>
+                        ) : (
+                          <span className="inline-flex min-h-10 items-center justify-center border border-[#9ed39f]/20 bg-black/40 px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-white/46">
+                            Report record pending
+                          </span>
                         )}
                       </div>
                     </article>
@@ -411,7 +356,9 @@ export default async function AdminDashboardPage() {
                 })}
               </div>
             ) : (
-              <EmptyState text="No submitted workflow intakes are currently in view." />
+              <div className="border border-[#9ed39f]/20 bg-black/36 p-5 text-sm leading-7 text-white/68">
+                No submitted workflow intakes are currently in view.
+              </div>
             )}
 
             {draftWorkflows.length > 0 && (
@@ -428,7 +375,7 @@ export default async function AdminDashboardPage() {
                         {statusPill(workflow.status)}
                       </div>
                       <h3 className="mt-3 text-lg font-black uppercase leading-tight tracking-[-0.04em] text-white">
-                        {workflowDisplayTitle(workflow)}
+                        {workflowTitle(workflow)}
                       </h3>
                       <p className="mt-3 text-sm leading-7 text-white/62">Updated {formatDate(workflow.updated_at)}</p>
                     </article>
@@ -438,11 +385,13 @@ export default async function AdminDashboardPage() {
             )}
           </Section>
 
-          <Section id="reports" eyebrow="Report operations" title="Report queue linked to workflow intakes">
+          <Section id="reports" eyebrow="Report operations" title="Admin report queue">
+            <p className="mb-6 max-w-4xl text-sm leading-7 text-white/66">
+              These controls use the internal admin report record. The customer dashboard route is not linked here because it depends on the customer account session.
+            </p>
             <div className="grid gap-4 lg:grid-cols-2">
               {data.reports.map((report) => {
                 const linkedWorkflow = report.submission_id ? workflowsById.get(report.submission_id) : null;
-                const linkedWorkflowTitle = workflowDisplayTitle(linkedWorkflow);
 
                 return (
                   <article key={report.id} className="border border-[#9ed39f]/20 bg-black/36 p-5">
@@ -451,7 +400,7 @@ export default async function AdminDashboardPage() {
                       {statusPill(report.status)}
                     </div>
                     <h3 className="mt-3 text-xl font-black uppercase leading-tight tracking-[-0.04em] text-white">
-                      {linkedWorkflowTitle}
+                      {workflowTitle(linkedWorkflow)}
                     </h3>
                     <p className="mt-4 border border-[#9ed39f]/16 bg-black/30 p-4 text-sm leading-7 text-white/70">
                       <strong className="text-[#9ed39f]">Report summary:</strong> {report.client_summary || "Report awaiting summary"}
@@ -462,28 +411,12 @@ export default async function AdminDashboardPage() {
                       <p><strong className="text-[#9ed39f]">Updated:</strong> {formatDate(report.generated_at || report.updated_at)}</p>
                     </div>
                     <div className="mt-5 flex flex-wrap gap-3">
-                      <a href={`/admin/reports/${report.id}`} className={reportPrimaryButtonClass}>
+                      <a href={`/admin/reports/${report.id}`} className={primaryButtonClass}>
                         Review report
                       </a>
-                      {report.submission_id && (
-                        <a href={`/dashboard/intake?submission_id=${report.submission_id}`} className={reportButtonClass}>
-                          View intake
-                        </a>
-                      )}
-                      {report.submission_id && (
-                        <a href={`/dashboard/report?submission_id=${report.submission_id}`} className={reportButtonClass}>
-                          View report
-                        </a>
-                      )}
-                      {canGenerate(report.status) && (
-                        <ReportActionForm reportId={report.id} action="generate" labelText="Generate" primary />
-                      )}
-                      {canRegenerate(report.status) && (
-                        <ReportActionForm reportId={report.id} action="regenerate" labelText="Regenerate" />
-                      )}
-                      {canApprove(report.status) && (
-                        <ReportActionForm reportId={report.id} action="approve" labelText="Approve" primary />
-                      )}
+                      {canGenerate(report.status) && <ReportActionForm reportId={report.id} action="generate" labelText="Generate" primary />}
+                      {canRegenerate(report.status) && <ReportActionForm reportId={report.id} action="regenerate" labelText="Regenerate" />}
+                      {canApprove(report.status) && <ReportActionForm reportId={report.id} action="approve" labelText="Approve" primary />}
                       <ReportActionForm reportId={report.id} action="needs_revision" labelText="Needs revision" />
                       <ReportActionForm reportId={report.id} action="queue" labelText="Requeue" />
                     </div>
@@ -510,7 +443,7 @@ export default async function AdminDashboardPage() {
               <article className="border border-[#9ed39f]/20 bg-black/36 p-5">
                 <h3 className="text-xl font-black uppercase tracking-[-0.04em] text-white">Report control</h3>
                 <p className="mt-3 text-sm leading-7 text-white/70">
-                  Admin controls are now available on report cards for generation, regeneration, approval, revision requests, and queue management.
+                  Admin controls are available on report cards for generation, regeneration, approval, revision requests, and queue management. Client-facing dashboard access remains separate.
                 </p>
               </article>
             </div>
