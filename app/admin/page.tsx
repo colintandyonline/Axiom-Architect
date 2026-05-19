@@ -152,7 +152,23 @@ function canRegenerate(status?: string | null) {
 }
 
 function canApprove(status?: string | null) {
-  return ["generated", "needs_review", "revision_requested"].includes(status || "");
+  return ["generated", "needs_review"].includes(status || "");
+}
+
+function workflowDisplayTitle(workflow?: WorkflowRecord | null) {
+  if (!workflow) {
+    return "Linked workflow not found";
+  }
+
+  return workflow.workflow_title || "Untitled draft workflow";
+}
+
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="border border-[#9ed39f]/20 bg-black/36 p-5 text-sm leading-7 text-white/68">
+      {text}
+    </div>
+  );
 }
 
 function ReportActionForm({
@@ -180,16 +196,16 @@ function ReportActionForm({
 async function getAdminData() {
   const [customers, orders, workflows, reports] = await Promise.all([
     supabaseFetch<CustomerRecord[]>(
-      "axiom_customers?select=id,auth_user_id,email,full_name,business_name,account_status,created_at,last_login_at&order=created_at.desc&limit=25",
+      "axiom_customers?select=id,auth_user_id,email,full_name,business_name,account_status,created_at,last_login_at&order=created_at.desc&limit=50",
     ),
     supabaseFetch<OrderRecord[]>(
-      "axiom_orders?select=id,customer_id,tier_slug,service_name,amount_total,currency,payment_status,status,created_at&order=created_at.desc&limit=25",
+      "axiom_orders?select=id,customer_id,tier_slug,service_name,amount_total,currency,payment_status,status,created_at&order=created_at.desc&limit=50",
     ),
     supabaseFetch<WorkflowRecord[]>(
-      "axiom_workflow_submissions?select=id,customer_id,order_id,tier_slug,workflow_title,status,updated_at&order=updated_at.desc&limit=25",
+      "axiom_workflow_submissions?select=id,customer_id,order_id,tier_slug,workflow_title,status,updated_at&order=updated_at.desc&limit=100",
     ),
     supabaseFetch<ReportRecord[]>(
-      "axiom_audit_reports?select=id,submission_id,customer_id,order_id,tier_slug,status,quality_score,quality_status,client_summary,generated_at,updated_at&order=updated_at.desc&limit=25",
+      "axiom_audit_reports?select=id,submission_id,customer_id,order_id,tier_slug,status,quality_score,quality_status,client_summary,generated_at,updated_at&order=updated_at.desc&limit=50",
     ),
   ]);
 
@@ -247,6 +263,14 @@ function Section({ id, eyebrow, title, children }: { id: string; eyebrow: string
 export default async function AdminDashboardPage() {
   const { adminEmail } = await requireAxiomAdmin();
   const data = await getAdminData();
+  const workflowsById = new Map(data.workflows.map((workflow) => [workflow.id, workflow]));
+  const reportsBySubmissionId = new Map(
+    data.reports
+      .filter((report) => report.submission_id)
+      .map((report) => [report.submission_id as string, report]),
+  );
+  const submittedWorkflows = data.workflows.filter((workflow) => workflow.status && workflow.status !== "draft");
+  const draftWorkflows = data.workflows.filter((workflow) => !workflow.status || workflow.status === "draft");
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
@@ -348,64 +372,116 @@ export default async function AdminDashboardPage() {
             </div>
           </Section>
 
-          <Section id="workflows" eyebrow="Workflow estate" title="Submitted client workflows">
-            <div className="grid gap-4 lg:grid-cols-2">
-              {data.workflows.map((workflow) => (
-                <article key={workflow.id} className="border border-[#9ed39f]/20 bg-black/36 p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className={eyebrowClass}>{label(workflow.tier_slug)}</p>
-                    {statusPill(workflow.status)}
-                  </div>
-                  <h3 className="mt-3 text-xl font-black uppercase leading-tight tracking-[-0.04em] text-white">
-                    {workflow.workflow_title || "Untitled workflow"}
-                  </h3>
-                  <p className="mt-3 text-sm leading-7 text-white/66">Updated {formatDate(workflow.updated_at)}</p>
-                </article>
-              ))}
-            </div>
+          <Section id="workflows" eyebrow="Workflow estate" title="Submitted workflow intakes">
+            {submittedWorkflows.length > 0 ? (
+              <div className="grid gap-4 lg:grid-cols-2">
+                {submittedWorkflows.map((workflow) => {
+                  const linkedReport = reportsBySubmissionId.get(workflow.id);
+
+                  return (
+                    <article key={workflow.id} className="border border-[#9ed39f]/20 bg-black/36 p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className={eyebrowClass}>{label(workflow.tier_slug)}</p>
+                        {statusPill(workflow.status)}
+                      </div>
+                      <h3 className="mt-3 text-xl font-black uppercase leading-tight tracking-[-0.04em] text-white">
+                        {workflowDisplayTitle(workflow)}
+                      </h3>
+                      <div className="mt-4 grid gap-3 text-sm leading-7 text-white/68 sm:grid-cols-2">
+                        <p><strong className="text-[#9ed39f]">Workflow updated:</strong> {formatDate(workflow.updated_at)}</p>
+                        <p><strong className="text-[#9ed39f]">Linked report:</strong> {label(linkedReport?.status)}</p>
+                      </div>
+                      <div className="mt-5 flex flex-wrap gap-3">
+                        <a href={`/dashboard/intake?submission_id=${workflow.id}`} className={reportButtonClass}>
+                          View intake
+                        </a>
+                        {linkedReport && (
+                          <a href={`/dashboard/report?submission_id=${workflow.id}`} className={reportButtonClass}>
+                            View report
+                          </a>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyState text="No submitted workflow intakes are currently in view." />
+            )}
+
+            {draftWorkflows.length > 0 && (
+              <div className="mt-8 border-t border-[#9ed39f]/18 pt-6">
+                <p className={eyebrowClass}>Draft intake records</p>
+                <p className="mt-2 max-w-3xl text-sm leading-7 text-white/64">
+                  Drafts are incomplete intake records. They are shown separately so they are not confused with submitted client work.
+                </p>
+                <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                  {draftWorkflows.map((workflow) => (
+                    <article key={workflow.id} className="border border-[#9ed39f]/14 bg-black/24 p-5 opacity-75">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className={eyebrowClass}>{label(workflow.tier_slug)}</p>
+                        {statusPill(workflow.status)}
+                      </div>
+                      <h3 className="mt-3 text-lg font-black uppercase leading-tight tracking-[-0.04em] text-white">
+                        {workflowDisplayTitle(workflow)}
+                      </h3>
+                      <p className="mt-3 text-sm leading-7 text-white/62">Updated {formatDate(workflow.updated_at)}</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
           </Section>
 
-          <Section id="reports" eyebrow="Report operations" title="Report queue and review status">
+          <Section id="reports" eyebrow="Report operations" title="Report queue linked to workflow intakes">
             <div className="grid gap-4 lg:grid-cols-2">
-              {data.reports.map((report) => (
-                <article key={report.id} className="border border-[#9ed39f]/20 bg-black/36 p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className={eyebrowClass}>{label(report.tier_slug)}</p>
-                    {statusPill(report.status)}
-                  </div>
-                  <h3 className="mt-3 text-xl font-black uppercase leading-tight tracking-[-0.04em] text-white">
-                    {report.client_summary || "Report awaiting summary"}
-                  </h3>
-                  <div className="mt-4 grid gap-3 text-sm leading-7 text-white/68 sm:grid-cols-3">
-                    <p><strong className="text-[#9ed39f]">Quality:</strong> {report.quality_score ?? "—"}</p>
-                    <p><strong className="text-[#9ed39f]">Review:</strong> {label(report.quality_status)}</p>
-                    <p><strong className="text-[#9ed39f]">Updated:</strong> {formatDate(report.generated_at || report.updated_at)}</p>
-                  </div>
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    {report.submission_id && (
-                      <a href={`/dashboard/intake?submission_id=${report.submission_id}`} className={reportButtonClass}>
-                        View intake
-                      </a>
-                    )}
-                    {report.submission_id && (
-                      <a href={`/dashboard/report?submission_id=${report.submission_id}`} className={reportButtonClass}>
-                        View report
-                      </a>
-                    )}
-                    {canGenerate(report.status) && (
-                      <ReportActionForm reportId={report.id} action="generate" labelText="Generate" primary />
-                    )}
-                    {canRegenerate(report.status) && (
-                      <ReportActionForm reportId={report.id} action="regenerate" labelText="Regenerate" />
-                    )}
-                    {canApprove(report.status) && (
-                      <ReportActionForm reportId={report.id} action="approve" labelText="Approve" primary />
-                    )}
-                    <ReportActionForm reportId={report.id} action="needs_revision" labelText="Needs revision" />
-                    <ReportActionForm reportId={report.id} action="queue" labelText="Requeue" />
-                  </div>
-                </article>
-              ))}
+              {data.reports.map((report) => {
+                const linkedWorkflow = report.submission_id ? workflowsById.get(report.submission_id) : null;
+                const linkedWorkflowTitle = workflowDisplayTitle(linkedWorkflow);
+
+                return (
+                  <article key={report.id} className="border border-[#9ed39f]/20 bg-black/36 p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className={eyebrowClass}>{label(report.tier_slug)}</p>
+                      {statusPill(report.status)}
+                    </div>
+                    <h3 className="mt-3 text-xl font-black uppercase leading-tight tracking-[-0.04em] text-white">
+                      {linkedWorkflowTitle}
+                    </h3>
+                    <p className="mt-4 border border-[#9ed39f]/16 bg-black/30 p-4 text-sm leading-7 text-white/70">
+                      <strong className="text-[#9ed39f]">Report summary:</strong> {report.client_summary || "Report awaiting summary"}
+                    </p>
+                    <div className="mt-4 grid gap-3 text-sm leading-7 text-white/68 sm:grid-cols-3">
+                      <p><strong className="text-[#9ed39f]">Quality:</strong> {report.quality_score ?? "—"}</p>
+                      <p><strong className="text-[#9ed39f]">Review:</strong> {label(report.quality_status)}</p>
+                      <p><strong className="text-[#9ed39f]">Updated:</strong> {formatDate(report.generated_at || report.updated_at)}</p>
+                    </div>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      {report.submission_id && (
+                        <a href={`/dashboard/intake?submission_id=${report.submission_id}`} className={reportButtonClass}>
+                          View intake
+                        </a>
+                      )}
+                      {report.submission_id && (
+                        <a href={`/dashboard/report?submission_id=${report.submission_id}`} className={reportButtonClass}>
+                          View report
+                        </a>
+                      )}
+                      {canGenerate(report.status) && (
+                        <ReportActionForm reportId={report.id} action="generate" labelText="Generate" primary />
+                      )}
+                      {canRegenerate(report.status) && (
+                        <ReportActionForm reportId={report.id} action="regenerate" labelText="Regenerate" />
+                      )}
+                      {canApprove(report.status) && (
+                        <ReportActionForm reportId={report.id} action="approve" labelText="Approve" primary />
+                      )}
+                      <ReportActionForm reportId={report.id} action="needs_revision" labelText="Needs revision" />
+                      <ReportActionForm reportId={report.id} action="queue" labelText="Requeue" />
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </Section>
 
