@@ -78,8 +78,32 @@ async function patchReport(reportId: string, payload: Record<string, unknown>) {
   });
 }
 
-function redirectBack(request: Request, result: "success" | "error", action: string, message?: string) {
-  const url = new URL("/admin#reports", request.url);
+function safeReturnPath(value: FormDataEntryValue | null) {
+  if (typeof value !== "string") {
+    return "/admin#reports";
+  }
+
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue.startsWith("/") || trimmedValue.startsWith("//")) {
+    return "/admin#reports";
+  }
+
+  if (!trimmedValue.startsWith("/admin")) {
+    return "/admin#reports";
+  }
+
+  return trimmedValue;
+}
+
+function redirectBack(
+  request: Request,
+  returnPath: string,
+  result: "success" | "error",
+  action: string,
+  message?: string,
+) {
+  const url = new URL(returnPath, request.url);
   url.searchParams.set("report_action", action);
   url.searchParams.set("result", result);
 
@@ -113,9 +137,10 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const reportId = typeof formData.get("report_id") === "string" ? String(formData.get("report_id")) : "";
   const action = typeof formData.get("action") === "string" ? String(formData.get("action")) : "";
+  const returnPath = safeReturnPath(formData.get("return_to"));
 
   if (!reportId || !allowedActions.has(action as AdminReportAction)) {
-    return redirectBack(request, "error", action || "unknown", "Invalid report action.");
+    return redirectBack(request, returnPath, "error", action || "unknown", "Invalid report action.");
   }
 
   try {
@@ -123,7 +148,7 @@ export async function POST(request: Request) {
 
     if (action === "generate" || action === "regenerate") {
       await runReportGeneration(request, reportId);
-      return redirectBack(request, "success", action);
+      return redirectBack(request, returnPath, "success", action);
     }
 
     if (action === "approve") {
@@ -131,7 +156,7 @@ export async function POST(request: Request) {
         status: "approved",
         updated_at: now,
       });
-      return redirectBack(request, "success", action);
+      return redirectBack(request, returnPath, "success", action);
     }
 
     if (action === "needs_revision") {
@@ -139,7 +164,7 @@ export async function POST(request: Request) {
         status: "revision_requested",
         updated_at: now,
       });
-      return redirectBack(request, "success", action);
+      return redirectBack(request, returnPath, "success", action);
     }
 
     if (action === "queue") {
@@ -147,14 +172,15 @@ export async function POST(request: Request) {
         status: "queued",
         updated_at: now,
       });
-      return redirectBack(request, "success", action);
+      return redirectBack(request, returnPath, "success", action);
     }
 
-    return redirectBack(request, "error", action, "Unsupported report action.");
+    return redirectBack(request, returnPath, "error", action, "Unsupported report action.");
   } catch (error) {
     console.error("Admin report action failed", error);
     return redirectBack(
       request,
+      returnPath,
       "error",
       action,
       error instanceof Error ? error.message : "Unknown admin report action error.",
