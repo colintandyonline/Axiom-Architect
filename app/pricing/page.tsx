@@ -3,9 +3,46 @@ import { ProductSystemVisual } from "../../components/ProductSystemVisual";
 import { getAxiomAuthContext } from "../../lib/axiom-auth";
 
 export const metadata: Metadata = {
-  title: "Pricing | Axiom Architect",
+  title: "Axiom Architect Pricing | AI Workflow Architecture Packages",
   description:
-    "Clear Axiom Architect pricing for workflow audits, workflow blueprints, operating packs, retainers, departmental systems, and flagship enterprise architecture systems.",
+    "Compare Axiom Architect pricing for AI workflow audits, workflow blueprints, operating packs, monthly stewardship, departmental ecosystems, and enterprise architecture systems.",
+  keywords: [
+    "Axiom Architect pricing",
+    "AI workflow audit pricing",
+    "workflow blueprint pricing",
+    "workflow architecture packages",
+    "workflow stewardship subscription",
+    "departmental ecosystem pricing",
+    "enterprise architecture system pricing",
+    "enterprise AI control stack",
+    "automation suitability pricing",
+  ],
+  alternates: {
+    canonical: "/pricing",
+  },
+  openGraph: {
+    title: "Axiom Architect Pricing | AI Workflow Architecture Packages",
+    description:
+      "Compare workflow architecture packages from $49 diagnostics to the $2,499 Axiom Enterprise Architecture System.",
+    url: "https://www.axiom-architect.co/pricing",
+    siteName: "Axiom Architect",
+    type: "website",
+    images: [
+      {
+        url: "/brand/axiom-architect-hero-banner.png",
+        width: 1920,
+        height: 1080,
+        alt: "Axiom Architect pricing for AI workflow architecture packages",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Axiom Architect Pricing | AI Workflow Architecture Packages",
+    description:
+      "Compare AI workflow audit, blueprint, operating pack, stewardship, departmental ecosystem, and enterprise architecture pricing.",
+    images: ["/brand/axiom-architect-hero-banner.png"],
+  },
 };
 
 type ProductSlug =
