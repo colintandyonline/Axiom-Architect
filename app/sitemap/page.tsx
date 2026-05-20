@@ -9,10 +9,10 @@ export const metadata: Metadata = {
 const pageGroups = [
   {
     title: "Main Pages",
-    description: "Core public pages for understanding Axiom Architect and starting the workflow audit path.",
+    description: "Core public pages for understanding Axiom Architect and starting the workflow architecture path.",
     links: [
       { label: "Home", href: "/", note: "Main Axiom Architect landing page." },
-      { label: "Workflow Audit", href: "/audit", note: "Product ladder and audit overview." },
+      { label: "Workflow Packages", href: "/audit", note: "Product ladder and workflow architecture overview." },
       { label: "Pricing", href: "/pricing", note: "Compare the six Axiom Architect products." },
       { label: "About", href: "/about", note: "Brand, positioning, and service context." },
       { label: "Contact", href: "/contact", note: "Contact and support entry point." },
@@ -27,7 +27,7 @@ const pageGroups = [
       { label: "Custom Operating Pack", href: "/products/custom-operating-pack", note: "Reusable operating assets and assistant guidance." },
       { label: "Workflow Stewardship", href: "/products/workflow-stewardship", note: "Ongoing review and optimisation." },
       { label: "Departmental Ecosystem", href: "/products/departmental-ecosystem", note: "Connected operating model for multiple workflows." },
-      { label: "Architect Residency", href: "/products/architect-residency", note: "High-touch implementation and deployment support." },
+      { label: "Axiom Enterprise Architecture System", href: "/products/enterprise-architecture-system", note: "Flagship enterprise architecture package for complex workflow systems." },
     ],
   },
   {
