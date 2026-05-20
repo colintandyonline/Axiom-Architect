@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 const mainLinks = [
   { label: "Home", href: "/" },
   { label: "Workflow Audit", href: "/audit" },
+  { label: "Custom Systems", href: "/bespoke" },
   { label: "Pricing", href: "/pricing" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
@@ -14,6 +15,8 @@ const mainLinks = [
 
 const serviceLinks = [
   { label: "Audit", href: "/audit" },
+  { label: "Custom Systems", href: "/bespoke" },
+  { label: "Proposal Form", href: "/bespoke/apply" },
   { label: "Method", href: "/#method" },
   { label: "Deliverables", href: "/#deliverables" },
   { label: "Services", href: "/#services" },
