@@ -25,6 +25,99 @@ type ProductInfo = {
   guidance: string[];
 };
 
+const siteUrl = "https://www.axiom-architect.co";
+
+const publicProductPaths: Record<ProductSlug, string> = {
+  "workflow-audit": "/products/workflow-audit",
+  "workflow-blueprint": "/products/workflow-blueprint",
+  "custom-operating-pack": "/products/custom-operating-pack",
+  "workflow-stewardship": "/products/workflow-stewardship",
+  "departmental-ecosystem": "/products/departmental-ecosystem",
+  "architect-residency": "/products/enterprise-architecture-system",
+};
+
+const productSeo: Record<ProductSlug, { title: string; description: string; keywords: string[] }> = {
+  "workflow-audit": {
+    title: "Workflow Audit | AI Workflow Diagnostic",
+    description:
+      "A focused AI workflow audit for one messy process. Diagnose bottlenecks, automation suitability, assistant opportunities, review gates, and practical next steps.",
+    keywords: [
+      "workflow audit",
+      "AI workflow audit",
+      "workflow diagnostic",
+      "automation suitability",
+      "AI assistant opportunity map",
+      "human review gates",
+    ],
+  },
+  "workflow-blueprint": {
+    title: "Workflow Blueprint | AI Implementation Plan",
+    description:
+      "A practical workflow blueprint for AI-supported execution, future-state process design, review gates, assistant roles, tool guidance, and a 30-day operating plan.",
+    keywords: [
+      "workflow blueprint",
+      "AI implementation plan",
+      "future state workflow",
+      "human in the loop controls",
+      "operating blueprint",
+      "workflow architecture",
+    ],
+  },
+  "custom-operating-pack": {
+    title: "Custom Operating Pack | AI Workflow Protocol",
+    description:
+      "A reusable operating pack for one workflow with protocol guidance, assistant instructions, handoff notes, workbook assets, and quality-control checkpoints.",
+    keywords: [
+      "custom operating pack",
+      "AI workflow protocol",
+      "assistant instructions",
+      "operating system for workflows",
+      "workflow SOP",
+      "quality control checkpoints",
+    ],
+  },
+  "workflow-stewardship": {
+    title: "Workflow Stewardship | Monthly AI Workflow Review",
+    description:
+      "Monthly workflow stewardship for AI-supported operations that need recalibration, tool-change review, risk checks, bottleneck tracking, and updated next actions.",
+    keywords: [
+      "workflow stewardship",
+      "monthly workflow review",
+      "AI workflow optimisation",
+      "workflow recalibration",
+      "AI operations review",
+      "automation governance",
+    ],
+  },
+  "departmental-ecosystem": {
+    title: "Departmental Ecosystem | Multi-Workflow Architecture",
+    description:
+      "A connected operating model for teams and departments. Map workflows, handoffs, data sources, dependencies, ownership, and implementation priorities.",
+    keywords: [
+      "departmental ecosystem",
+      "multi workflow architecture",
+      "workflow handoff mapping",
+      "department operating model",
+      "business process architecture",
+      "workflow dependencies",
+    ],
+  },
+  "architect-residency": {
+    title: "Axiom Enterprise Architecture System | Enterprise AI Control",
+    description:
+      "A flagship enterprise architecture system for complex workflows: dependency mapping, automation boundaries, risk controls, data-flow architecture, review gates, and implementation sequencing.",
+    keywords: [
+      "enterprise architecture system",
+      "enterprise AI control",
+      "AI workflow architecture",
+      "automation boundaries",
+      "risk control gates",
+      "enterprise AI operating system",
+      "enterprise AI control stack",
+    ],
+  },
+};
+
 const products: Record<ProductSlug, ProductInfo> = {
   "workflow-audit": {
     slug: "workflow-audit",
@@ -311,12 +404,45 @@ export async function generateMetadata({
   if (!product) {
     return {
       title: "Product Not Found | Axiom Architect",
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
 
+  const seo = productSeo[product.slug];
+  const publicPath = publicProductPaths[product.slug];
+  const canonicalUrl = `${siteUrl}${publicPath}`;
+
   return {
-    title: `${product.name} | Axiom Architect`,
-    description: product.summary,
+    title: seo.title,
+    description: seo.description,
+    keywords: seo.keywords,
+    alternates: {
+      canonical: publicPath,
+    },
+    openGraph: {
+      type: "website",
+      url: canonicalUrl,
+      siteName: "Axiom Architect",
+      title: `${seo.title} | Axiom Architect`,
+      description: seo.description,
+      images: [
+        {
+          url: "/brand/axiom-architect-hero-banner.png",
+          width: 1920,
+          height: 1080,
+          alt: `${product.name} by Axiom Architect`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${seo.title} | Axiom Architect`,
+      description: seo.description,
+      images: ["/brand/axiom-architect-hero-banner.png"],
+    },
   };
 }
 
