@@ -45,7 +45,7 @@ export const bespokeProposalSensitivityOptions = [
   "Not sure yet",
 ] as const;
 
-export type BespokeProposalFieldType = "text" | "email" | "password" | "textarea" | "select" | "checkbox";
+export type BespokeProposalFieldType = "text" | "email" | "textarea" | "select" | "checkbox";
 
 export type BespokeProposalField = {
   name: string;
@@ -84,22 +84,6 @@ export const bespokeProposalFields: BespokeProposalField[] = [
     name: "business_name",
     label: "Business name",
     type: "text",
-    required: true,
-    section: "Client details",
-  },
-  {
-    name: "password",
-    label: "Create portal password",
-    help: "Use at least 8 characters. This is used only to create your secure client portal login.",
-    type: "password",
-    required: true,
-    section: "Client details",
-  },
-  {
-    name: "confirmPassword",
-    label: "Confirm portal password",
-    help: "Re-enter the same password so the portal account can be created correctly.",
-    type: "password",
     required: true,
     section: "Client details",
   },
