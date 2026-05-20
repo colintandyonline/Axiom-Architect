@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Workflow Received | Axiom Architect",
   description:
-    "Confirmation page for submitted Axiom Architect workflow audits.",
+    "Confirmation page for submitted Axiom Architect workflow audits, enterprise architecture intakes, and stewardship updates.",
 };
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ type SearchParams = {
 
 type SubmissionRecord = {
   id: string;
-  tier_slug: string;
+  tier_slug: string | null;
   workflow_title: string | null;
   status: string;
   submitted_at: string | null;
@@ -132,16 +132,16 @@ export default async function IntakeReceivedPage({
           </a>
 
           <p className="mt-10 inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-            Submission received
+            {handoff.eyebrow}
           </p>
 
           <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[0.95fr_0.72fr] lg:items-end">
             <div>
               <h1 className="max-w-5xl text-[clamp(2.65rem,6vw,5.9rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
-                Your workflow audit has been received.
+                {handoff.headline}
               </h1>
               <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-                The intake is now locked into the audit pipeline. The next stage is report processing and review.
+                {handoff.intro}
               </p>
             </div>
 
@@ -154,7 +154,7 @@ export default async function IntakeReceivedPage({
                   <strong className="text-white">Submission ID:</strong> {params.submission_id || "Missing"}
                 </p>
                 <p className="m-0">
-                  <strong className="text-white">Received:</strong> {formatDate(submission?.submitted_at)}
+                  <strong className="text-white">Received:</strong> {receivedAt}
                 </p>
                 <p className="m-0">
                   <strong className="text-white">Report status:</strong> {formatStatus(reportStatus)}
@@ -169,7 +169,7 @@ export default async function IntakeReceivedPage({
         <div className="mx-auto grid max-w-[1220px] grid-cols-1 gap-5 lg:grid-cols-4">
           <article className={summaryCardClass}>
             <span className="mb-5 block h-2 w-2 bg-[#9ed39f]" />
-            <h2 className={summaryHeadingClass}>Selected tier</h2>
+            <h2 className={summaryHeadingClass}>Selected service</h2>
             <p className={summaryBodyClass}>{serviceName}</p>
           </article>
           <article className={summaryCardClass}>
@@ -186,7 +186,7 @@ export default async function IntakeReceivedPage({
             <span className="mb-5 block h-2 w-2 bg-[#9ed39f]" />
             <h2 className={summaryHeadingClass}>Status</h2>
             <p className={summaryBodyClass}>
-              Intake {formatStatus(submission?.status)} · Report {formatStatus(reportStatus)}
+              Intake {formatStatus(submission?.status)} Â· Report {formatStatus(reportStatus)}
             </p>
           </article>
         </div>
@@ -199,10 +199,10 @@ export default async function IntakeReceivedPage({
               What happens next
             </p>
             <h2 className="mt-5 text-[clamp(2rem,4vw,3.7rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
-              The report record is now queued.
+              {handoff.nextHeading}
             </h2>
             <p className="mt-5 text-base leading-8 text-[#e6f6e7]/75">
-              Your intake has been saved as structured source material. Axiom Architect can now use that record to produce the diagnostic findings, review gates, implementation recommendations, and final report output.
+              {handoff.nextText}
             </p>
           </div>
 
@@ -235,7 +235,7 @@ export default async function IntakeReceivedPage({
               href={`/dashboard/intake?submission_id=${params.submission_id}`}
               className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/45 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black"
             >
-              Review submitted intake
+              {handoff.secondaryAction}
             </a>
           )}
         </div>
@@ -243,3 +243,4 @@ export default async function IntakeReceivedPage({
     </main>
   );
 }
+
