@@ -336,6 +336,7 @@ export default async function DashboardPage({
     (await getRecordByCustomer(customer.id));
 
   const hasOrder = Boolean(record.order);
+  const checkoutPending = params.checkout === "success" && !hasOrder;
   const hasWorkflow = Boolean(record.workflow);
   const hasSubmittedIntake = Boolean(record.workflow?.id && record.workflow.status !== "draft");
   const isAdmin = isAxiomAdminEmail(user.email) || isAxiomAdminEmail(customer.email);
@@ -358,15 +359,27 @@ export default async function DashboardPage({
   const cards = [
     {
       label: "Selected package",
-      text: hasOrder ? serviceName : "Choose a package from the pricing page to begin.",
+      text: hasOrder
+        ? serviceName
+        : checkoutPending
+          ? "Payment received. Preparing your selected package."
+          : "Choose a package from the pricing page to begin.",
     },
     {
       label: "Payment",
-      text: hasOrder ? `${paymentAmount} · ${paymentStatus}` : "No payment is attached to this account yet.",
+      text: hasOrder
+        ? `${paymentAmount} · ${paymentStatus}`
+        : checkoutPending
+          ? "Paid · confirmation syncing"
+          : "No payment is attached to this account yet.",
     },
     {
       label: "Workflow intake",
-      text: hasWorkflow ? `${workflowTitle} · ${workflowStatus}` : "Your workflow intake will appear here after checkout.",
+      text: hasWorkflow
+        ? `${workflowTitle} · ${workflowStatus}`
+        : checkoutPending
+          ? "Your intake workspace is being prepared."
+          : "Your workflow intake will appear here after checkout.",
     },
     {
       label: isStewardship ? "Stewardship" : "Report status",
@@ -374,7 +387,9 @@ export default async function DashboardPage({
         ? "Monthly review cycle active after the baseline intake is submitted."
         : hasWorkflow
           ? reportStatus
-          : "A report record is created after your intake is submitted.",
+          : checkoutPending
+            ? "Workspace preparing."
+            : "A report record is created after your intake is submitted.",
     },
   ];
 
@@ -390,7 +405,11 @@ export default async function DashboardPage({
           <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
             <div>
               <h1 className="max-w-5xl text-[clamp(2.65rem,6vw,5.8rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
-                {hasOrder ? `${customerName}, your audit workspace is ready.` : `${customerName}, your account is ready.`}
+                {hasOrder
+                  ? `${customerName}, your audit workspace is ready.`
+                  : checkoutPending
+                    ? `${customerName}, your payment is being confirmed.`
+                    : `${customerName}, your account is ready.`}
               </h1>
             </div>
             <div className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
@@ -416,6 +435,15 @@ export default async function DashboardPage({
                       Open admin console
                     </a>
                   )}
+                </div>
+              ) : checkoutPending ? (
+                <div className="grid gap-4">
+                  <p className="m-0 text-2xl font-black uppercase leading-tight tracking-[-0.04em] text-white">
+                    Payment received
+                  </p>
+                  <p className="m-0">
+                    Stripe has returned a successful checkout. Your workspace is being prepared and should appear shortly. Refresh this dashboard if the intake button has not appeared yet.
+                  </p>
                 </div>
               ) : (
                 <div className="grid gap-4">
@@ -463,7 +491,7 @@ export default async function DashboardPage({
             <div className="mt-8 grid gap-4 text-sm leading-7 text-[#e6f6e7]/78 sm:grid-cols-2">
               <p className="m-0 border border-[#9ed39f]/24 bg-[#9ed39f]/8 p-4">
                 <strong className="block text-[0.68rem] uppercase tracking-[0.16em] text-[#9ed39f]">Package</strong>
-                {serviceName}
+                {checkoutPending ? "Preparing package" : serviceName}
               </p>
               <p className="m-0 border border-[#9ed39f]/24 bg-[#9ed39f]/8 p-4">
                 <strong className="block text-[0.68rem] uppercase tracking-[0.16em] text-[#9ed39f]">Business</strong>
@@ -471,11 +499,11 @@ export default async function DashboardPage({
               </p>
               <p className="m-0 border border-[#9ed39f]/24 bg-[#9ed39f]/8 p-4">
                 <strong className="block text-[0.68rem] uppercase tracking-[0.16em] text-[#9ed39f]">Intake</strong>
-                {workflowStatus}
+                {checkoutPending ? "preparing" : workflowStatus}
               </p>
               <p className="m-0 border border-[#9ed39f]/24 bg-[#9ed39f]/8 p-4">
                 <strong className="block text-[0.68rem] uppercase tracking-[0.16em] text-[#9ed39f]">{isStewardship ? "Cycle" : "Report"}</strong>
-                {isStewardship ? "Monthly stewardship" : reportStatus}
+                {checkoutPending ? "Workspace preparing" : isStewardship ? "Monthly stewardship" : reportStatus}
               </p>
             </div>
           </article>
@@ -495,7 +523,9 @@ export default async function DashboardPage({
                     : hasWorkflow
                       ? "Continue your workflow intake."
                       : "Start your workflow intake."
-                : "Choose a package to begin."}
+                : checkoutPending
+                  ? "Preparing your intake workspace."
+                  : "Choose a package to begin."}
             </h2>
             <p className="mt-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
               {hasOrder
@@ -506,7 +536,9 @@ export default async function DashboardPage({
                   : hasSubmittedIntake
                     ? "Your workflow intake is locked and the report has moved into the status queue. Use the report page to track the next stage."
                     : "The intake form is the source material for your diagnostic report. The stronger the workflow details, the stronger the report."
-                : "Your account is ready. Select a package, complete checkout, and your intake workspace will appear here."}
+                : checkoutPending
+                  ? "Stripe has returned a successful checkout. The order and intake workspace can take a short moment to sync through the webhook. Refresh this dashboard shortly if the workspace is not visible yet."
+                  : "Your account is ready. Select a package, complete checkout, and your intake workspace will appear here."}
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               {hasOrder ? (
@@ -521,6 +553,13 @@ export default async function DashboardPage({
                     : hasSubmittedIntake
                       ? "View report status"
                       : "Start workflow intake"}
+                </a>
+              ) : checkoutPending ? (
+                <a
+                  href="/dashboard"
+                  className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white sm:min-w-72"
+                >
+                  Refresh dashboard
                 </a>
               ) : (
                 <a
