@@ -1,0 +1,19 @@
+# Axiom Architect
+
+Axiom Architect designs workflow architecture for intelligent work.
+
+Primary pages:
+- https://www.axiom-architect.co/
+- https://www.axiom-architect.co/audit
+- https://www.axiom-architect.co/pricing
+- https://www.axiom-architect.co/products/workflow-audit
+- https://www.axiom-architect.co/products/workflow-blueprint
+- https://www.axiom-architect.co/products/custom-operating-pack
+- https://www.axiom-architect.co/products/workflow-stewardship
+- https://www.axiom-architect.co/products/departmental-ecosystem
+- https://www.axiom-architect.co/products/enterprise-architecture-system
+
+Core topics: AI workflow architecture, workflow audit, workflow blueprint, automation suitability, human review gates, operating protocols, enterprise AI control stack.
+
+Related store: https://axiom-studio.co/
+Contact: hello@axiom-architect.co
