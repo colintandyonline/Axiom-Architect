@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { AxiomGlobalFooter } from "../components/AxiomGlobalFooter";
 import { AxiomGlobalHeader } from "../components/AxiomGlobalHeader";
+import { BespokeProposalCta } from "../components/BespokeProposalCta";
 import "./globals.css";
 
 const googleAnalyticsId = "G-WPVQ3WB3FK";
@@ -126,7 +127,8 @@ const structuredData = {
           "Custom Operating Pack",
           "Workflow Stewardship",
           "Departmental Ecosystem",
-          "Axiom Enterprise Architecture System"
+          "Axiom Enterprise Architecture System",
+          "Bespoke AI Workflow Architecture"
         ].map((name) => ({
           "@type": "Offer",
           itemOffered: {
@@ -149,6 +151,7 @@ export default function RootLayout({
       <body>
         <AxiomGlobalHeader />
         {children}
+        <BespokeProposalCta />
         <AxiomGlobalFooter />
         <Script
           id="axiom-structured-data"
