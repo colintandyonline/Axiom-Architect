@@ -205,8 +205,8 @@ export default async function PricingPage() {
                 <a href="/signup" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white">
                   Start audit
                 </a>
-                <a href="/login" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/35 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-white transition hover:border-[#9ed39f] hover:text-[#9ed39f]">
-                  Client login
+                <a href="/bespoke/apply" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/45 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">
+                  Request custom proposal
                 </a>
               </div>
             </div>
