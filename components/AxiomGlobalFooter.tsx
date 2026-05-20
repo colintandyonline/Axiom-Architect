@@ -31,6 +31,7 @@ const systemLinks = [
   { label: "Agent Kits", href: "https://axiom-studio.co/collections/agent-kits" },
   { label: "Workbooks", href: "https://axiom-studio.co/collections/workbooks" },
   { label: "Operating Packs", href: "https://axiom-studio.co/collections/operating-packs" },
+  { label: "Enterprise AI Control Stack", href: "https://axiom-studio.co/collections/enterprise-ai-control-stack" },
   { label: "Visit Axiom Studio", href: "https://axiom-studio.co/" },
 ];
 
@@ -177,7 +178,7 @@ export function AxiomGlobalFooter() {
               Linked Axiom Studio resources for protocols, workbooks, operating packs, and agent instruction kits.
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
             {systemLinks.map((link) => (
               <a
                 key={link.href}
