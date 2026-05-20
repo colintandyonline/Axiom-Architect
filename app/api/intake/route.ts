@@ -357,6 +357,7 @@ export async function POST(request: Request) {
           intake_schema_id: schema.id,
           intake_schema_version: schema.version,
           status: "submitted",
+          submitted_at: submittedAt,
           updated_at: submittedAt,
         }),
       },
