@@ -133,7 +133,7 @@ export default function BespokeProposalApplyPage() {
       </section>
 
       <section className="bg-[#020904] px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-        <form action="/api/contact" method="post" className="mx-auto grid max-w-[1280px] gap-6">
+        <form action="/api/client/proposal" method="post" className="mx-auto grid max-w-[1280px] gap-6">
           <input type="hidden" name="inquiry_type" value="Custom Workflow Systems" />
           <input type="hidden" name="subject" value="Custom workflow proposal request" />
           <input type="hidden" name="business" value="Custom workflow proposal request" />
@@ -229,4 +229,5 @@ export default function BespokeProposalApplyPage() {
     </main>
   );
 }
+
 

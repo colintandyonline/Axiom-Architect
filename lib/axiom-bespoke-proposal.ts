@@ -1,4 +1,4 @@
-export const bespokeProposalScopeTypes = [
+﻿export const bespokeProposalScopeTypes = [
   "One complex workflow",
   "Department or team workflow system",
   "Multi-tool operating system",
@@ -45,7 +45,7 @@ export const bespokeProposalSensitivityOptions = [
   "Not sure yet",
 ] as const;
 
-export type BespokeProposalFieldType = "text" | "email" | "textarea" | "select" | "checkbox";
+export type BespokeProposalFieldType = "text" | "email" | "password" | "textarea" | "select" | "checkbox";
 
 export type BespokeProposalField = {
   name: string;
@@ -232,3 +232,4 @@ export function getBespokeProposalOptions(fieldName: string) {
       return [];
   }
 }
+
