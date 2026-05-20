@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import {
   bespokeProposalFields,
   bespokeProposalSections,
@@ -30,7 +30,8 @@ const sectionNotes: Record<string, string> = {
 const nextSteps = [
   "Axiom reviews the workflow and operating context.",
   "The correct service route and implementation boundaries are identified.",
-  "A proposal is prepared with deliverables, timeline, quote, and acceptance criteria.",
+  "A scoped proposal is prepared with deliverables, timeline, quote, and acceptance criteria.",
+  "If the proposal is accepted, Axiom sends a manual invoice for the agreed scope before work begins.",
 ] as const;
 
 function renderField(field: (typeof bespokeProposalFields)[number]) {
@@ -94,7 +95,7 @@ export default function BespokeProposalApplyPage() {
               href="/bespoke"
               className="inline-flex border border-[#9ed39f]/50 bg-black/70 px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#9ed39f] transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
             >
-              ← Custom workflow systems
+              â† Custom workflow systems
             </a>
             <p className="mt-8 inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
               Proposal intake
@@ -124,7 +125,7 @@ export default function BespokeProposalApplyPage() {
             <div className="mt-6 border border-[#9ed39f]/42 bg-[#9ed39f] p-5 text-black">
               <p className="text-[0.68rem] font-black uppercase tracking-[0.18em]">Important</p>
               <p className="mt-3 text-sm leading-7 text-black/78">
-                Do not submit passwords, access tokens, private credentials, payment card details, or unnecessary sensitive data. The proposal can define secure review and access rules later.
+                No payment is taken from this form. Custom workflow work is priced after review, then invoiced manually only when scope and price are agreed. Do not include secrets or unnecessary confidential data in the request.
               </p>
             </div>
           </div>
@@ -192,7 +193,7 @@ export default function BespokeProposalApplyPage() {
                 One clear paragraph for the first review.
               </h2>
               <p className="mt-4 text-sm leading-7 text-[#e6f6e7]/76">
-                Summarise the request plainly so the first review has the workflow, problem, desired outcome, and likely implementation need in one place.
+                Summarise the request plainly so the first review has the workflow, problem, desired outcome, and likely implementation need in one place. This is a proposal request only; payment is handled later by manual invoice after the scope is agreed.
               </p>
             </div>
             <label className="block">
@@ -216,7 +217,7 @@ export default function BespokeProposalApplyPage() {
                 Send the workflow for proposal review.
               </h2>
               <p className="mt-4 max-w-3xl text-sm leading-7 text-black/76">
-                Axiom Architect will review the operating context and prepare the correct route for a scoped proposal.
+                Axiom Architect will review the operating context and prepare the correct route for a scoped proposal. No checkout is triggered from this form.
               </p>
             </div>
             <button type="submit" className="inline-flex min-h-14 items-center justify-center border border-black bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black sm:min-w-72">
@@ -228,3 +229,4 @@ export default function BespokeProposalApplyPage() {
     </main>
   );
 }
+

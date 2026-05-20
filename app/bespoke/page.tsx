@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Custom AI Workflow Systems | Axiom Architect",
@@ -98,12 +98,12 @@ const engagementSteps = [
   {
     number: "03",
     title: "You receive a scoped proposal",
-    text: "The proposal explains the recommended service route, deliverables, timeline, quote, boundaries, and what will count as complete.",
+    text: "The proposal explains the recommended service route, deliverables, timeline, quoted price, boundaries, and what will count as complete. No payment is taken at the request stage.",
   },
   {
     number: "04",
     title: "Build from controlled clarity",
-    text: "Once approved, the blueprint can move into implementation planning, handoff documentation, system build support, or ongoing workflow stewardship.",
+    text: "If approved, Axiom sends a manual invoice for the agreed scope. Once paid, the blueprint can move into implementation planning, handoff documentation, system build support, or ongoing workflow stewardship.",
   },
 ] as const;
 
@@ -316,7 +316,7 @@ export default function BespokePage() {
               </h2>
             </div>
             <p className="border border-[#9ed39f]/55 bg-[#9ed39f]/14 p-5 text-base leading-8 text-[#e6f6e7] sm:text-lg">
-              The proposal exists to protect the work: it defines scope, deliverables, boundaries, review gates, responsibilities, timeline, and the implementation route before the build phase begins.
+              The proposal exists to protect the work: it defines scope, deliverables, boundaries, review gates, responsibilities, timeline, pricing, and the implementation route before the build phase begins. Payment is handled only after manual scope agreement and invoice.
             </p>
           </div>
 
@@ -366,7 +366,7 @@ export default function BespokePage() {
               </h2>
             </div>
             <p className="border border-[#9ed39f]/55 bg-[#9ed39f]/14 p-5 text-base leading-8 text-[#e6f6e7] sm:text-lg">
-              The proposal is the control document. It explains what Axiom will design, what is outside scope, what information is needed, how implementation should be handled, and how completion will be assessed.
+              The proposal is the control document. It explains what Axiom will design, what is outside scope, what information is needed, how implementation should be handled, how pricing is agreed, and how completion will be assessed. This is not an instant checkout product.
             </p>
           </div>
 
@@ -390,7 +390,7 @@ export default function BespokePage() {
               Request a custom workflow proposal.
             </h2>
             <p className="mt-5 max-w-3xl text-base leading-8 text-black/74 sm:text-lg">
-              Send the workflow, operating problem, system idea, or implementation challenge. Axiom Architect will assess the scope and prepare the right proposal route.
+              Send the workflow, operating problem, system idea, or implementation challenge. Axiom Architect will assess the scope and prepare the right proposal route. No checkout is triggered from this request; custom work is invoiced manually after scope and price are agreed.
             </p>
           </div>
           <a href="/bespoke/apply" className="inline-flex min-h-14 items-center justify-center border border-black bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black sm:min-w-72">
@@ -401,3 +401,4 @@ export default function BespokePage() {
     </main>
   );
 }
+
