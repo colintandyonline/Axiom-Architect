@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Axiom Architect",
+  title: "Terms of Service | Workflow Architecture Services",
   description:
-    "Terms for using Axiom Architect, purchasing workflow audits, ordering blueprints, and engaging digital workflow architecture services.",
+    "Terms for Axiom Architect workflow architecture services, workflow audits, blueprints, operating packs, stewardship, departmental systems, and enterprise architecture reports.",
 };
 
 const sections = [
@@ -11,14 +11,14 @@ const sections = [
     title: "1. What these terms cover",
     text: [
       "These Terms of Service apply when you visit Axiom Architect, create an account, submit a workflow intake, purchase a digital service, or contact us about workflow architecture services.",
-      "Axiom Architect provides workflow diagnostics, operating blueprints, implementation plans, custom operating packs, retainers, and related advisory or implementation services. The service is designed to support better operational decisions, not to replace your own business judgement, legal advice, financial advice, compliance review, or professional responsibilities.",
+      "Axiom Architect provides workflow diagnostics, operating blueprints, implementation plans, custom operating packs, stewardship, departmental ecosystem mapping, enterprise architecture reports, and related advisory or implementation services. The service is designed to support better operational decisions, not to replace your own business judgement, legal advice, financial advice, compliance review, or professional responsibilities.",
     ],
   },
   {
     title: "2. Purchases and payment",
     text: [
       "Paid services may be purchased through Stripe checkout or another approved payment process. Prices, package details, and billing terms are shown before purchase.",
-      "Workflow Audit, Workflow Blueprint, Custom Operating Pack, Departmental Ecosystem, and Architect Residency services are generally sold as one-time service purchases unless stated otherwise. Workflow Stewardship is sold as a subscription or retainer-style service when offered through subscription checkout.",
+      "Workflow Audit, Workflow Blueprint, Custom Operating Pack, Departmental Ecosystem, and Axiom Enterprise Architecture System services are generally sold as one-time service purchases unless stated otherwise. Workflow Stewardship is sold as a subscription or retainer-style service when offered through subscription checkout.",
       "You are responsible for providing accurate billing details, contact details, and the information needed to deliver the service.",
     ],
   },
