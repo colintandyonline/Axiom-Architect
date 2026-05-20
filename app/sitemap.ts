@@ -11,7 +11,7 @@ const routes = [
   { path: "/products/custom-operating-pack", priority: 0.84, changeFrequency: "monthly" },
   { path: "/products/workflow-stewardship", priority: 0.82, changeFrequency: "monthly" },
   { path: "/products/departmental-ecosystem", priority: 0.8, changeFrequency: "monthly" },
-  { path: "/products/architect-residency", priority: 0.78, changeFrequency: "monthly" },
+  { path: "/products/enterprise-architecture-system", priority: 0.78, changeFrequency: "monthly" },
   { path: "/about", priority: 0.7, changeFrequency: "monthly" },
   { path: "/contact", priority: 0.65, changeFrequency: "monthly" },
   { path: "/sitemap", priority: 0.5, changeFrequency: "monthly" },
