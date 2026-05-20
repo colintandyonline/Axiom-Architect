@@ -26,6 +26,17 @@ type AxiomCustomer = {
   last_login_at: string | null;
 };
 
+type AxiomServiceRequest = {
+  id: string;
+  customer_id: string;
+};
+
+type AxiomClientWorkspace = {
+  id: string;
+  customer_id: string;
+  service_request_id: string | null;
+};
+
 const sessionTokenKey = "access" + "_token";
 const refreshTokenKey = "refresh" + "_token";
 const expiryKey = "expires" + "_in";
@@ -89,6 +100,10 @@ function cleanMessage(formData: FormData, name: string) {
   return typeof value === "string" ? value.trim().replace(/\r\n/g, "\n") : "";
 }
 
+function nullableText(value: string | null | undefined) {
+  return value ? value : null;
+}
+
 function redirectToApply(request: Request, error: string) {
   const url = new URL("/bespoke/apply", getAppUrl(request));
   url.searchParams.set("error", error);
@@ -149,10 +164,19 @@ function getCreatedUser(result: SignupResponse, email: string): AxiomAuthUser | 
 }
 
 function collectProposalPayload(formData: FormData) {
-  return bespokeProposalFields.reduce<Record<string, string>>((payload, field) => {
-    payload[field.name] = field.type === "textarea" ? cleanMessage(formData, field.name) : cleanField(formData, field.name);
-    return payload;
+  const payload = bespokeProposalFields.reduce<Record<string, string>>((proposalPayload, field) => {
+    proposalPayload[field.name] =
+      field.type === "textarea"
+        ? cleanMessage(formData, field.name)
+        : cleanField(formData, field.name);
+
+    return proposalPayload;
   }, {});
+
+  delete payload.password;
+  delete payload.confirmPassword;
+
+  return payload;
 }
 
 function isValidEmail(email: string) {
@@ -190,7 +214,7 @@ async function supabaseServiceFetch<T>(path: string, options: RequestInit = {}) 
   const responseText = await response.text();
 
   if (!response.ok) {
-    console.error("Axiom proposal customer request failed", response.status, responseText);
+    console.error("Axiom proposal Supabase request failed", response.status, responseText);
     return null;
   }
 
@@ -260,6 +284,126 @@ async function linkOrCreateProposalCustomer({
   return created?.[0] ?? null;
 }
 
+async function createProposalPortalRecords({
+  customer,
+  fullName,
+  email,
+  businessName,
+  proposalPayload,
+  summaryMessage,
+}: {
+  customer: AxiomCustomer;
+  fullName: string;
+  email: string;
+  businessName: string;
+  proposalPayload: Record<string, string>;
+  summaryMessage: string;
+}) {
+  const now = new Date().toISOString();
+
+  const serviceRequests = await supabaseServiceFetch<AxiomServiceRequest[]>(
+    "axiom_service_requests?select=id,customer_id",
+    {
+      method: "POST",
+      headers: {
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        customer_id: customer.id,
+        request_type: "custom_workflow_systems",
+        source: "bespoke_apply_form",
+        status: "pending_review",
+        proposal_status: "not_prepared",
+        contact_name: fullName,
+        email,
+        business_name: businessName,
+        role: nullableText(proposalPayload.role),
+        website: nullableText(proposalPayload.website),
+        scope_type: nullableText(proposalPayload.scope_type),
+        support_type: nullableText(proposalPayload.support_type),
+        budget_range: nullableText(proposalPayload.budget_range),
+        timeline: nullableText(proposalPayload.timeline),
+        sensitive_data: nullableText(proposalPayload.sensitive_data),
+        summary_message: nullableText(summaryMessage),
+        request_payload: proposalPayload,
+      }),
+    },
+  );
+
+  const serviceRequest = serviceRequests?.[0] ?? null;
+
+  if (!serviceRequest) {
+    console.error("Axiom proposal portal sync failed: service request was not created");
+    return false;
+  }
+
+  const workspaces = await supabaseServiceFetch<AxiomClientWorkspace[]>(
+    "axiom_client_workspaces?select=id,customer_id,service_request_id",
+    {
+      method: "POST",
+      headers: {
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        customer_id: customer.id,
+        service_request_id: serviceRequest.id,
+        workspace_name: `${businessName} workspace`,
+        workspace_type: "premium_client_portal",
+        status: "active",
+        current_phase: "discovery",
+        current_priority: "Proposal review",
+        next_client_action: "Check your email for account confirmation and next steps.",
+        axiom_review_focus: "Review submitted proposal context and prepare the premium client workspace.",
+        last_activity_at: now,
+      }),
+    },
+  );
+
+  const workspace = workspaces?.[0] ?? null;
+
+  if (!workspace) {
+    console.error("Axiom proposal portal sync failed: client workspace was not created");
+    return false;
+  }
+
+  const activity = await supabaseServiceFetch<Record<string, unknown>[]>(
+    "axiom_workspace_activity?select=id",
+    {
+      method: "POST",
+      headers: {
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        workspace_id: workspace.id,
+        customer_id: customer.id,
+        actor_type: "client",
+        actor_label: fullName,
+        activity_type: "proposal_submitted",
+        title: "Proposal request submitted",
+        body:
+          summaryMessage ||
+          "A premium proposal request was submitted through the bespoke application form.",
+        metadata: {
+          service_request_id: serviceRequest.id,
+          source: "bespoke_apply_form",
+          scope_type: proposalPayload.scope_type || null,
+          support_type: proposalPayload.support_type || null,
+          timeline: proposalPayload.timeline || null,
+          budget_range: proposalPayload.budget_range || null,
+        },
+        is_client_visible: true,
+      }),
+    },
+  );
+
+  if (!activity?.[0]) {
+    console.error("Axiom proposal portal sync failed: workspace activity was not created");
+    return false;
+  }
+
+  return true;
+}
+
 export async function POST(request: Request) {
   const formData = await request.formData();
   const honeypot = cleanField(formData, "company_website");
@@ -275,6 +419,7 @@ export async function POST(request: Request) {
   const password = cleanField(formData, "password");
   const confirmPassword = cleanField(formData, "confirmPassword");
   const proposalPayload = collectProposalPayload(formData);
+  const summaryMessage = cleanMessage(formData, "message");
 
   if (!publicConfig) {
     return redirectToApply(request, "config");
@@ -292,11 +437,15 @@ export async function POST(request: Request) {
     return redirectToApply(request, "password-match");
   }
 
-  await linkOrCreateProposalCustomer({
+  const initialCustomer = await linkOrCreateProposalCustomer({
     email,
     fullName,
     businessName,
   });
+
+  if (!initialCustomer) {
+    return redirectToApply(request, "customer");
+  }
 
   const postSignupRedirectUrl = new URL("/login", getAppUrl(request));
   postSignupRedirectUrl.searchParams.set("signup", "confirmed");
@@ -333,6 +482,19 @@ export async function POST(request: Request) {
     const errorText = getAuthErrorText(result);
 
     if (errorText.includes("already") || errorText.includes("registered") || errorText.includes("exists")) {
+      const portalSynced = await createProposalPortalRecords({
+        customer: initialCustomer,
+        fullName,
+        email,
+        businessName,
+        proposalPayload,
+        summaryMessage,
+      });
+
+      if (!portalSynced) {
+        return redirectToApply(request, "portal-sync");
+      }
+
       return redirectToExistingLogin(request);
     }
 
@@ -349,6 +511,19 @@ export async function POST(request: Request) {
 
   if (!customer) {
     return redirectToApply(request, "link");
+  }
+
+  const portalSynced = await createProposalPortalRecords({
+    customer,
+    fullName,
+    email,
+    businessName,
+    proposalPayload,
+    summaryMessage,
+  });
+
+  if (!portalSynced) {
+    return redirectToApply(request, "portal-sync");
   }
 
   const sessionToken = getStringValue(result, sessionTokenKey);
