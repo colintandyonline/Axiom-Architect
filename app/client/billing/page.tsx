@@ -1,6 +1,7 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { ClientPortalPage } from "../../../components/ClientPortalPage";
 import { billingContent } from "../../../lib/axiom-client-portal";
+import { loadClientPortalData } from "../../../lib/axiom-client-portal-data";
 
 export const metadata: Metadata = {
   title: "Billing | Axiom Architect Client Portal",
@@ -10,6 +11,8 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function ClientPortalBillingPage() {
-  return <ClientPortalPage content={billingContent} activePath="/client/billing" />;
+export default async function ClientPortalBillingPage() {
+  const liveData = await loadClientPortalData("/client/billing");
+
+  return <ClientPortalPage content={billingContent} activePath="/client/billing" liveData={liveData} />;
 }
