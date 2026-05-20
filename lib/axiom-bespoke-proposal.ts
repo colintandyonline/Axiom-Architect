@@ -3,7 +3,7 @@ export const bespokeProposalScopeTypes = [
   "Department or team workflow system",
   "Multi-tool operating system",
   "AI automation design",
-  "Codex-assisted implementation brief",
+  "Developer-ready implementation brief",
   "Enterprise AI control stack",
   "Not sure yet",
 ] as const;
@@ -13,7 +13,7 @@ export const bespokeProposalSupportTypes = [
   "Workflow diagnosis and blueprint",
   "Operating system design",
   "Automation design",
-  "Codex-ready implementation brief",
+  "Developer-ready implementation brief",
   "Manual implementation support",
   "Full guarded system build",
   "Not sure yet",
@@ -120,7 +120,7 @@ export const bespokeProposalFields: BespokeProposalField[] = [
   {
     name: "tools_used",
     label: "What tools, platforms, files, dashboards, or systems are involved?",
-    help: "List CRMs, spreadsheets, websites, dashboards, automations, AI tools, documents, or repositories involved.",
+    help: "List CRMs, spreadsheets, websites, dashboards, automations, AI tools, documents, repositories, or manual handoff points involved.",
     type: "textarea",
     required: true,
     section: "Workflow context",
@@ -164,8 +164,8 @@ export const bespokeProposalFields: BespokeProposalField[] = [
     section: "Implementation and guardrails",
   },
   {
-    name: "codex_relevance",
-    label: "If code or repository work may be needed, what should Codex or a developer be allowed to inspect or change?",
+    name: "implementation_scope",
+    label: "If technical or repository work may be needed, what areas should be inspected or changed?",
     help: "Do not include secrets. Mention repositories, file areas, tool surfaces, or limits only at a high level.",
     type: "textarea",
     required: false,
