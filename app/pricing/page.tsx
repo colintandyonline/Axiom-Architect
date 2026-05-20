@@ -202,8 +202,8 @@ export default async function PricingPage() {
                 Start with diagnosis, move into implementation planning, build operating assets, then scale into ongoing support, departmental architecture, or a fixed-price flagship enterprise architecture system.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <a href="/signup" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white">
-                  Start audit
+                <a href="/signup?tier=workflow-audit&account=required" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white">
+                  Start Workflow Audit
                 </a>
                 <a href="/bespoke/apply" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/45 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">
                   Request custom proposal
