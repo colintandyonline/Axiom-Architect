@@ -1,4 +1,4 @@
-﻿export const bespokeProposalScopeTypes = [
+export const bespokeProposalScopeTypes = [
   "One complex workflow",
   "Department or team workflow system",
   "Multi-tool operating system",
@@ -84,6 +84,22 @@ export const bespokeProposalFields: BespokeProposalField[] = [
     name: "business_name",
     label: "Business name",
     type: "text",
+    required: true,
+    section: "Client details",
+  },
+  {
+    name: "password",
+    label: "Create portal password",
+    help: "Use at least 8 characters. This is used only to create your secure client portal login.",
+    type: "password",
+    required: true,
+    section: "Client details",
+  },
+  {
+    name: "confirmPassword",
+    label: "Confirm portal password",
+    help: "Re-enter the same password so the portal account can be created correctly.",
+    type: "password",
     required: true,
     section: "Client details",
   },
@@ -232,4 +248,3 @@ export function getBespokeProposalOptions(fieldName: string) {
       return [];
   }
 }
-
