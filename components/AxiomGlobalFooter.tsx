@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 const publicPagePaths = new Set([
   "/",
   "/audit",
+  "/bespoke",
+  "/bespoke/apply",
   "/pricing",
   "/about",
   "/contact",
@@ -20,10 +22,18 @@ const publicPagePaths = new Set([
 const siteLinks = [
   { label: "Home", href: "/" },
   { label: "Workflow Audit", href: "/audit" },
+  { label: "Custom Systems", href: "/bespoke" },
   { label: "Pricing", href: "/pricing" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
   { label: "Sitemap", href: "/sitemap" },
+];
+
+const serviceLinks = [
+  { label: "Start Audit", href: "/signup" },
+  { label: "Custom Proposal", href: "/bespoke/apply" },
+  { label: "Workflow Packages", href: "/audit" },
+  { label: "Compare Pricing", href: "/pricing" },
 ];
 
 const systemLinks = [
@@ -158,14 +168,14 @@ export function AxiomGlobalFooter() {
               <a href="/signup" className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-5 text-center text-[0.68rem] font-black uppercase tracking-[0.17em] text-black transition hover:bg-white">
                 Start Audit
               </a>
-              <a href="mailto:hello@axiom-architect.co" className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f]/40 bg-black px-5 text-center text-[0.68rem] font-black uppercase tracking-[0.17em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">
-                Email Axiom
+              <a href="/bespoke/apply" className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f]/40 bg-black px-5 text-center text-[0.68rem] font-black uppercase tracking-[0.17em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">
+                Custom Proposal
               </a>
             </div>
           </section>
 
           <FooterColumn title="Site" links={siteLinks} />
-          <FooterColumn title="Account" links={accountLinks} />
+          <FooterColumn title="Services" links={serviceLinks} />
           <FooterColumn title="Legal" links={legalLinks} />
         </div>
 
