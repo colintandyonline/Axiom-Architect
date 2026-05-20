@@ -1,9 +1,46 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About | Axiom Architect",
+  title: "About Axiom Architect | AI Workflow Architecture Methodology",
   description:
-    "Learn how Axiom Architect turns messy business workflows into structured diagnostics, operating blueprints, review gates, and AI-ready implementation plans.",
+    "Learn how Axiom Architect designs AI-ready workflow architecture with diagnostics, operating blueprints, automation suitability, review gates, and structured implementation plans.",
+  keywords: [
+    "about Axiom Architect",
+    "AI workflow architecture",
+    "workflow architecture methodology",
+    "business process architecture",
+    "automation suitability",
+    "human review gates",
+    "AI operating systems",
+    "operating blueprints",
+    "Axiom Studio",
+  ],
+  alternates: {
+    canonical: "/about",
+  },
+  openGraph: {
+    title: "About Axiom Architect | The Architecture Behind Intelligent Work",
+    description:
+      "Axiom Architect turns messy workflows into structured diagnostics, operating blueprints, review gates, and AI-ready implementation plans.",
+    url: "https://www.axiom-architect.co/about",
+    siteName: "Axiom Architect",
+    type: "website",
+    images: [
+      {
+        url: "/brand/axiom-architect-hero-banner.png",
+        width: 1920,
+        height: 1080,
+        alt: "About Axiom Architect workflow architecture methodology",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "About Axiom Architect | AI Workflow Architecture",
+    description:
+      "A systems-focused workflow architecture service for diagnostics, automation suitability, review gates, and AI-ready operating models.",
+    images: ["/brand/axiom-architect-hero-banner.png"],
+  },
 };
 
 const principles = [
