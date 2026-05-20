@@ -1,9 +1,25 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Axiom Architect",
+  title: "Privacy Policy | Axiom Architect Client Data & Workflow Intake",
   description:
-    "Privacy information for Axiom Architect users, clients, contact form submissions, account records, orders, and workflow intake data.",
+    "Privacy information for Axiom Architect users, clients, workflow intake submissions, account records, orders, reports, contact forms, analytics, and service delivery data.",
+  keywords: [
+    "Axiom Architect privacy policy",
+    "workflow intake data",
+    "client account records",
+    "workflow report data",
+    "AI workflow service privacy",
+    "service delivery records",
+    "contact form privacy",
+  ],
+  alternates: {
+    canonical: "/privacy",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 const sections = [
