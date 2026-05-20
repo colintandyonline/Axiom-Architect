@@ -5,6 +5,8 @@ const siteUrl = "https://www.axiom-architect.co";
 const routes = [
   { path: "", priority: 1, changeFrequency: "weekly" },
   { path: "/audit", priority: 0.95, changeFrequency: "weekly" },
+  { path: "/bespoke", priority: 0.93, changeFrequency: "weekly" },
+  { path: "/bespoke/apply", priority: 0.91, changeFrequency: "weekly" },
   { path: "/pricing", priority: 0.9, changeFrequency: "weekly" },
   { path: "/products/workflow-audit", priority: 0.88, changeFrequency: "monthly" },
   { path: "/products/workflow-blueprint", priority: 0.86, changeFrequency: "monthly" },
