@@ -3,14 +3,14 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Bespoke AI Workflow Architecture | Axiom Architect",
   description:
-    "Request a bespoke Axiom Architect proposal for custom AI workflow architecture, guarded implementation planning, operating systems, automation design, and Codex-ready delivery briefs.",
+    "Request a bespoke Axiom Architect proposal for custom AI workflow architecture, operating system design, automation boundaries, review gates, and Codex-ready implementation briefs.",
   keywords: [
     "bespoke AI workflow architecture",
     "custom workflow architecture",
     "AI operating system design",
-    "bespoke automation design",
     "workflow proposal",
     "Codex implementation brief",
+    "automation suitability",
     "human review gates",
     "enterprise AI control stack",
   ],
@@ -42,58 +42,70 @@ export const metadata: Metadata = {
   },
 };
 
-const proposalSteps = [
+const flowSteps = [
   {
-    step: "01",
-    title: "Request review",
-    text: "Submit the workflow problem, operating context, tool stack, desired outcome, and whether implementation support may be needed.",
+    number: "01",
+    title: "Structured request",
+    text: "The client submits the workflow, current friction, tools involved, desired outcome, implementation risk, and guardrail requirements.",
   },
   {
-    step: "02",
-    title: "Scope diagnosis",
-    text: "Axiom Architect reviews the request, identifies the likely service route, and decides whether clarification or a formal proposal is needed.",
+    number: "02",
+    title: "Proposal diagnosis",
+    text: "Axiom Architect reviews the scope and decides the right proposal route before any implementation work is accepted.",
   },
   {
-    step: "03",
-    title: "Proposal first",
-    text: "You receive a structured proposal covering scope, deliverables, exclusions, guardrails, timeline, price, and acceptance criteria.",
+    number: "03",
+    title: "Controlled proposal",
+    text: "The proposal defines deliverables, exclusions, review gates, timeline, quote, implementation method, and acceptance criteria.",
   },
   {
-    step: "04",
-    title: "Guarded delivery",
-    text: "Only after approval does the work move into manual architecture, Codex-assisted implementation support, human review, and client delivery.",
+    number: "04",
+    title: "Guarded handoff",
+    text: "Manual or Codex-assisted implementation only begins after the proposal is approved and the handoff guardrails are clear.",
   },
 ] as const;
 
-const serviceLanes = [
-  "Bespoke Workflow Architecture",
-  "Bespoke AI Operating System",
-  "Bespoke Automation Design",
-  "Codex Implementation Brief",
-  "Enterprise AI Control Stack",
-  "Bespoke System Build Support",
+const serviceRoutes = [
+  {
+    title: "Bespoke Workflow Architecture",
+    text: "For one complex workflow that needs diagnosis, redesign, automation suitability, and a future-state operating blueprint.",
+  },
+  {
+    title: "Bespoke AI Operating System",
+    text: "For teams that need repeatable AI-supported work with assistant roles, handoff rules, review gates, and quality controls.",
+  },
+  {
+    title: "Codex Implementation Brief",
+    text: "For projects where code may be needed later. Axiom defines approved scope, allowed files, forbidden changes, tests, and QA standards first.",
+  },
 ] as const;
 
-const proposalIncludes = [
-  "Client and workflow summary",
+const proposalControls = [
+  "Client summary and workflow context",
   "Current-state diagnosis",
-  "Recommended future-state workflow",
-  "Scope of work",
-  "Out-of-scope boundaries",
-  "Security and data guardrails",
+  "Recommended future-state system",
+  "AI and automation suitability",
   "Human review gates",
+  "Security and data guardrails",
   "Implementation method",
-  "Deliverables",
-  "Acceptance criteria",
-  "Timeline",
-  "Quote",
+  "Out-of-scope boundaries",
+  "Deliverables and acceptance criteria",
+  "Timeline and quote",
 ] as const;
 
-const guardrails = [
-  "No secrets, API keys, tokens, or .env values are shared in the onboarding flow.",
-  "Implementation does not begin until the proposal scope and acceptance criteria are approved.",
-  "Codex only receives an approved implementation brief with allowed files, forbidden files, test commands, and review standards.",
-  "All Codex-assisted work comes back for human QA before client delivery.",
+const formSignals = [
+  "Workflow summary",
+  "Current problem",
+  "Tools involved",
+  "People and approvals",
+  "Desired outcome",
+  "Scope type",
+  "Support type",
+  "Implementation risk",
+  "Codex relevance",
+  "Guardrails",
+  "Timeline",
+  "Budget range",
 ] as const;
 
 export default function BespokePage() {
@@ -101,19 +113,19 @@ export default function BespokePage() {
     <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
       <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(158,211,159,0.18),#041008_34%,#000_76%)] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.11)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.11)_1px,transparent_1px)] [background-size:44px_44px]" />
-        <div className="relative mx-auto grid max-w-[1440px] grid-cols-1 gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <div className="relative mx-auto grid max-w-[1440px] grid-cols-1 gap-10 lg:grid-cols-[0.88fr_1.12fr] lg:items-center">
           <div>
             <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-              Bespoke AI workflow architecture
+              Bespoke proposal service
             </p>
-            <h1 className="mt-6 max-w-5xl text-[clamp(2.7rem,6vw,5.9rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
-              Custom workflow systems need a proposal before implementation.
+            <h1 className="mt-6 max-w-5xl text-[clamp(2.65rem,6vw,5.9rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
+              Custom workflow systems need scope before build.
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-[#e6f6e7]/80 sm:text-xl">
-              Axiom Architect designs the scope, guardrails, review gates, and delivery route before any manual or Codex-assisted implementation work begins.
+              Axiom Architect turns a bespoke workflow request into a structured proposal before manual work, automation design, or Codex-assisted implementation begins.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a href="/contact" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white">
+              <a href="/bespoke/apply" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white">
                 Request bespoke proposal
               </a>
               <a href="/pricing" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/38 bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-white transition hover:border-[#9ed39f] hover:text-[#9ed39f]">
@@ -122,20 +134,14 @@ export default function BespokePage() {
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-[2rem] border border-[#9ed39f]/38 bg-[#020503] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.38)] sm:p-7">
-            <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(158,211,159,0.13)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.13)_1px,transparent_1px)] [background-size:38px_38px]" />
-            <div className="relative grid gap-4">
-              {proposalSteps.map((item) => (
-                <div key={item.step} className="border border-[#9ed39f]/25 bg-black/60 p-5">
-                  <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">
-                    {item.step}
-                  </p>
-                  <h2 className="mt-3 text-2xl font-black uppercase tracking-[-0.04em] text-white">
-                    {item.title}
-                  </h2>
-                  <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/72">
-                    {item.text}
-                  </p>
+          <div className="rounded-[2rem] border border-[#9ed39f]/38 bg-[#020503] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.38)] sm:p-7">
+            <p className="text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]">
+              Proposal intake model
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {formSignals.map((signal) => (
+                <div key={signal} className="border border-[#9ed39f]/22 bg-black/60 px-4 py-4 text-xs font-black uppercase tracking-[0.14em] text-white">
+                  {signal}
                 </div>
               ))}
             </div>
@@ -147,14 +153,14 @@ export default function BespokePage() {
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
           <div>
             <p className="inline-flex border border-black bg-black px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]">
-              Proposal-led service
+              Proposal first
             </p>
             <h2 className="mt-5 max-w-4xl text-[clamp(2.1rem,4vw,3.9rem)] font-black uppercase leading-[0.92] tracking-[-0.06em]">
-              The work is scoped before the build starts.
+              No vague AI build. No uncontrolled handoff.
             </h2>
           </div>
           <p className="max-w-4xl text-base leading-8 text-black/76 sm:text-lg">
-            Bespoke work is for requests that do not fit neatly into a fixed package. The proposal defines what should be built, what should not be touched, what risks need controls, what approval gates are needed, and what outcome will count as complete.
+            Bespoke work starts by defining the operating problem, the risk boundaries, the review gates, the implementation route, and the exact standard for completion. That proposal becomes the control document.
           </p>
         </div>
       </section>
@@ -164,24 +170,23 @@ export default function BespokePage() {
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-end">
             <div>
               <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-                Service lanes
+                Flow
               </p>
               <h2 className="mt-5 max-w-4xl text-[clamp(2.15rem,4vw,4rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
-                Built for messy operational problems, not generic AI advice.
+                From request to controlled delivery route.
               </h2>
             </div>
             <p className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
-              Each bespoke route starts with diagnosis and a proposal. Implementation only follows once the scope, evidence, risks, ownership, and handoff model are clear.
+              The form is intentionally detailed because the proposal must be accurate enough to protect scope, security, quality, and implementation decisions.
             </p>
           </div>
 
-          <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {serviceLanes.map((lane) => (
-              <article key={lane} className="rounded-[2rem] border border-[#9ed39f]/30 bg-[#030804] p-6 shadow-[0_22px_60px_rgba(0,0,0,0.24)] transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">
-                <span className="block h-2 w-2 bg-[#9ed39f]" />
-                <h3 className="mt-8 text-2xl font-black uppercase tracking-[-0.04em]">
-                  {lane}
-                </h3>
+          <div className="mt-10 grid grid-cols-1 gap-4 lg:grid-cols-4">
+            {flowSteps.map((step) => (
+              <article key={step.number} className="border border-[#9ed39f]/28 bg-[#030804] p-5">
+                <p className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">{step.number}</p>
+                <h3 className="mt-8 text-2xl font-black uppercase tracking-[-0.04em] text-white">{step.title}</h3>
+                <p className="mt-4 text-sm leading-7 text-[#e6f6e7]/72">{step.text}</p>
               </article>
             ))}
           </div>
@@ -189,51 +194,48 @@ export default function BespokePage() {
       </section>
 
       <section className="border-y border-[#9ed39f]/20 bg-[#041008] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <div className="mx-auto max-w-[1440px]">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
-            <div>
-              <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-                Proposal contents
-              </p>
-              <h2 className="mt-5 max-w-4xl text-[clamp(2.15rem,4vw,4rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
-                The proposal becomes the control document.
-              </h2>
-            </div>
-            <p className="border border-[#9ed39f]/35 bg-black/55 p-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
-              A bespoke proposal is not just a quote. It defines what will happen, what is excluded, who reviews decisions, and how implementation work will be safely handed off.
+        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-10 lg:grid-cols-[0.74fr_1.26fr]">
+          <div>
+            <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
+              Bespoke routes
             </p>
+            <h2 className="mt-5 text-[clamp(2.1rem,4vw,3.7rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
+              Choose the route after the workflow is understood.
+            </h2>
           </div>
-
-          <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {proposalIncludes.map((item) => (
-              <div key={item} className="border border-[#9ed39f]/25 bg-black px-5 py-5 text-sm font-black uppercase tracking-[0.14em] text-white">
-                {item}
-              </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            {serviceRoutes.map((route) => (
+              <article key={route.title} className="rounded-[2rem] border border-[#9ed39f]/30 bg-black p-6">
+                <span className="block h-2 w-2 bg-[#9ed39f]" />
+                <h3 className="mt-8 text-2xl font-black uppercase tracking-[-0.04em] text-white">{route.title}</h3>
+                <p className="mt-4 text-sm leading-7 text-[#e6f6e7]/72">{route.text}</p>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
       <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-10 lg:grid-cols-[0.8fr_1.2fr]">
-          <div>
-            <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-              Codex handoff guardrails
+        <div className="mx-auto max-w-[1440px]">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
+            <div>
+              <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
+                Proposal controls
+              </p>
+              <h2 className="mt-5 max-w-4xl text-[clamp(2.15rem,4vw,4rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
+                The proposal defines the work before the work begins.
+              </h2>
+            </div>
+            <p className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
+              This protects both sides: no surprise build scope, no loose automation promises, and no Codex handoff until boundaries and acceptance criteria are clear.
             </p>
-            <h2 className="mt-5 text-[clamp(2.1rem,4vw,3.7rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
-              Codex supports implementation. It does not define the business system.
-            </h2>
           </div>
-          <div className="grid gap-4">
-            {guardrails.map((rule, index) => (
-              <article key={rule} className="border border-[#9ed39f]/28 bg-[#030804] p-5">
-                <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">
-                  Guardrail 0{index + 1}
-                </p>
-                <p className="mt-3 text-base leading-8 text-[#e6f6e7]/78">
-                  {rule}
-                </p>
-              </article>
+
+          <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {proposalControls.map((control) => (
+              <div key={control} className="border border-[#9ed39f]/25 bg-[#030804] px-4 py-5 text-xs font-black uppercase tracking-[0.14em] text-white">
+                {control}
+              </div>
             ))}
           </div>
         </div>
@@ -243,17 +245,17 @@ export default function BespokePage() {
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
             <p className="inline-flex border border-black bg-black px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]">
-              Start the process
+              Start
             </p>
             <h2 className="mt-5 max-w-4xl text-[clamp(2.2rem,4vw,4rem)] font-black uppercase leading-[0.92] tracking-[-0.06em]">
-              Request a bespoke proposal before the build begins.
+              Request the proposal. Then decide the build route.
             </h2>
             <p className="mt-5 max-w-3xl text-base leading-8 text-black/74 sm:text-lg">
-              Send the workflow problem first. Axiom Architect will review the fit, route the request, and prepare the right proposal path before any implementation work starts.
+              The application form collects the information needed to prepare the proposal and identify whether implementation, automation, or Codex-assisted support belongs in scope.
             </p>
           </div>
-          <a href="/contact" className="inline-flex min-h-14 items-center justify-center border border-black bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black sm:min-w-72">
-            Request bespoke proposal
+          <a href="/bespoke/apply" className="inline-flex min-h-14 items-center justify-center border border-black bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black sm:min-w-72">
+            Open proposal form
           </a>
         </div>
       </section>
