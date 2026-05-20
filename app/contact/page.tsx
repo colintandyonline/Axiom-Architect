@@ -1,9 +1,25 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Contact | Axiom Architect",
+  title: "Contact Axiom Architect | Workflow Architecture Enquiries",
   description:
-    "Contact Axiom Architect for workflow audit questions, operating blueprint enquiries, support, partnerships, and implementation planning.",
+    "Contact Axiom Architect for AI workflow audit questions, workflow blueprint enquiries, enterprise architecture systems, client support, partnerships, and implementation planning.",
+  keywords: [
+    "contact Axiom Architect",
+    "workflow audit enquiry",
+    "workflow blueprint enquiry",
+    "AI workflow architecture contact",
+    "enterprise architecture system enquiry",
+    "workflow support",
+    "operating blueprint support",
+  ],
+  alternates: {
+    canonical: "/contact",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 type ContactSearchParams = {
@@ -25,7 +41,7 @@ const contactRoutes = [
   {
     title: "Workflow projects",
     email: "projects@axiom-architect.co",
-    description: "Blueprint, operating pack, ecosystem, and residency enquiries for active business workflows.",
+    description: "Blueprint, operating pack, ecosystem, and enterprise architecture enquiries for active business workflows.",
   },
 ];
 
@@ -35,7 +51,8 @@ const inquiryTypes = [
   "Custom Operating Pack",
   "Workflow Stewardship",
   "Departmental Ecosystem",
-  "Architect Residency",
+  "Axiom Enterprise Architecture System",
+  "Enterprise AI Control Stack",
   "Support",
   "General enquiry",
 ];
