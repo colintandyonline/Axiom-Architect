@@ -13,23 +13,23 @@ const ctaByPath: Record<
   }
 > = {
   "/": {
-    eyebrow: "Bespoke proposal route",
-    title: "Have a workflow that does not fit a fixed package?",
-    text: "Request a bespoke proposal for custom workflow architecture, automation boundaries, Codex-ready implementation briefs, review gates, or a guarded operating system build.",
+    eyebrow: "Custom workflow systems",
+    title: "Have an operating problem that needs more than a fixed package?",
+    text: "Request a custom proposal for workflow architecture, automation boundaries, review gates, implementation planning, or a guarded operating system build.",
     secondaryHref: "/pricing",
     secondaryLabel: "Compare packages",
   },
   "/audit": {
     eyebrow: "Custom scope available",
     title: "Need more than one workflow audit?",
-    text: "Use the bespoke proposal route when the workflow involves multiple tools, implementation risk, repository work, automation design, or enterprise-level review gates.",
+    text: "Use the custom proposal route when the workflow involves multiple tools, implementation risk, technical handoff, automation design, or enterprise-level review gates.",
     secondaryHref: "/pricing",
     secondaryLabel: "View package ladder",
   },
   "/pricing": {
-    eyebrow: "Bespoke service path",
+    eyebrow: "Custom service path",
     title: "Not sure which package fits the work?",
-    text: "Submit a bespoke proposal request and Axiom Architect will assess the workflow, required guardrails, implementation route, timeline, and suitable scope before any build work begins.",
+    text: "Submit a custom proposal request and Axiom Architect will assess the workflow, required guardrails, implementation route, timeline, and suitable scope before any build work begins.",
     secondaryHref: "/audit",
     secondaryLabel: "View workflow packages",
   },
@@ -59,7 +59,7 @@ export function BespokeProposalCta() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[34rem]">
           <a href="/bespoke/apply" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white">
-            Request bespoke proposal
+            Request custom proposal
           </a>
           <a href={content.secondaryHref} className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f]/45 bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">
             {content.secondaryLabel}
