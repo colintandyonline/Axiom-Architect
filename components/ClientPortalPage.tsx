@@ -55,23 +55,23 @@ function getLiveMetrics(liveData?: ClientPortalLiveData) {
   return [
     {
       label: "Workspace",
-      value: liveData.workspace ? formatLabel(liveData.workspace.status) : "None yet",
-      text: liveData.workspace?.workspace_name || "No premium workspace has been created for this client yet.",
+      value: liveData.workspace ? formatLabel(liveData.workspace.status) : "Not open",
+      text: liveData.workspace?.workspace_name || "Your workspace will appear here once your proposal is received.",
     },
     {
       label: "Phase",
       value: liveData.workspace ? formatLabel(liveData.workspace.current_phase) : "Not started",
-      text: liveData.workspace?.current_priority || "Current priority will appear once a workspace exists.",
+      text: liveData.workspace?.current_priority || "The current focus will appear here when review begins.",
     },
     {
       label: "Proposal",
-      value: liveData.serviceRequest ? formatLabel(liveData.serviceRequest.proposal_status) : "No request",
-      text: liveData.serviceRequest ? formatLabel(liveData.serviceRequest.status) : "No linked service request found.",
+      value: liveData.serviceRequest ? formatLabel(liveData.serviceRequest.proposal_status) : "Not submitted",
+      text: liveData.serviceRequest ? formatLabel(liveData.serviceRequest.status) : "Submit a proposal to begin review.",
     },
     {
-      label: "Latest activity",
-      value: liveData.latestActivity ? formatLabel(liveData.latestActivity.activity_type) : "None yet",
-      text: liveData.latestActivity?.title || "Client-visible activity will appear here.",
+      label: "Latest update",
+      value: liveData.latestActivity ? formatLabel(liveData.latestActivity.activity_type) : "No update yet",
+      text: liveData.latestActivity?.title || "Updates from Axiom will appear here.",
     },
   ];
 }
@@ -84,29 +84,29 @@ function getPageRecordRows(activePath: string, liveData?: ClientPortalLiveData) 
   if (activePath === "/client/operations") {
     return [
       { label: "Current phase", value: formatLabel(liveData.workspace?.current_phase) },
-      { label: "Current priority", value: liveData.workspace?.current_priority || "Not set" },
-      { label: "Next client action", value: liveData.workspace?.next_client_action || "No action currently assigned" },
-      { label: "Axiom review focus", value: liveData.workspace?.axiom_review_focus || "Not set" },
-      { label: "Open approval gates", value: String(liveData.approvalGates.filter((gate) => gate.status === "open").length) },
-      { label: "Latest activity", value: liveData.latestActivity?.title || "No activity yet" },
+      { label: "Current focus", value: liveData.workspace?.current_priority || "Not set" },
+      { label: "Next action", value: liveData.workspace?.next_client_action || "No action currently assigned" },
+      { label: "Axiom focus", value: liveData.workspace?.axiom_review_focus || "Not set" },
+      { label: "Open approvals", value: String(liveData.approvalGates.filter((gate) => gate.status === "open").length) },
+      { label: "Latest update", value: liveData.latestActivity?.title || "No update yet" },
     ];
   }
 
   if (activePath === "/client/documents") {
     return [
-      { label: "Documents uploaded", value: String(liveData.documents.length) },
+      { label: "Files received", value: String(liveData.documents.length) },
       { label: "Under review", value: String(liveData.documents.filter((document) => document.review_status === "under_review").length) },
       { label: "Needs clarification", value: String(liveData.documents.filter((document) => document.review_status === "needs_clarification").length) },
-      { label: "Latest document", value: liveData.documents[0]?.title || liveData.documents[0]?.original_filename || "No documents yet" },
+      { label: "Latest file", value: liveData.documents[0]?.title || liveData.documents[0]?.original_filename || "No files yet" },
     ];
   }
 
   if (activePath === "/client/deliverables") {
     return [
-      { label: "Deliverables", value: String(liveData.deliverables.length) },
+      { label: "Outputs", value: String(liveData.deliverables.length) },
       { label: "Ready for review", value: String(liveData.deliverables.filter((deliverable) => deliverable.status === "ready_for_review").length) },
       { label: "Approved", value: String(liveData.deliverables.filter((deliverable) => deliverable.status === "approved").length) },
-      { label: "Latest deliverable", value: liveData.deliverables[0]?.title || "No deliverables yet" },
+      { label: "Latest output", value: liveData.deliverables[0]?.title || "No outputs yet" },
     ];
   }
 
@@ -123,20 +123,20 @@ function getPageRecordRows(activePath: string, liveData?: ClientPortalLiveData) 
 
   if (activePath === "/client/account") {
     return [
-      { label: "Client name", value: liveData.customer.full_name || liveData.user.email || "Not set" },
+      { label: "Name", value: liveData.customer.full_name || liveData.user.email || "Not set" },
       { label: "Email", value: liveData.customer.email || liveData.user.email || "Not set" },
       { label: "Business", value: liveData.customer.business_name || "Not set" },
-      { label: "Account status", value: formatLabel(liveData.customer.account_status) },
+      { label: "Status", value: formatLabel(liveData.customer.account_status) },
     ];
   }
 
   return [
     { label: "Workspace", value: liveData.workspace?.workspace_name || "No workspace yet" },
-    { label: "Service request", value: liveData.serviceRequest ? formatLabel(liveData.serviceRequest.status) : "No request yet" },
-    { label: "Proposal status", value: liveData.serviceRequest ? formatLabel(liveData.serviceRequest.proposal_status) : "Not prepared" },
+    { label: "Review status", value: liveData.serviceRequest ? formatLabel(liveData.serviceRequest.status) : "No proposal yet" },
+    { label: "Proposal", value: liveData.serviceRequest ? formatLabel(liveData.serviceRequest.proposal_status) : "Not prepared" },
     { label: "Next action", value: liveData.workspace?.next_client_action || "Submit a proposal or wait for Axiom review." },
-    { label: "Latest activity", value: liveData.latestActivity?.title || "No activity yet" },
-    { label: "Activity date", value: formatDate(liveData.latestActivity?.created_at) },
+    { label: "Latest update", value: liveData.latestActivity?.title || "No update yet" },
+    { label: "Updated", value: formatDate(liveData.latestActivity?.created_at) },
   ];
 }
 
@@ -144,6 +144,7 @@ export function ClientPortalPage({ content, activePath, liveData }: ClientPortal
   const activeNavItem = getActiveNavItem(activePath);
   const liveMetrics = getLiveMetrics(liveData);
   const pageRecordRows = getPageRecordRows(activePath, liveData);
+  const showStaticMetrics = liveMetrics.length === 0;
 
   return (
     <>
@@ -166,7 +167,7 @@ export function ClientPortalPage({ content, activePath, liveData }: ClientPortal
 
             <aside className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5">
               <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">
-                Current area
+                Portal area
               </p>
               <p className="mt-4 text-2xl font-black uppercase leading-tight tracking-[-0.04em] text-white">
                 {activeNavItem.label}
@@ -217,13 +218,13 @@ export function ClientPortalPage({ content, activePath, liveData }: ClientPortal
           <div className="mx-auto grid max-w-[1440px] gap-8 lg:grid-cols-[0.45fr_1fr]">
             <div>
               <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-                Live workspace record
+                Workspace snapshot
               </p>
               <h2 className="mt-5 text-[clamp(2.1rem,4vw,4.4rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-white">
-                Real client data from Supabase.
+                Your current position.
               </h2>
               <p className="mt-5 text-sm leading-7 text-[#e6f6e7]/70">
-                This section is populated from the logged-in customer record and the linked premium client workspace.
+                The latest status, next action, and workspace details for this engagement.
               </p>
             </div>
 
@@ -239,18 +240,20 @@ export function ClientPortalPage({ content, activePath, liveData }: ClientPortal
         </section>
       )}
 
-      <section className="bg-black px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-[1440px] gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {content.metrics.map((metric) => (
-            <article key={`${metric.label}-${metric.value}`} className="rounded-[1.25rem] border border-[#9ed39f]/24 bg-[#030804] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.26)]">
-              <span className="mb-5 block h-2 w-2 bg-[#9ed39f]" />
-              <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{metric.label}</p>
-              <h2 className="mt-3 text-2xl font-black uppercase leading-tight tracking-[-0.05em] text-white">{metric.value}</h2>
-              <p className="mt-4 text-sm leading-6 text-[#e6f6e7]/72">{metric.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+      {showStaticMetrics && (
+        <section className="bg-black px-4 py-12 sm:px-6 lg:px-8">
+          <div className="mx-auto grid max-w-[1440px] gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {content.metrics.map((metric) => (
+              <article key={`${metric.label}-${metric.value}`} className="rounded-[1.25rem] border border-[#9ed39f]/24 bg-[#030804] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.26)]">
+                <span className="mb-5 block h-2 w-2 bg-[#9ed39f]" />
+                <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{metric.label}</p>
+                <h2 className="mt-3 text-2xl font-black uppercase leading-tight tracking-[-0.05em] text-white">{metric.value}</h2>
+                <p className="mt-4 text-sm leading-6 text-[#e6f6e7]/72">{metric.text}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       {content.sections.map((section) => (
         <section key={`${section.eyebrow}-${section.title}`} className="bg-[#020904] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
@@ -295,14 +298,14 @@ export function ClientPortalPage({ content, activePath, liveData }: ClientPortal
             <div className="grid gap-8 lg:grid-cols-[0.55fr_1fr] lg:items-end">
               <div>
                 <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-                  Client actions
+                  Next steps
                 </p>
                 <h2 className="mt-5 text-[clamp(2.1rem,4vw,4.4rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-white">
-                  Move to the right next step.
+                  Continue from here.
                 </h2>
               </div>
               <p className="max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-                Use these routes to continue the client workflow. Each page has a specific job and should support an actual client action.
+                Use these shortcuts to continue the engagement, review progress, or check the material connected to your workspace.
               </p>
             </div>
 
