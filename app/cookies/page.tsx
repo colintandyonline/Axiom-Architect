@@ -1,9 +1,25 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Cookie Policy | Axiom Architect",
+  title: "Cookie Policy | Axiom Architect Site Operation & Analytics",
   description:
-    "Cookie policy for Axiom Architect, including essential cookies, account sessions, checkout flow, analytics, and service improvement.",
+    "Cookie policy for Axiom Architect covering essential cookies, account sessions, checkout flow, analytics, service improvement, and third-party operational tools.",
+  keywords: [
+    "Axiom Architect cookie policy",
+    "site operation cookies",
+    "account session cookies",
+    "checkout cookies",
+    "analytics cookies",
+    "service improvement cookies",
+    "workflow service cookies",
+  ],
+  alternates: {
+    canonical: "/cookies",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 const sections = [
