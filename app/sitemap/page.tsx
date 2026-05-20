@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Sitemap | Axiom Architect Pages & Products",
   description:
-    "Browse Axiom Architect public pages, workflow architecture product pages, pricing, support routes, legal policies, and XML sitemap links.",
+    "Browse Axiom Architect public pages, workflow architecture product pages, custom workflow system routes, pricing, support routes, legal policies, and XML sitemap links.",
   alternates: {
     canonical: "/sitemap",
   },
@@ -16,6 +16,8 @@ const pageGroups = [
     links: [
       { label: "Home", href: "/", note: "Main Axiom Architect landing page." },
       { label: "Workflow Packages", href: "/audit", note: "Product ladder and workflow architecture overview." },
+      { label: "Custom Workflow Systems", href: "/bespoke", note: "Custom service route for complex workflow architecture and implementation planning." },
+      { label: "Custom Proposal Form", href: "/bespoke/apply", note: "Structured intake for custom workflow system proposal requests." },
       { label: "Pricing", href: "/pricing", note: "Compare the six Axiom Architect products." },
       { label: "About", href: "/about", note: "Brand, positioning, and service context." },
       { label: "Contact", href: "/contact", note: "Contact and support entry point." },
@@ -73,7 +75,7 @@ export default function SitemapPage() {
             Sitemap
           </h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-[#e6f6e7]/80 sm:text-xl">
-            Browse the main public pages, product detail pages, account entry points, legal pages, and the XML sitemap for search engines.
+            Browse the main public pages, product detail pages, custom workflow system routes, account entry points, legal pages, and the XML sitemap for search engines.
           </p>
         </div>
       </section>
