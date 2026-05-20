@@ -1,9 +1,26 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Refund and Service Delivery Policy | Axiom Architect",
+  title: "Refund & Service Delivery Policy | Axiom Architect Digital Services",
   description:
-    "Refund, returns, cancellation, subscription, and digital service delivery expectations for Axiom Architect workflow services.",
+    "Refund, cancellation, subscription, and service delivery policy for Axiom Architect digital workflow architecture services, reports, blueprints, operating packs, and stewardship.",
+  keywords: [
+    "Axiom Architect refund policy",
+    "service delivery policy",
+    "digital workflow services",
+    "workflow audit refund",
+    "workflow blueprint delivery",
+    "operating pack delivery",
+    "workflow stewardship cancellation",
+    "digital service cancellation",
+  ],
+  alternates: {
+    canonical: "/refund-policy",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 const sections = [
