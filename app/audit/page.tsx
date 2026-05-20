@@ -2,9 +2,46 @@ import type { Metadata } from "next";
 import { ProductSystemVisual } from "../../components/ProductSystemVisual";
 
 export const metadata: Metadata = {
-  title: "Workflow Architecture Packages | Axiom Architect",
+  title: "Workflow Architecture Packages | AI Workflow Audit & Blueprints",
   description:
-    "Choose an Axiom Architect package for workflow diagnosis, implementation planning, operating packs, stewardship, departmental systems, or enterprise architecture.",
+    "Compare Axiom Architect workflow architecture packages: AI workflow audit, workflow blueprint, operating pack, stewardship, departmental ecosystem, and enterprise architecture system.",
+  keywords: [
+    "workflow architecture packages",
+    "AI workflow audit",
+    "workflow blueprint",
+    "automation suitability",
+    "operating pack",
+    "workflow stewardship",
+    "departmental ecosystem",
+    "enterprise architecture system",
+    "enterprise AI control stack",
+  ],
+  alternates: {
+    canonical: "/audit",
+  },
+  openGraph: {
+    title: "Workflow Architecture Packages | Axiom Architect",
+    description:
+      "Choose the right level of workflow architecture, from one workflow audit to enterprise AI control architecture.",
+    url: "https://www.axiom-architect.co/audit",
+    siteName: "Axiom Architect",
+    type: "website",
+    images: [
+      {
+        url: "/brand/axiom-architect-hero-banner.png",
+        width: 1920,
+        height: 1080,
+        alt: "Axiom Architect workflow architecture packages",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Workflow Architecture Packages | Axiom Architect",
+    description:
+      "Compare workflow audits, blueprints, operating packs, stewardship, departmental systems, and enterprise architecture packages.",
+    images: ["/brand/axiom-architect-hero-banner.png"],
+  },
 };
 
 const packages = [
@@ -91,6 +128,7 @@ const packages = [
   {
     name: "Axiom Enterprise Architecture System",
     slug: "architect-residency",
+    publicSlug: "enterprise-architecture-system",
     price: "$2,499",
     label: "Flagship enterprise product",
     summary:
@@ -116,6 +154,8 @@ const flowSteps = [
 ];
 
 function PackageCard({ item }: { item: (typeof packages)[number] }) {
+  const publicSlug = "publicSlug" in item ? item.publicSlug : item.slug;
+
   return (
     <article className="group rounded-[2rem] border border-[#9ed39f]/35 bg-[#030804] p-5 text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)] transition duration-200 hover:border-black hover:bg-[#9ed39f] hover:text-black sm:p-6">
       <ProductSystemVisual kind={item.slug} />
@@ -146,7 +186,7 @@ function PackageCard({ item }: { item: (typeof packages)[number] }) {
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
         <a
-          href={`/products/${item.slug}`}
+          href={`/products/${publicSlug}`}
           className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f]/45 bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 hover:border-black hover:bg-white hover:text-black group-hover:!border-black group-hover:!bg-white group-hover:!text-black"
         >
           Learn more
