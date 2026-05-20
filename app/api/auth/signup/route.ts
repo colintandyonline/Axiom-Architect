@@ -38,6 +38,14 @@ const refreshTokenKey = "refresh" + "_token";
 const expiryKey = "expires" + "_in";
 const productionAppUrl = "https://www.axiom-architect.co";
 
+function normaliseTierSlug(value: string | null) {
+  if (value === "enterprise-architecture-system") {
+    return "architect-residency";
+  }
+
+  return value;
+}
+
 function isTierSlug(value: string | null): value is TierSlug {
   return (
     value === "workflow-audit" ||
@@ -262,7 +270,7 @@ async function linkOrCreateCustomer({
 
 export async function POST(request: Request) {
   const formData = await request.formData();
-  const tierValue = cleanField(formData, "tier");
+  const tierValue = normaliseTierSlug(cleanField(formData, "tier"));
   const tier: TierSlug = isTierSlug(tierValue) ? tierValue : "workflow-blueprint";
   const fullName = cleanField(formData, "name");
   const email = cleanField(formData, "email").toLowerCase();
