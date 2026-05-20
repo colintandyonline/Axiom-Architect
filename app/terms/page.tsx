@@ -1,9 +1,26 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Workflow Architecture Services",
+  title: "Terms of Service | Axiom Architect Workflow Services",
   description:
-    "Terms for Axiom Architect workflow architecture services, workflow audits, blueprints, operating packs, stewardship, departmental systems, and enterprise architecture reports.",
+    "Terms of Service for Axiom Architect digital workflow architecture services, including workflow audits, blueprints, operating packs, stewardship, departmental systems, enterprise architecture, accounts, payments, and service outputs.",
+  keywords: [
+    "Axiom Architect terms of service",
+    "workflow architecture terms",
+    "workflow audit terms",
+    "workflow blueprint terms",
+    "operating pack terms",
+    "workflow stewardship terms",
+    "enterprise architecture service terms",
+    "digital service terms",
+  ],
+  alternates: {
+    canonical: "/terms",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 const sections = [
