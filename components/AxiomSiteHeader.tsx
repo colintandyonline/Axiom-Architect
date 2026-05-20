@@ -24,6 +24,7 @@ const coreSystemLinks = [
   { label: "Agent Kits", href: "https://axiom-studio.co/collections/agent-kits" },
   { label: "Workbooks", href: "https://axiom-studio.co/collections/workbooks" },
   { label: "Operating Packs", href: "https://axiom-studio.co/collections/operating-packs" },
+  { label: "Enterprise AI Control Stack", href: "https://axiom-studio.co/collections/enterprise-ai-control-stack" },
 ];
 
 const legalLinks = [
