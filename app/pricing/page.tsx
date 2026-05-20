@@ -18,6 +18,7 @@ type ProductSlug =
 
 const tiers: Array<{
   slug: ProductSlug;
+  publicSlug?: string;
   name: string;
   header: string;
   price: string;
@@ -122,6 +123,7 @@ const tiers: Array<{
   },
   {
     slug: "architect-residency",
+    publicSlug: "enterprise-architecture-system",
     name: "Axiom Enterprise Architecture System",
     header: "Flagship enterprise architecture",
     price: "$2,499",
@@ -185,77 +187,81 @@ export default async function PricingPage() {
           </div>
 
           <div className="mt-12 grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
-            {tiers.map((tier) => (
-              <article
-                key={tier.slug}
-                className="group rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)] transition duration-200 hover:border-black hover:bg-[#9ed39f] hover:text-black hover:shadow-[0_0_70px_rgba(158,211,159,0.24)]"
-              >
-                <ProductSystemVisual kind={tier.slug} />
+            {tiers.map((tier) => {
+              const publicSlug = tier.publicSlug || tier.slug;
 
-                <p className="mt-6 inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-black transition duration-200 group-hover:border-black group-hover:bg-black group-hover:text-[#9ed39f]">
-                  {tier.label}
-                </p>
+              return (
+                <article
+                  key={tier.slug}
+                  className="group rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)] transition duration-200 hover:border-black hover:bg-[#9ed39f] hover:text-black hover:shadow-[0_0_70px_rgba(158,211,159,0.24)]"
+                >
+                  <ProductSystemVisual kind={tier.slug} />
 
-                <p className="mt-5 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f] transition duration-200 group-hover:text-black/64">
-                  {tier.header}
-                </p>
+                  <p className="mt-6 inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-black transition duration-200 group-hover:border-black group-hover:bg-black group-hover:text-[#9ed39f]">
+                    {tier.label}
+                  </p>
 
-                <div className="mt-3 flex items-start justify-between gap-5">
-                  <h2 className="text-2xl font-black uppercase tracking-[-0.04em] sm:text-3xl">
-                    {tier.name}
-                  </h2>
-                  <p className="text-4xl font-black tracking-[-0.06em]">{tier.price}</p>
-                </div>
+                  <p className="mt-5 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f] transition duration-200 group-hover:text-black/64">
+                    {tier.header}
+                  </p>
 
-                <p className="mt-5 text-base leading-7 text-[#e6f6e7]/78 transition duration-200 group-hover:text-black/76">
-                  {tier.summary}
-                </p>
+                  <div className="mt-3 flex items-start justify-between gap-5">
+                    <h2 className="text-2xl font-black uppercase tracking-[-0.04em] sm:text-3xl">
+                      {tier.name}
+                    </h2>
+                    <p className="text-4xl font-black tracking-[-0.06em]">{tier.price}</p>
+                  </div>
 
-                <ul className="mt-6 space-y-3">
-                  {tier.includes.map((item) => (
-                    <li key={item} className="flex gap-3 text-sm leading-6">
-                      <span className="mt-1.5 h-2 w-2 shrink-0 bg-[#9ed39f] transition duration-200 group-hover:bg-black" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                  <p className="mt-5 text-base leading-7 text-[#e6f6e7]/78 transition duration-200 group-hover:text-black/76">
+                    {tier.summary}
+                  </p>
 
-                {isSignedIn ? (
-                  <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                    <a
-                      href={`/products/${tier.slug}`}
-                      className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f]/45 bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 hover:border-black hover:bg-white hover:text-black group-hover:!border-black group-hover:!bg-white group-hover:!text-black"
-                    >
-                      Learn more
-                    </a>
-                    <form action="/api/checkout" method="post">
-                      <input type="hidden" name="tier" value={tier.slug} />
-                      <button
-                        type="submit"
+                  <ul className="mt-6 space-y-3">
+                    {tier.includes.map((item) => (
+                      <li key={item} className="flex gap-3 text-sm leading-6">
+                        <span className="mt-1.5 h-2 w-2 shrink-0 bg-[#9ed39f] transition duration-200 group-hover:bg-black" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {isSignedIn ? (
+                    <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                      <a
+                        href={`/products/${publicSlug}`}
+                        className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f]/45 bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 hover:border-black hover:bg-white hover:text-black group-hover:!border-black group-hover:!bg-white group-hover:!text-black"
+                      >
+                        Learn more
+                      </a>
+                      <form action="/api/checkout" method="post">
+                        <input type="hidden" name="tier" value={tier.slug} />
+                        <button
+                          type="submit"
+                          className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-black hover:text-white group-hover:!border-black group-hover:!bg-black group-hover:!text-white"
+                        >
+                          Continue to checkout
+                        </button>
+                      </form>
+                    </div>
+                  ) : (
+                    <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                      <a
+                        href={`/products/${publicSlug}`}
+                        className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f]/45 bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 hover:border-black hover:bg-white hover:text-black group-hover:!border-black group-hover:!bg-white group-hover:!text-black"
+                      >
+                        Learn more
+                      </a>
+                      <a
+                        href={`/signup?tier=${publicSlug}&account=required`}
                         className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-black hover:text-white group-hover:!border-black group-hover:!bg-black group-hover:!text-white"
                       >
-                        Continue to checkout
-                      </button>
-                    </form>
-                  </div>
-                ) : (
-                  <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                    <a
-                      href={`/products/${tier.slug}`}
-                      className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f]/45 bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 hover:border-black hover:bg-white hover:text-black group-hover:!border-black group-hover:!bg-white group-hover:!text-black"
-                    >
-                      Learn more
-                    </a>
-                    <a
-                      href={`/signup?tier=${tier.slug}&account=required`}
-                      className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-black hover:text-white group-hover:!border-black group-hover:!bg-black group-hover:!text-white"
-                    >
-                      Start this package
-                    </a>
-                  </div>
-                )}
-              </article>
-            ))}
+                        Start this package
+                      </a>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
           </div>
 
           <div className="mt-10 border border-[#9ed39f]/30 bg-[#041008] p-6 text-[#e6f6e7]/78">
