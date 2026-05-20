@@ -102,6 +102,15 @@ const universalWorkflowTitleField: SchemaField = {
   required: true,
 };
 
+const strongSubmissionGuidance = [
+  "Describe the real workflow steps in order, including where work starts, where it waits, and where it ends.",
+  "Name the people, teams, systems, tools, documents, forms, inboxes, dashboards, and handoffs involved.",
+  "Include the messy parts: delays, duplicate work, unclear ownership, manual checks, exceptions, and repeated mistakes.",
+  "Add evidence where useful: examples, volumes, timings, screenshots described in words, approval rules, or recent failure cases.",
+  "Explain what good should look like after the workflow is improved, not just what feels annoying today.",
+  "Do not include passwords, private keys, full payment details, or unnecessary sensitive personal data.",
+];
+
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -508,6 +517,34 @@ export default async function WorkflowIntakePage({
                 This intake form is not available yet. Return to your dashboard and contact Axiom if this continues.
               </p>
             </div>
+          )}
+
+          {context && !schemaMissing && !isLocked && (
+            <section className="mb-8 border border-[#9ed39f]/34 bg-[#041008] p-5 sm:p-7 lg:p-8">
+              <div className="grid gap-6 lg:grid-cols-[0.54fr_1fr] lg:items-start">
+                <div>
+                  <p className="m-0 text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">
+                    Before you submit
+                  </p>
+                  <h2 className="mt-4 text-[clamp(1.85rem,3vw,3.1rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
+                    Give the working reality, not the polished version.
+                  </h2>
+                  <p className="mt-4 text-sm leading-7 text-[#e6f6e7]/72 sm:text-base">
+                    Strong reports come from specific operating detail. Short answers are fine when the workflow is simple, but include enough context for Axiom to see where judgement, risk, delay, repetition, and handoff problems actually live.
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {strongSubmissionGuidance.map((item, index) => (
+                    <article key={item} className="border border-[#9ed39f]/20 bg-black/38 p-4">
+                      <p className="m-0 text-[0.64rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">
+                        {String(index + 1).padStart(2, "0")}
+                      </p>
+                      <p className="mb-0 mt-3 text-sm leading-6 text-[#e6f6e7]/76">{item}</p>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
           )}
 
           {context && !schemaMissing && (
