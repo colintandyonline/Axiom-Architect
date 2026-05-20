@@ -21,6 +21,14 @@ type SearchParams = {
   tier?: string;
 };
 
+function normaliseProductSlug(value?: string | null): string | null {
+  if (value === "enterprise-architecture-system") {
+    return "architect-residency";
+  }
+
+  return value || null;
+}
+
 function isProductSlug(value?: string | null): value is ProductSlug {
   return (
     value === "workflow-audit" ||
@@ -33,7 +41,8 @@ function isProductSlug(value?: string | null): value is ProductSlug {
 }
 
 function getSelectedTier(value?: string | null): ProductSlug {
-  return isProductSlug(value) ? value : "workflow-blueprint";
+  const normalisedValue = normaliseProductSlug(value);
+  return isProductSlug(normalisedValue) ? normalisedValue : "workflow-blueprint";
 }
 
 function errorMessage(error?: string) {
