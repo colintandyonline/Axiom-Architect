@@ -46,32 +46,32 @@ export const clientPortalNav: ClientPortalNavItem[] = [
   {
     href: "/client",
     label: "Overview",
-    description: "Your proposal status, workspace position, and next client action.",
+    description: "A clear view of your proposal, current phase, and next action.",
   },
   {
     href: "/client/operations",
     label: "Operations",
-    description: "Project phases, review gates, decisions, and current operating priorities.",
+    description: "The working plan, review stages, decisions, and approvals for your engagement.",
   },
   {
     href: "/client/documents",
     label: "Documents",
-    description: "Requested evidence, supplied material, and files needed for review.",
+    description: "Files, examples, notes, and supporting material connected to your work.",
   },
   {
     href: "/client/deliverables",
     label: "Deliverables",
-    description: "Blueprints, reports, protocols, and handoff material produced for the engagement.",
+    description: "Blueprints, reports, protocols, maps, and handoff material prepared for you.",
   },
   {
     href: "/client/billing",
     label: "Billing",
-    description: "Proposal value, invoices, payment status, and service records.",
+    description: "Your proposal value, invoices, payment status, and service history.",
   },
   {
     href: "/client/account",
     label: "Account",
-    description: "Business identity, primary contact, and client access details.",
+    description: "Your contact details, business profile, and access information.",
   },
 ];
 
@@ -83,71 +83,50 @@ export const premiumClientTierSlugs = new Set([
   "enterprise-architecture-system",
 ]);
 
-export const portalStatusCards: ClientPortalMetric[] = [
-  {
-    label: "Status",
-    value: "Client route",
-    text: "This portal is reserved for custom workflow and premium service clients.",
-  },
-  {
-    label: "Identity",
-    value: "Account-linked",
-    text: "Client records are tied to the signed-in account, not editable form fields.",
-  },
-  {
-    label: "Proposal",
-    value: "Protected",
-    text: "Detailed proposal intake happens inside the client route after sign-in.",
-  },
-  {
-    label: "Records",
-    value: "Connected",
-    text: "Service requests, workspaces, and activity are linked to one customer record.",
-  },
-];
+export const portalStatusCards: ClientPortalMetric[] = [];
 
 export const overviewContent: ClientPortalPageContent = {
   eyebrow: "Client overview",
-  title: "Your Axiom Architect client workspace.",
+  title: "Your workspace.",
   intro:
-    "A private workspace for your custom proposal, review status, next action, documents, deliverables, billing, and account details.",
+    "A private place to follow your Axiom Architect engagement, see what is happening now, and move to the next step without digging through emails.",
   summaryLabel: "Current position",
-  summaryTitle: "Proposal workspace opened",
+  summaryTitle: "Proposal received.",
   summaryText:
-    "Your account is connected to the client portal. Once you submit a protected proposal, Axiom can review the scope and organise the service request under this workspace.",
+    "Your workspace shows the latest review status, current phase, next action, and any updates connected to your engagement.",
   metrics: [
-    { label: "Proposal", value: "Ready", text: "Submit the custom proposal intake from the protected client route." },
-    { label: "Account", value: "Linked", text: "Name, email, and business are taken from the customer record." },
-    { label: "Workspace", value: "Private", text: "Custom work stays separate from standard audit dashboards." },
-    { label: "Next step", value: "Submit", text: "Complete the protected proposal intake when ready." },
+    { label: "Proposal", value: "In review", text: "Axiom is reviewing your submitted workflow context." },
+    { label: "Phase", value: "Discovery", text: "The first stage focuses on understanding the work, tools, and constraints." },
+    { label: "Next step", value: "Review", text: "Axiom will confirm the right proposal route before work begins." },
+    { label: "Workspace", value: "Open", text: "Your engagement activity will appear in this portal as it progresses." },
   ],
   sections: [
     {
-      eyebrow: "Your next action",
-      title: "Start or continue the custom proposal.",
-      intro: "The proposal intake gives Axiom the workflow context needed to judge scope, suitability, risk, and the right service route.",
+      eyebrow: "What happens next",
+      title: "From proposal to plan.",
+      intro: "Axiom reviews the request, checks fit, and turns the messy workflow context into a clear next step.",
       items: [
-        { label: "Step 01", title: "Open proposal intake", text: "Use the protected proposal form so the request is attached to this account." },
-        { label: "Step 02", title: "Describe the workflow", text: "Explain the process, tools, people, risks, and desired outcome without sharing secrets." },
-        { label: "Step 03", title: "Wait for review", text: "Axiom reviews the request and prepares the correct next step for the engagement." },
+        { label: "01", title: "Scope review", text: "Your workflow, goals, timeline, and constraints are reviewed before any proposal is prepared." },
+        { label: "02", title: "Proposal direction", text: "Axiom confirms whether the work is best handled as a blueprint, operating pack, build, or retained support." },
+        { label: "03", title: "Client decision", text: "You receive a clear next step before any paid implementation work begins." },
       ],
     },
     {
-      eyebrow: "Workspace areas",
-      title: "Where each part of the engagement lives.",
-      intro: "Each portal area has a distinct job so the client route does not become one vague dashboard.",
+      eyebrow: "Workspace guide",
+      title: "Where to find things.",
+      intro: "Each area of the portal has a practical purpose during the engagement.",
       items: [
-        { label: "Operations", title: "Phases and decisions", text: "Track review stages, open decisions, client actions, and approval gates." },
-        { label: "Documents", title: "Evidence and files", text: "Keep supporting material, document requests, and file status separate from deliverables." },
-        { label: "Billing", title: "Commercial record", text: "Use billing for invoices, payment state, proposal value, and service records." },
+        { label: "Operations", title: "Plan and progress", text: "Use this for phases, priorities, decisions, and approvals." },
+        { label: "Documents", title: "Supporting material", text: "Use this for files, examples, screenshots, and workflow evidence." },
+        { label: "Deliverables", title: "Finished outputs", text: "Use this for reports, blueprints, protocols, and handoff material." },
       ],
     },
   ],
   panels: [],
   actions: [
-    { title: "Submit proposal", text: "Open the protected custom proposal intake.", href: "/client/proposal" },
-    { title: "Review operations", text: "See current project phases and decisions.", href: "/client/operations" },
-    { title: "Check documents", text: "Review evidence and requested material.", href: "/client/documents" },
+    { title: "Open proposal", text: "View or submit the detailed proposal intake.", href: "/client/proposal" },
+    { title: "View operations", text: "Check the current working stage.", href: "/client/operations" },
+    { title: "View documents", text: "See supporting material and file requests.", href: "/client/documents" },
   ],
 };
 
@@ -155,47 +134,47 @@ overviewContent.panels = overviewContent.sections.flatMap((section) => section.i
 
 export const operationsContent: ClientPortalPageContent = {
   eyebrow: "Operations",
-  title: "Project phases, decisions, and review gates.",
+  title: "The working plan.",
   intro:
-    "Use this page to understand what stage the custom engagement is in, what is waiting for a decision, and where client approval is required.",
-  summaryLabel: "Operational status",
-  summaryTitle: "Awaiting proposal review",
+    "This page shows how the engagement is moving forward: the current stage, current focus, open decisions, and what needs attention next.",
+  summaryLabel: "Current stage",
+  summaryTitle: "Discovery underway.",
   summaryText:
-    "After a proposal intake is submitted, Axiom can move the request through discovery, workflow mapping, architecture design, and implementation planning.",
+    "Axiom is reviewing your workflow context and shaping the right approach before recommending implementation steps.",
   metrics: [
-    { label: "Phase", value: "Discovery", text: "Initial workflow context and business requirements are gathered here." },
-    { label: "Decision", value: "Pending", text: "Scope, timeline, and implementation depth are confirmed after review." },
-    { label: "Risk", value: "Guarded", text: "Sensitive data, auth, billing, and production systems require approval gates." },
-    { label: "Client action", value: "Context", text: "Provide enough detail for a clean proposal decision." },
+    { label: "Phase", value: "Discovery", text: "Understanding the current process and the outcome you want." },
+    { label: "Focus", value: "Proposal review", text: "Checking fit, complexity, risks, and the likely service route." },
+    { label: "Decision", value: "Pending", text: "The next decision is the correct proposal direction." },
+    { label: "Approval", value: "Required", text: "No implementation work begins without clear client approval." },
   ],
   sections: [
     {
-      eyebrow: "Engagement phases",
-      title: "How the work moves forward.",
-      intro: "These are the client-facing stages used to keep custom work controlled and understandable.",
+      eyebrow: "Engagement flow",
+      title: "How the work moves.",
+      intro: "Custom work moves in stages so the scope stays clear and controlled.",
       items: [
-        { label: "01", title: "Discovery", text: "Axiom reviews the submitted workflow, business context, tools, constraints, and goals." },
-        { label: "02", title: "Workflow mapping", text: "The current process is mapped across people, tools, handoffs, delays, and decision points." },
-        { label: "03", title: "Architecture design", text: "A future workflow is shaped around automation suitability, AI support, and human review." },
-        { label: "04", title: "Implementation plan", text: "Approved work is converted into staged actions, acceptance criteria, and delivery checkpoints." },
+        { label: "01", title: "Discovery", text: "Axiom reviews the current workflow, goals, tools, constraints, and examples." },
+        { label: "02", title: "Mapping", text: "The process is broken into stages, handoffs, decisions, bottlenecks, and risks." },
+        { label: "03", title: "Design", text: "The future workflow is shaped around better structure, automation fit, and safe AI use." },
+        { label: "04", title: "Plan", text: "The agreed direction becomes a clear plan with actions, responsibilities, and checkpoints." },
       ],
     },
     {
-      eyebrow: "Review gates",
-      title: "What needs approval before work changes.",
-      intro: "Custom work should never drift into production changes without explicit approval.",
+      eyebrow: "Approval points",
+      title: "Where you stay in control.",
+      intro: "Key decisions stay visible so work does not move ahead without agreement.",
       items: [
-        { label: "Scope", title: "Service boundary", text: "Confirm what is included, what is excluded, and what counts as additional work." },
-        { label: "Access", title: "System permissions", text: "Any repository, site, database, or third-party tool access must be approved first." },
-        { label: "Delivery", title: "Acceptance check", text: "Final outputs should be reviewed against the agreed proposal and deliverables." },
+        { label: "Scope", title: "What is included", text: "The proposal confirms what is included, what is excluded, and what would be extra." },
+        { label: "Access", title: "What can be inspected", text: "Any access to sites, files, tools, or systems must be agreed first." },
+        { label: "Delivery", title: "What counts as complete", text: "Finished work is checked against the agreed outputs and next action." },
       ],
     },
   ],
   panels: [],
   actions: [
-    { title: "Open proposal", text: "Submit or update the proposal context.", href: "/client/proposal" },
-    { title: "View documents", text: "Check what evidence may be needed.", href: "/client/documents" },
-    { title: "View deliverables", text: "See where outputs will be organised.", href: "/client/deliverables" },
+    { title: "Open proposal", text: "Review the proposal intake.", href: "/client/proposal" },
+    { title: "View documents", text: "Check supporting material.", href: "/client/documents" },
+    { title: "View deliverables", text: "See where final outputs will appear.", href: "/client/deliverables" },
   ],
 };
 
@@ -203,47 +182,47 @@ operationsContent.panels = operationsContent.sections.flatMap((section) => secti
 
 export const documentsContent: ClientPortalPageContent = {
   eyebrow: "Documents",
-  title: "Evidence, files, and review material.",
+  title: "Supporting material.",
   intro:
-    "The documents area keeps supporting material separate from final outputs. It is for evidence, examples, exports, screenshots, SOPs, and workflow references.",
-  summaryLabel: "Document state",
-  summaryTitle: "No document request is active",
+    "Use this area for files, screenshots, process notes, examples, and references that help Axiom understand the real workflow.",
+  summaryLabel: "Document status",
+  summaryTitle: "No files requested yet.",
   summaryText:
-    "When Axiom needs evidence, the request should be specific: what file is needed, why it matters, and whether it has been reviewed.",
+    "When supporting material is needed, the request will be clear: what to provide, why it helps, and what happens after review.",
   metrics: [
-    { label: "Uploads", value: "None", text: "No client files are currently attached to this workspace." },
-    { label: "Requests", value: "Clear", text: "Future document requests should state exactly what is needed." },
-    { label: "Review", value: "Tracked", text: "Files should move from requested to received to reviewed." },
-    { label: "Security", value: "Guarded", text: "Do not upload secrets, passwords, tokens, or unnecessary personal data." },
+    { label: "Files", value: "None yet", text: "No files are currently attached to this workspace." },
+    { label: "Requests", value: "None open", text: "Document requests will appear here when needed." },
+    { label: "Review", value: "Not started", text: "Uploaded material will show a clear review state." },
+    { label: "Privacy", value: "Careful", text: "Only share material that is needed for the engagement." },
   ],
   sections: [
     {
-      eyebrow: "Evidence types",
-      title: "Useful material for workflow diagnosis.",
-      intro: "Good documents help Axiom understand the real process instead of relying on vague descriptions.",
+      eyebrow: "Useful material",
+      title: "What helps the review.",
+      intro: "Good examples make the proposal sharper and reduce guesswork.",
       items: [
-        { label: "Process", title: "SOPs and workflow notes", text: "Current operating steps, checklists, handoff notes, and internal instructions." },
-        { label: "Systems", title: "Tool screenshots", text: "Screenshots or exports showing dashboards, forms, automations, and repeated manual steps." },
-        { label: "Examples", title: "Real work samples", text: "Redacted examples of typical tasks, exceptions, client requests, or approval flows." },
-        { label: "Rules", title: "Policies and constraints", text: "Compliance notes, access limits, approval requirements, or business rules that shape the work." },
+        { label: "Process", title: "Current steps", text: "Checklists, process notes, standard operating steps, or internal instructions." },
+        { label: "Tools", title: "Screenshots and exports", text: "Screenshots or examples showing forms, dashboards, tools, and repeated manual tasks." },
+        { label: "Examples", title: "Typical work", text: "Redacted examples of common requests, exceptions, handoffs, or approval moments." },
+        { label: "Rules", title: "Limits and requirements", text: "Policies, constraints, approval rules, or compliance notes that affect the workflow." },
       ],
     },
     {
-      eyebrow: "Document rules",
-      title: "What should not be uploaded.",
-      intro: "The portal should support review without collecting unnecessary risk.",
+      eyebrow: "Before uploading",
+      title: "Keep sensitive data out.",
+      intro: "Share enough to explain the workflow without exposing information that is not needed.",
       items: [
-        { label: "Secrets", title: "No credentials", text: "Do not upload passwords, API keys, seed phrases, access tokens, or private keys." },
-        { label: "Payments", title: "No card data", text: "Do not upload payment card details or unnecessary billing information." },
-        { label: "Private data", title: "Redact where possible", text: "Remove client names, personal data, and sensitive records unless clearly required." },
+        { label: "Access", title: "No passwords", text: "Never upload passwords, access keys, recovery phrases, or private credentials." },
+        { label: "Payments", title: "No card data", text: "Do not upload card numbers or unnecessary payment information." },
+        { label: "Privacy", title: "Redact where possible", text: "Remove names, private client details, and sensitive personal information where possible." },
       ],
     },
   ],
   panels: [],
   actions: [
-    { title: "Back to overview", text: "Return to current workspace status.", href: "/client" },
-    { title: "Open operations", text: "See current review phases.", href: "/client/operations" },
-    { title: "View deliverables", text: "Separate final outputs from evidence.", href: "/client/deliverables" },
+    { title: "Back to overview", text: "Return to your workspace summary.", href: "/client" },
+    { title: "View operations", text: "Check the current working stage.", href: "/client/operations" },
+    { title: "View deliverables", text: "See where finished outputs will appear.", href: "/client/deliverables" },
   ],
 };
 
@@ -251,47 +230,47 @@ documentsContent.panels = documentsContent.sections.flatMap((section) => section
 
 export const deliverablesContent: ClientPortalPageContent = {
   eyebrow: "Deliverables",
-  title: "Blueprints, protocols, and final outputs.",
+  title: "Your outputs.",
   intro:
-    "Deliverables are the client-facing outputs of the engagement. This page separates finished work from raw evidence and day-to-day operations.",
-  summaryLabel: "Delivery state",
-  summaryTitle: "No deliverable released yet",
+    "This area is where finished or review-ready material appears: blueprints, reports, workflow maps, protocols, and handoff files.",
+  summaryLabel: "Delivery status",
+  summaryTitle: "No outputs released yet.",
   summaryText:
-    "Once the proposal is reviewed and the work is agreed, approved outputs can be organised here by type, status, and download route.",
+    "Deliverables appear here once the proposal is agreed and the work reaches the right stage.",
   metrics: [
-    { label: "Blueprint", value: "Pending", text: "Architecture blueprint appears after review and scoping." },
-    { label: "Workflow map", value: "Pending", text: "Process maps are prepared once the current workflow is understood." },
-    { label: "Protocol", value: "Pending", text: "AI operating rules and review gates belong in final outputs." },
-    { label: "Handoff", value: "Pending", text: "Final files should include status, version, and approval state." },
+    { label: "Blueprint", value: "Pending", text: "Your architecture blueprint will appear here when prepared." },
+    { label: "Workflow map", value: "Pending", text: "Workflow maps will appear here when ready for review." },
+    { label: "Protocol", value: "Pending", text: "AI operating rules and review gates will appear here if included." },
+    { label: "Handoff", value: "Pending", text: "Final material will be organised here when complete." },
   ],
   sections: [
     {
       eyebrow: "Output types",
-      title: "What may be delivered through this area.",
-      intro: "Different services produce different outputs, but each should have a clear purpose and approval state.",
+      title: "What may appear here.",
+      intro: "The final outputs depend on the agreed proposal and service route.",
       items: [
-        { label: "Blueprint", title: "Workflow architecture", text: "A structured operating model for how the improved workflow should run." },
-        { label: "Map", title: "Process sequence", text: "A clear view of stages, handoffs, decisions, systems, and failure points." },
-        { label: "Protocol", title: "AI operating rules", text: "Assistant roles, boundaries, review gates, escalation rules, and human control points." },
-        { label: "Workbook", title: "Implementation support", text: "A practical guide for applying the blueprint across tools, people, and routines." },
+        { label: "Blueprint", title: "Workflow architecture", text: "A clear operating model for the improved workflow." },
+        { label: "Map", title: "Process sequence", text: "A visual or written structure showing stages, handoffs, decisions, and review points." },
+        { label: "Protocol", title: "AI operating rules", text: "Clear instructions, boundaries, review gates, and escalation rules for AI-assisted work." },
+        { label: "Workbook", title: "Implementation guide", text: "Practical steps for applying the plan across people, tools, and routines." },
       ],
     },
     {
-      eyebrow: "Approval state",
-      title: "How deliverables should be controlled.",
-      intro: "Client-facing outputs should not be ambiguous. Each file needs a status and next action.",
+      eyebrow: "Review status",
+      title: "Know what is ready.",
+      intro: "Outputs will show whether they are being prepared, ready for review, approved, or delivered.",
       items: [
-        { label: "Draft", title: "For review", text: "A draft output needs client review before it is treated as final." },
-        { label: "Approved", title: "Accepted output", text: "Approved files become the working reference for implementation or handoff." },
-        { label: "Superseded", title: "Replaced version", text: "Older files should remain traceable but not treated as the current source." },
+        { label: "Draft", title: "For review", text: "Draft material is shared for feedback before final approval." },
+        { label: "Approved", title: "Accepted", text: "Approved outputs become the working reference for the engagement." },
+        { label: "Delivered", title: "Final", text: "Delivered files are ready to use or hand over." },
       ],
     },
   ],
   panels: [],
   actions: [
-    { title: "Open documents", text: "Review supporting material first.", href: "/client/documents" },
-    { title: "Open operations", text: "Check project phase and approvals.", href: "/client/operations" },
-    { title: "Open billing", text: "Review service and invoice status.", href: "/client/billing" },
+    { title: "View documents", text: "Check supporting material first.", href: "/client/documents" },
+    { title: "View operations", text: "Check the current working stage.", href: "/client/operations" },
+    { title: "View billing", text: "Review proposal and invoice status.", href: "/client/billing" },
   ],
 };
 
@@ -299,47 +278,47 @@ deliverablesContent.panels = deliverablesContent.sections.flatMap((section) => s
 
 export const billingContent: ClientPortalPageContent = {
   eyebrow: "Billing",
-  title: "Proposal value, invoices, and service status.",
+  title: "Billing and proposal value.",
   intro:
-    "Billing is kept separate from project operations so commercial records do not get mixed into workflow notes, documents, or deliverables.",
-  summaryLabel: "Billing state",
-  summaryTitle: "No active invoice shown",
+    "This area shows proposal value, invoices, payment status, and service history for the engagement.",
+  summaryLabel: "Billing status",
+  summaryTitle: "No invoice due.",
   summaryText:
-    "Custom proposal work is priced after review. Any invoice or payment record should connect back to an agreed service request or accepted proposal.",
+    "Pricing is confirmed after review. Any invoice or payment request will appear here with clear status and next action.",
   metrics: [
-    { label: "Proposal", value: "Review first", text: "Pricing follows scope review, not the initial form submission." },
-    { label: "Invoice", value: "None", text: "No invoice is displayed for this workspace yet." },
+    { label: "Proposal", value: "Review first", text: "Pricing follows scope review and agreement." },
+    { label: "Invoice", value: "None", text: "No invoice is currently shown for this workspace." },
     { label: "Payment", value: "Not due", text: "Payment status changes only after a proposal is accepted." },
-    { label: "Service", value: "Pending", text: "Active services should link back to a service request." },
+    { label: "Service", value: "Pending", text: "Accepted work will appear here with its billing status." },
   ],
   sections: [
     {
       eyebrow: "Commercial flow",
-      title: "How custom work moves from request to invoice.",
-      intro: "Axiom reviews the request first so the commercial record matches the actual work required.",
+      title: "From proposal to invoice.",
+      intro: "Custom work is priced after the request has been reviewed properly.",
       items: [
-        { label: "01", title: "Proposal request", text: "The client submits workflow context through the protected proposal form." },
-        { label: "02", title: "Scope review", text: "Axiom reviews complexity, risk, implementation needs, and deliverables." },
-        { label: "03", title: "Proposal sent", text: "The agreed route, timeline, deliverables, and price are sent for approval." },
-        { label: "04", title: "Invoice issued", text: "Billing is created only after the client accepts the proposal or agreed next step." },
+        { label: "01", title: "Request received", text: "Your workflow context is reviewed before pricing is prepared." },
+        { label: "02", title: "Scope confirmed", text: "Axiom confirms the right route, timeline, and outputs." },
+        { label: "03", title: "Proposal sent", text: "You receive the proposed scope, price, and next step." },
+        { label: "04", title: "Invoice issued", text: "Billing is issued only after the agreed proposal or next step." },
       ],
     },
     {
-      eyebrow: "Billing records",
-      title: "What should be visible here.",
-      intro: "The billing page should answer practical client questions without exposing private payment data.",
+      eyebrow: "What appears here",
+      title: "Clear billing information.",
+      intro: "This page is for practical billing visibility, not project notes.",
       items: [
-        { label: "Invoices", title: "Issued records", text: "Invoice number, amount, status, due date, and related service request." },
-        { label: "Payments", title: "Payment status", text: "Paid, due, overdue, refunded, or manually reconciled status." },
-        { label: "Services", title: "Commercial scope", text: "The accepted service tier, deliverables, and agreed support window." },
+        { label: "Invoices", title: "Issued invoices", text: "Invoice number, amount, status, and due date." },
+        { label: "Payments", title: "Payment status", text: "Paid, due, overdue, refunded, or manually reconciled." },
+        { label: "Services", title: "Accepted work", text: "The agreed service, support window, and related outputs." },
       ],
     },
   ],
   panels: [],
   actions: [
-    { title: "Open proposal", text: "Submit scope before pricing is finalised.", href: "/client/proposal" },
-    { title: "Open deliverables", text: "Check what outputs are attached to the service.", href: "/client/deliverables" },
-    { title: "Open account", text: "Confirm business and contact details.", href: "/client/account" },
+    { title: "Open proposal", text: "Review your submitted proposal context.", href: "/client/proposal" },
+    { title: "View deliverables", text: "Check outputs connected to the work.", href: "/client/deliverables" },
+    { title: "View account", text: "Confirm your client details.", href: "/client/account" },
   ],
 };
 
@@ -347,47 +326,47 @@ billingContent.panels = billingContent.sections.flatMap((section) => section.ite
 
 export const accountContent: ClientPortalPageContent = {
   eyebrow: "Account",
-  title: "Client identity and access details.",
+  title: "Your account details.",
   intro:
-    "The account page explains which client identity is attached to the workspace and which details should be used for proposals, billing, and communication.",
-  summaryLabel: "Account state",
-  summaryTitle: "Customer record controls identity",
+    "This page shows the contact and business details connected to your Axiom Architect workspace.",
+  summaryLabel: "Account status",
+  summaryTitle: "Details connected.",
   summaryText:
-    "Name, email, and business should come from the linked customer record. Proposal forms should not ask clients to re-enter or change account identity.",
+    "Your name, email, and business details are used for communication, proposal review, billing, and workspace access.",
   metrics: [
-    { label: "Identity", value: "Locked", text: "Proposal identity should be taken from the signed-in customer record." },
-    { label: "Email", value: "Primary", text: "The customer email is used for portal access and service communication." },
-    { label: "Business", value: "Linked", text: "Business name connects proposals, workspaces, and billing records." },
-    { label: "Access", value: "Protected", text: "Client pages should require a valid authenticated session." },
+    { label: "Identity", value: "Confirmed", text: "Your workspace is connected to your signed-in account." },
+    { label: "Email", value: "Primary", text: "This email is used for access and service updates." },
+    { label: "Business", value: "Connected", text: "Your business name is used across proposals and billing." },
+    { label: "Access", value: "Private", text: "Only signed-in clients can view this portal." },
   ],
   sections: [
     {
-      eyebrow: "Client record",
-      title: "What belongs in the account area.",
-      intro: "This page should help the client understand the identity connected to the workspace.",
+      eyebrow: "Profile",
+      title: "Your client profile.",
+      intro: "These details help Axiom keep the engagement connected to the right person and business.",
       items: [
-        { label: "Name", title: "Primary contact", text: "The person Axiom should treat as the main client contact for this workspace." },
-        { label: "Email", title: "Login and communication", text: "The email used for login, account confirmation, and service updates." },
-        { label: "Business", title: "Workspace owner", text: "The company, project, or organisation attached to proposals and billing records." },
-        { label: "Status", title: "Account standing", text: "Whether the account is active, pending confirmation, or needs support." },
+        { label: "Name", title: "Primary contact", text: "The person Axiom contacts about this workspace." },
+        { label: "Email", title: "Service email", text: "The email used for login, updates, and communication." },
+        { label: "Business", title: "Workspace owner", text: "The company or project attached to this engagement." },
+        { label: "Status", title: "Account standing", text: "Shows whether the account is active or needs attention." },
       ],
     },
     {
-      eyebrow: "Access rules",
-      title: "What must stay controlled.",
-      intro: "Account controls should protect the client route without interfering with standard login.",
+      eyebrow: "Access",
+      title: "Private workspace access.",
+      intro: "This portal is reserved for signed-in clients connected to an active workspace.",
       items: [
-        { label: "Auth", title: "Normal login remains separate", text: "The standard auth route handles sessions and should not be mixed with proposal submission." },
-        { label: "Customer", title: "Single customer record", text: "Existing audit clients should reuse the same customer account for custom proposals." },
-        { label: "Security", title: "No secrets in forms", text: "Passwords, keys, tokens, and payment data must never be stored in proposal records." },
+        { label: "Login", title: "Protected access", text: "You must be signed in to view the client portal." },
+        { label: "Updates", title: "Service communication", text: "Axiom uses your account email for important updates." },
+        { label: "Security", title: "Sensitive information", text: "Do not share passwords, private keys, or unnecessary sensitive data in forms." },
       ],
     },
   ],
   panels: [],
   actions: [
-    { title: "Open proposal", text: "Submit a custom workflow proposal under this account.", href: "/client/proposal" },
-    { title: "Open billing", text: "Review commercial records for this client.", href: "/client/billing" },
-    { title: "Back to overview", text: "Return to the workspace summary.", href: "/client" },
+    { title: "Open proposal", text: "Review or submit your proposal context.", href: "/client/proposal" },
+    { title: "View billing", text: "Check proposal and invoice status.", href: "/client/billing" },
+    { title: "Back to overview", text: "Return to your workspace summary.", href: "/client" },
   ],
 };
 
