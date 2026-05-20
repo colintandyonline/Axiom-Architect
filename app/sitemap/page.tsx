@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sitemap | Axiom Architect",
+  title: "Sitemap | Axiom Architect Pages & Products",
   description:
-    "Browse the main public pages, service pages, product detail pages, and legal pages on Axiom Architect.",
+    "Browse Axiom Architect public pages, workflow architecture product pages, pricing, support routes, legal policies, and XML sitemap links.",
+  alternates: {
+    canonical: "/sitemap",
+  },
 };
 
 const pageGroups = [
