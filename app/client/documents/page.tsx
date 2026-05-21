@@ -172,12 +172,24 @@ export default async function ClientPortalDocumentsPage({
                 <article key={document.id} className="grid gap-4 border border-[#9ed39f]/24 bg-[#030804] p-5 lg:grid-cols-[1fr_auto] lg:items-center">
                   <div>
                     <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{formatLabel(document.review_status)}</p>
-                    <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.05em] text-white">{document.title || document.original_filename}</h3>
+                    <h3 className="mt-3 break-words text-2xl font-black uppercase tracking-[-0.05em] text-white">{document.title || document.original_filename}</h3>
                     <p className="mt-2 text-sm leading-7 text-[#e6f6e7]/72">{document.description || formatLabel(document.document_category)}</p>
                   </div>
-                  <div className="text-left text-xs font-bold uppercase tracking-[0.14em] text-[#e6f6e7]/58 lg:text-right">
-                    <p>{formatDate(document.uploaded_at)}</p>
-                    {document.reviewed_at && <p className="mt-2">Reviewed {formatDate(document.reviewed_at)}</p>}
+                  <div className="flex flex-col gap-4 text-left text-xs font-bold uppercase tracking-[0.14em] text-[#e6f6e7]/58 lg:items-end lg:text-right">
+                    <div>
+                      <p>{formatDate(document.uploaded_at)}</p>
+                      {document.reviewed_at && <p className="mt-2">Reviewed {formatDate(document.reviewed_at)}</p>}
+                    </div>
+                    {document.storage_bucket && document.storage_path && (
+                      <a
+                        href={`/api/client/documents/${document.id}/download`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex min-h-11 items-center justify-center border border-[#9ed39f] px-4 text-[0.68rem] font-black uppercase tracking-[0.16em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black"
+                      >
+                        Open file
+                      </a>
+                    )}
                   </div>
                 </article>
               ))
