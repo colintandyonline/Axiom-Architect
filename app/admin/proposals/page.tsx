@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAxiomAdmin } from "../../../lib/axiom-admin";
+import { formatDate, label } from "../../../lib/axiom-admin-dashboard";
+import { AdminSection, AdminShell, StatCard, buttonClass, statusPill } from "../../../components/admin/AdminShell";
 
 export const metadata: Metadata = {
   title: "Proposal Clients | Axiom Architect Admin",
@@ -98,11 +100,6 @@ type ProposalView = {
   nextAdminAction: string;
 };
 
-const panelClass = "rounded-[1.5rem] border border-[#9ed39f]/30 bg-[#030804] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.24)] sm:p-7";
-const eyebrowClass = "text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]";
-const buttonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f]/35 bg-black px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black";
-const primaryButtonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-black transition hover:bg-white";
-
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -170,29 +167,6 @@ async function getProposalAdminData(): Promise<ProposalAdminData> {
     documents: documents || [],
     deliverables: deliverables || [],
   };
-}
-
-function label(value?: string | null) {
-  return value ? value.replace(/_/g, " ") : "—";
-}
-
-function formatDate(value?: string | null) {
-  if (!value) {
-    return "—";
-  }
-
-  return new Intl.DateTimeFormat("en-GB", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
-function statusPill(status?: string | null) {
-  return (
-    <span className="inline-flex w-fit border border-[#9ed39f]/35 px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#9ed39f]">
-      {label(status)}
-    </span>
-  );
 }
 
 function payloadText(payload: JsonRecord | null, key: string) {
@@ -263,17 +237,6 @@ function nextAdminAction(view: Omit<ProposalView, "segment" | "nextAdminAction">
   }
 
   return "Review the submitted brief and decide the proposal route.";
-}
-
-function StatCard({ title, value, helper }: { title: string; value: string; helper: string }) {
-  return (
-    <article className="rounded-[1.25rem] border border-black bg-[#061009] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.26)]">
-      <span className="mb-5 block h-2 w-2 bg-[#9ed39f]" />
-      <h2 className="text-lg font-black uppercase tracking-[0.02em] text-[#9ed39f]">{title}</h2>
-      <p className="mt-4 text-3xl font-black uppercase tracking-[-0.055em] text-white">{value}</p>
-      <p className="mt-3 text-sm leading-6 text-white/68">{helper}</p>
-    </article>
-  );
 }
 
 function SegmentColumn({ title, views }: { title: string; views: ProposalView[] }) {
@@ -351,34 +314,13 @@ export default async function AdminProposalClientsPage() {
   const deliveryQueue = proposalViews.filter((view) => view.segment === "Delivery released");
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
-      <section className="relative overflow-hidden border-b border-[#9ed39f]/20 bg-[radial-gradient(circle_at_top_right,rgba(158,211,159,0.18),#041008_36%,#000_78%)] px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-        <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.11)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.11)_1px,transparent_1px)] [background-size:44px_44px]" />
-        <div className="relative mx-auto max-w-[1440px]">
-          <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-            Proposal clients
-          </p>
-          <div className="mt-6 grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
-            <h1 className="max-w-5xl text-[clamp(2.65rem,6vw,5.8rem)] font-black uppercase leading-[0.9] tracking-[-0.075em] text-white">
-              Business proposal control.
-            </h1>
-            <div className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
-              <p className="m-0 text-2xl font-black uppercase leading-tight tracking-[-0.04em] text-white">
-                Signed in as {adminEmail}
-              </p>
-              <p className="mb-0 mt-3">
-                This page separates proposal clients from product/order customers and tracks the service workflow from submitted brief to evidence, delivery, and follow-up.
-              </p>
-            </div>
-          </div>
-          <div className="mt-6 flex flex-wrap gap-3 text-[0.68rem] font-black uppercase tracking-[0.16em]">
-            <Link href="/admin" className={buttonClass}>Main admin</Link>
-            <a href="#pipeline" className={buttonClass}>Pipeline</a>
-            <a href="#proposal-clients" className={primaryButtonClass}>Proposal clients</a>
-          </div>
-        </div>
-      </section>
-
+    <AdminShell
+      adminEmail={adminEmail}
+      eyebrow="Proposal clients"
+      title="Business proposal control."
+      intro="This page separates proposal clients from product/order customers and tracks the service workflow from submitted brief to evidence, delivery, and follow-up."
+      activePath="/admin/proposals"
+    >
       <section className="bg-[#9ed39f] px-4 py-14 text-white sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-6">
           <StatCard title="Proposals" value={String(data.proposals.length)} helper="Submitted proposal requests" />
@@ -392,31 +334,17 @@ export default async function AdminProposalClientsPage() {
 
       <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mx-auto grid max-w-[1440px] gap-8">
-          <section id="pipeline" className={panelClass}>
-            <p className={eyebrowClass}>Business pipeline</p>
-            <h2 className="mt-3 text-[clamp(1.8rem,3vw,3.1rem)] font-black uppercase leading-[0.94] tracking-[-0.06em] text-white">
-              Proposal-client segmentation
-            </h2>
-            <div className="mt-6 grid gap-4 lg:grid-cols-4">
+          <AdminSection eyebrow="Business pipeline" title="Proposal-client segmentation">
+            <div className="grid gap-4 lg:grid-cols-4">
               <SegmentColumn title="Needs review" views={reviewQueue} />
               <SegmentColumn title="Workspace / proposal" views={preparedQueue} />
               <SegmentColumn title="Evidence received" views={evidenceQueue} />
               <SegmentColumn title="Delivery released" views={deliveryQueue} />
             </div>
-          </section>
+          </AdminSection>
 
-          <section id="proposal-clients" className={panelClass}>
-            <div className="flex flex-col gap-4 border-b border-[#9ed39f]/20 pb-6 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className={eyebrowClass}>Service clients</p>
-                <h2 className="mt-3 text-[clamp(1.8rem,3vw,3.1rem)] font-black uppercase leading-[0.94] tracking-[-0.06em] text-white">
-                  Proposal workspace control
-                </h2>
-              </div>
-              <Link href="/admin" className={buttonClass}>Back to main admin</Link>
-            </div>
-
-            <div className="mt-8 grid gap-5">
+          <AdminSection eyebrow="Service clients" title="Proposal workspace control">
+            <div className="grid gap-5">
               {proposalViews.length > 0 ? (
                 proposalViews.map((view) => (
                   <article key={view.proposal.id} className="grid gap-5 border border-[#9ed39f]/20 bg-black/36 p-5 xl:grid-cols-[1.15fr_0.85fr]">
@@ -446,7 +374,7 @@ export default async function AdminProposalClientsPage() {
                     </div>
 
                     <aside className="border border-[#9ed39f]/18 bg-[#030804] p-5">
-                      <p className={eyebrowClass}>Control state</p>
+                      <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">Control state</p>
                       <div className="mt-4 grid gap-3 text-sm leading-7 text-white/68">
                         <p><strong className="text-[#9ed39f]">Workspace:</strong> {view.workspace?.workspace_name || "Workspace not created"}</p>
                         <p><strong className="text-[#9ed39f]">Phase:</strong> {label(view.workspace?.current_phase)}</p>
@@ -474,9 +402,9 @@ export default async function AdminProposalClientsPage() {
                 </article>
               )}
             </div>
-          </section>
+          </AdminSection>
         </div>
       </section>
-    </main>
+    </AdminShell>
   );
 }
