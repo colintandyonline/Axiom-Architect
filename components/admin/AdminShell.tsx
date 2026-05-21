@@ -14,6 +14,7 @@ const adminNavItems = [
   ["Workflows", "/admin/workflows"],
   ["Reports", "/admin/reports"],
   ["Proposal clients", "/admin/proposals"],
+  ["Send deliverables", "/admin/proposals/deliverables"],
   ["Analytics", "/admin/analytics"],
 ] as const;
 
