@@ -91,7 +91,6 @@ export type ClientPortalDeliverable = {
   storage_path: string | null;
   mime_type: string | null;
   file_size_bytes: number | null;
-  approval_required: boolean;
   approved_at: string | null;
   delivered_at: string | null;
   created_at: string;
