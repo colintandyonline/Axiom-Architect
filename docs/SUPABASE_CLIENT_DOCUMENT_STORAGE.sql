@@ -23,10 +23,13 @@ values (
     'application/pdf',
     'text/plain',
     'text/csv',
+    'application/csv',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation'
   ]
 )
 on conflict (id) do update set
@@ -52,7 +55,11 @@ create table if not exists public.axiom_workspace_documents (
   uploaded_at timestamptz not null default now(),
   reviewed_at timestamptz,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint axiom_workspace_documents_review_status_check
+    check (review_status in ('under_review', 'needs_clarification', 'reviewed', 'archived')),
+  constraint axiom_workspace_documents_uploaded_by_check
+    check (uploaded_by in ('client', 'axiom', 'system'))
 );
 
 alter table public.axiom_workspace_documents
@@ -71,6 +78,35 @@ create index if not exists axiom_workspace_documents_workspace_uploaded_idx
 create index if not exists axiom_workspace_documents_customer_uploaded_idx
   on public.axiom_workspace_documents (customer_id, uploaded_at desc);
 
+create index if not exists axiom_workspace_documents_review_status_idx
+  on public.axiom_workspace_documents (review_status);
+
 create unique index if not exists axiom_workspace_documents_storage_path_uidx
   on public.axiom_workspace_documents (storage_bucket, storage_path)
   where storage_bucket is not null and storage_path is not null;
+
+create or replace function public.axiom_set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists axiom_workspace_documents_set_updated_at on public.axiom_workspace_documents;
+
+create trigger axiom_workspace_documents_set_updated_at
+before update on public.axiom_workspace_documents
+for each row
+execute function public.axiom_set_updated_at();
+
+alter table public.axiom_workspace_documents enable row level security;
+
+-- The application uploads through /api/client/documents/upload using the service role.
+-- Do not make this bucket public. Do not expose storage paths directly to clients.
+
+-- Quick checks after running:
+-- select id, name, public, file_size_limit from storage.buckets where id = 'axiom-client-documents';
+-- select column_name, data_type from information_schema.columns where table_schema = 'public' and table_name = 'axiom_workspace_documents' order by ordinal_position;
