@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAxiomAuthContext } from "../../../../../../../lib/axiom-auth";
+import { getAxiomAuthContext } from "../../../../../../lib/axiom-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
