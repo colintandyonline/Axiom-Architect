@@ -68,6 +68,10 @@ export type ClientPortalDocument = {
   review_status: string;
   title: string | null;
   description: string | null;
+  storage_bucket: string | null;
+  storage_path: string | null;
+  mime_type: string | null;
+  file_size_bytes: number | null;
   uploaded_at: string;
   reviewed_at: string | null;
 };
@@ -220,7 +224,7 @@ async function getLatestActivity(workspaceId: string) {
 async function getWorkspaceDocuments(workspaceId: string) {
   return (
     (await supabaseServiceFetch<ClientPortalDocument[]>(
-      `axiom_workspace_documents?select=id,workspace_id,customer_id,original_filename,document_category,review_status,title,description,uploaded_at,reviewed_at&workspace_id=eq.${encodeURIComponent(workspaceId)}&order=uploaded_at.desc&limit=12`,
+      `axiom_workspace_documents?select=id,workspace_id,customer_id,original_filename,document_category,review_status,title,description,storage_bucket,storage_path,mime_type,file_size_bytes,uploaded_at,reviewed_at&workspace_id=eq.${encodeURIComponent(workspaceId)}&order=uploaded_at.desc&limit=12`,
     )) || []
   );
 }
