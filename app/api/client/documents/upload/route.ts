@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAxiomAuthContext } from "../../../../../lib/axiom-auth";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const storageBucket = "axiom-client-documents";
 const maxFileSizeBytes = 15 * 1024 * 1024;
@@ -14,10 +15,13 @@ const allowedMimeTypes = new Set([
   "application/pdf",
   "text/plain",
   "text/csv",
+  "application/csv",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 ]);
 
 type ClientWorkspaceRecord = {
@@ -126,6 +130,19 @@ async function getLatestWorkspace(customerId: string) {
   return records?.[0] ?? null;
 }
 
+async function storageObjectExists(config: { url: string; serviceRoleKey: string }, objectPath: string) {
+  const response = await fetch(storageObjectUrl(config, objectPath), {
+    method: "HEAD",
+    cache: "no-store",
+    headers: {
+      apikey: config.serviceRoleKey,
+      Authorization: `Bearer ${config.serviceRoleKey}`,
+    },
+  });
+
+  return response.ok;
+}
+
 async function uploadToStorage(file: File, objectPath: string) {
   const config = getSupabaseServiceConfig();
 
@@ -144,12 +161,21 @@ async function uploadToStorage(file: File, objectPath: string) {
     body: Buffer.from(await file.arrayBuffer()),
   });
 
-  if (!response.ok) {
-    console.error("Axiom document storage upload failed", response.status, await response.text());
-    return false;
+  if (response.ok) {
+    return true;
   }
 
-  return true;
+  const responseText = await response.text();
+  console.error("Axiom document storage upload returned non-OK", response.status, responseText);
+
+  const objectExists = await storageObjectExists(config, objectPath);
+
+  if (objectExists) {
+    console.warn("Axiom document storage object exists after non-OK upload response", objectPath);
+    return true;
+  }
+
+  return false;
 }
 
 async function createDocumentRecord(payload: Record<string, unknown>) {
