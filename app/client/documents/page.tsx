@@ -9,6 +9,10 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+type DocumentsSearchParams = {
+  upload?: string;
+};
+
 function formatLabel(value: string | null | undefined, fallback = "Not set") {
   if (!value) return fallback;
   return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -25,7 +29,34 @@ function formatDate(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
-export default async function ClientPortalDocumentsPage() {
+function getUploadMessage(status?: string) {
+  switch (status) {
+    case "success":
+      return { title: "Upload received.", text: "Your file has been saved and added to this workspace for review." };
+    case "too-large":
+      return { title: "File too large.", text: "Uploads are limited to 15MB. Try a smaller file or compressed screenshot." };
+    case "type":
+      return { title: "File type blocked.", text: "Use an image, PDF, document, spreadsheet, CSV, or plain text file." };
+    case "missing-file":
+      return { title: "No file selected.", text: "Choose a file before uploading." };
+    case "workspace":
+      return { title: "Workspace missing.", text: "A workspace is required before files can be uploaded." };
+    case "storage":
+    case "record":
+    case "config":
+      return { title: "Upload failed.", text: "The file could not be saved. Check the storage setup and try again." };
+    default:
+      return null;
+  }
+}
+
+export default async function ClientPortalDocumentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<DocumentsSearchParams>;
+}) {
+  const params = await searchParams;
+  const uploadMessage = getUploadMessage(params.upload);
   const liveData = await loadClientPortalData("/client/documents");
   const documents = liveData.documents;
   const latestDocument = documents[0];
@@ -49,7 +80,7 @@ export default async function ClientPortalDocumentsPage() {
             <div>
               <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">Documents</p>
               <h1 className="mt-6 max-w-5xl text-[clamp(3rem,6vw,6.5rem)] font-black uppercase leading-[0.86] tracking-[-0.08em] text-white">Files.</h1>
-              <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">Workspace files, requests, and review status.</p>
+              <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">Upload screenshots, PDFs, documents, exports, and working examples for this client workspace.</p>
             </div>
 
             <aside className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5">
@@ -61,6 +92,19 @@ export default async function ClientPortalDocumentsPage() {
         </div>
       </section>
 
+      {uploadMessage && (
+        <section className="bg-[#9ed39f] px-4 py-5 text-black sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-[1440px] flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-[0.66rem] font-black uppercase tracking-[0.2em]">Upload status</p>
+              <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">{uploadMessage.title}</h2>
+              <p className="mt-1 text-sm font-semibold leading-6 text-black/72">{uploadMessage.text}</p>
+            </div>
+            <Link href="/client/documents" className="inline-flex min-h-11 items-center justify-center border border-black px-4 text-[0.7rem] font-black uppercase tracking-[0.16em] text-black hover:bg-black hover:text-[#9ed39f]">Clear</Link>
+          </div>
+        </section>
+      )}
+
       <section className="bg-[#020904] px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-[1440px] gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {summaryCards.map((card) => (
@@ -71,6 +115,44 @@ export default async function ClientPortalDocumentsPage() {
               <p className="mt-4 text-sm leading-6 text-[#e6f6e7]/72">{card.text}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="bg-black px-4 py-14 sm:px-6 lg:px-8 lg:py-18">
+        <div className="mx-auto grid max-w-[1440px] gap-6 lg:grid-cols-[0.44fr_1fr]">
+          <div>
+            <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">Upload</p>
+            <h2 className="mt-5 text-[clamp(2.1rem,4vw,4.4rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-white">Add a file.</h2>
+            <p className="mt-5 text-sm leading-7 text-[#e6f6e7]/72">Accepted: images, PDFs, documents, spreadsheets, CSV, and plain text. Maximum file size: 15MB.</p>
+          </div>
+
+          <form action="/api/client/documents/upload" method="post" encType="multipart/form-data" className="grid gap-4 border border-[#9ed39f]/30 bg-[#030804] p-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="grid gap-2 text-[0.68rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">
+                Title
+                <input name="title" type="text" placeholder="Screenshot / workflow export / brief" className="min-h-12 border border-[#9ed39f]/30 bg-black px-4 text-sm font-semibold normal-case tracking-normal text-white outline-none focus:border-[#9ed39f]" />
+              </label>
+              <label className="grid gap-2 text-[0.68rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">
+                Category
+                <select name="document_category" defaultValue="supporting_material" className="min-h-12 border border-[#9ed39f]/30 bg-black px-4 text-sm font-semibold normal-case tracking-normal text-white outline-none focus:border-[#9ed39f]">
+                  <option value="supporting_material">Supporting material</option>
+                  <option value="screenshot">Screenshot</option>
+                  <option value="process_export">Process export</option>
+                  <option value="brief">Brief</option>
+                  <option value="example">Example</option>
+                </select>
+              </label>
+            </div>
+            <label className="grid gap-2 text-[0.68rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">
+              Description
+              <textarea name="description" rows={3} placeholder="Optional note about what this file shows" className="border border-[#9ed39f]/30 bg-black px-4 py-3 text-sm font-semibold normal-case tracking-normal text-white outline-none focus:border-[#9ed39f]" />
+            </label>
+            <label className="grid gap-2 text-[0.68rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">
+              File
+              <input name="file" type="file" required className="min-h-12 border border-[#9ed39f]/30 bg-black px-4 py-3 text-sm font-semibold normal-case tracking-normal text-white file:mr-4 file:border-0 file:bg-[#9ed39f] file:px-4 file:py-2 file:text-xs file:font-black file:uppercase file:tracking-[0.16em] file:text-black" />
+            </label>
+            <button type="submit" className="inline-flex min-h-12 w-fit items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition hover:bg-white">Upload file</button>
+          </form>
         </div>
       </section>
 
