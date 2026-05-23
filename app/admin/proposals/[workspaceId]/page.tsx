@@ -265,6 +265,58 @@ function visibilityLabel(status: string | null) {
   return status && clientVisibleDeliverableStatuses.has(status) ? "client visible" : "internal only";
 }
 
+function activityTypeLabel(type: string | null | undefined) {
+  switch (type) {
+    case "proposal_submitted":
+      return "Proposal submitted";
+    case "document_uploaded":
+      return "Document uploaded";
+    case "document_status_updated":
+      return "Document review update";
+    case "deliverable_released":
+      return "Deliverable released";
+    case "deliverable_status_updated":
+      return "Deliverable status update";
+    default:
+      return label(type) === "Not set" ? "Workspace activity" : label(type);
+  }
+}
+
+function activityLaneLabel(activity: ActivityRecord) {
+  if (activity.actor_type === "client") {
+    return "Client action";
+  }
+
+  if (activity.actor_type === "axiom") {
+    return "Axiom action";
+  }
+
+  return "System event";
+}
+
+function activityVisibilityLabel(activity: ActivityRecord) {
+  return activity.is_client_visible ? "Client-visible" : "Internal note";
+}
+
+function activityGroupLabel(activity: ActivityRecord) {
+  switch (activity.activity_type) {
+    case "proposal_submitted":
+      return "Intake";
+    case "document_uploaded":
+    case "document_status_updated":
+      return "Evidence";
+    case "deliverable_released":
+    case "deliverable_status_updated":
+      return "Delivery";
+    default:
+      return "Operations";
+  }
+}
+
+function activityDisplayTitle(activity: ActivityRecord) {
+  return activity.title || activityTypeLabel(activity.activity_type);
+}
+
 function DetailLine({ labelText, value }: { labelText: string; value: string | null | undefined }) {
   return (
     <p className="text-sm leading-7 text-white/68">
@@ -299,6 +351,37 @@ function DocumentReviewControls({ document, workspaceId }: { document: DocumentR
   );
 }
 
+function ActivityCard({ activity }: { activity: ActivityRecord }) {
+  return (
+    <article className="grid gap-4 border border-[#9ed39f]/16 bg-black/34 p-4 md:grid-cols-[0.22fr_0.78fr]">
+      <div>
+        <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">
+          {activityGroupLabel(activity)}
+        </p>
+        <p className="mt-2 text-xs font-bold uppercase tracking-[0.12em] text-white/46">
+          {formatDate(activity.created_at)}
+        </p>
+      </div>
+      <div>
+        <div className="flex flex-wrap gap-2">
+          {statusPill(activityLaneLabel(activity))}
+          {statusPill(activityVisibilityLabel(activity))}
+          {statusPill(activityTypeLabel(activity.activity_type))}
+        </div>
+        <h3 className="mt-3 text-lg font-black uppercase tracking-[-0.04em] text-white">
+          {activityDisplayTitle(activity)}
+        </h3>
+        <p className="mt-2 text-sm leading-7 text-white/68">
+          {activity.body || "No activity detail recorded."}
+        </p>
+        <p className="mt-2 text-xs font-bold uppercase tracking-[0.14em] text-white/44">
+          {activity.actor_label || "Axiom Architect"}
+        </p>
+      </div>
+    </article>
+  );
+}
+
 export default async function AdminProposalWorkspacePage({ params }: PageProps) {
   const { adminEmail } = await requireAxiomAdmin();
   const { workspaceId } = await params;
@@ -315,6 +398,9 @@ export default async function AdminProposalWorkspacePage({ params }: PageProps) 
   const underReviewDocuments = data.documents.filter((document) =>
     ["uploaded", "under_review"].includes(document.review_status || ""),
   ).length;
+  const latestActivity = data.activities[0] || null;
+  const clientVisibleActivityCount = data.activities.filter((activity) => activity.is_client_visible).length;
+  const internalActivityCount = data.activities.length - clientVisibleActivityCount;
 
   return (
     <AdminShell
@@ -450,21 +536,30 @@ export default async function AdminProposalWorkspacePage({ params }: PageProps) 
           </AdminSection>
 
           <AdminSection eyebrow="Timeline" title="Workspace activity">
+            {latestActivity ? (
+              <div className="mb-5 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+                <article className="border border-[#9ed39f]/22 bg-[#9ed39f]/10 p-5">
+                  <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">Latest event</p>
+                  <h3 className="mt-3 text-2xl font-black uppercase leading-tight tracking-[-0.05em] text-white">
+                    {activityDisplayTitle(latestActivity)}
+                  </h3>
+                  <p className="mt-3 text-sm leading-7 text-white/68">
+                    {latestActivity.body || "No latest activity detail recorded."}
+                  </p>
+                </article>
+                <article className="grid gap-3 border border-[#9ed39f]/22 bg-black/34 p-5 text-sm leading-7 text-white/68">
+                  <DetailLine labelText="Total events" value={String(data.activities.length)} />
+                  <DetailLine labelText="Client-visible" value={String(clientVisibleActivityCount)} />
+                  <DetailLine labelText="Internal only" value={String(internalActivityCount)} />
+                  <DetailLine labelText="Latest time" value={formatDate(latestActivity.created_at)} />
+                </article>
+              </div>
+            ) : null}
+
             {data.activities.length > 0 ? (
               <div className="grid gap-3">
                 {data.activities.map((activity) => (
-                  <article key={activity.id} className="border border-[#9ed39f]/16 bg-black/34 p-4">
-                    <div className="flex flex-wrap gap-2">
-                      {statusPill(activity.activity_type)}
-                      {statusPill(activity.actor_type)}
-                      {activity.is_client_visible ? statusPill("client visible") : statusPill("internal")}
-                    </div>
-                    <h3 className="mt-3 text-lg font-black uppercase tracking-[-0.04em] text-white">{activity.title || "Activity"}</h3>
-                    <p className="mt-2 text-sm leading-7 text-white/68">{activity.body || "No activity detail recorded."}</p>
-                    <p className="mt-2 text-xs font-bold uppercase tracking-[0.14em] text-white/44">
-                      {activity.actor_label || "Axiom"} · {formatDate(activity.created_at)}
-                    </p>
-                  </article>
+                  <ActivityCard key={activity.id} activity={activity} />
                 ))}
               </div>
             ) : (
