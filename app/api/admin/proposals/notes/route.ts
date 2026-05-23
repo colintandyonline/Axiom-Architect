@@ -1,0 +1,137 @@
+import { NextResponse } from "next/server";
+import { requireAxiomAdmin } from "../../../../../lib/axiom-admin";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+type WorkspaceRecord = {
+  id: string;
+  customer_id: string;
+  workspace_name: string;
+};
+
+function getSupabaseServiceConfig() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceRoleKey) {
+    return null;
+  }
+
+  return {
+    url: url.replace(/\/$/, ""),
+    serviceRoleKey,
+  };
+}
+
+function cleanInput(value: FormDataEntryValue | null) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function safeReturnPath(value: string, workspaceId: string) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return `/admin/proposals/${workspaceId}`;
+  }
+
+  return value;
+}
+
+function redirectWithStatus(request: Request, returnTo: string, workspaceId: string, status: string) {
+  const url = new URL(safeReturnPath(returnTo, workspaceId), request.url);
+  url.searchParams.set("note", status);
+  return NextResponse.redirect(url, 303);
+}
+
+async function supabaseServiceFetch<T>(path: string, options: RequestInit = {}) {
+  const config = getSupabaseServiceConfig();
+
+  if (!config) {
+    return null;
+  }
+
+  const headers = new Headers(options.headers);
+  headers.set("apikey", config.serviceRoleKey);
+  headers.set("Authorization", `Bearer ${config.serviceRoleKey}`);
+
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const response = await fetch(`${config.url}/rest/v1/${path}`, {
+    ...options,
+    cache: "no-store",
+    headers,
+  });
+
+  const responseText = await response.text();
+
+  if (!response.ok) {
+    console.error("Axiom admin note request failed", response.status, responseText);
+    return null;
+  }
+
+  if (!responseText) {
+    return undefined as T;
+  }
+
+  return JSON.parse(responseText) as T;
+}
+
+async function getWorkspace(workspaceId: string) {
+  const records = await supabaseServiceFetch<WorkspaceRecord[]>(
+    `axiom_client_workspaces?select=id,customer_id,workspace_name&id=eq.${encodeURIComponent(workspaceId)}&limit=1`,
+  );
+
+  return records?.[0] ?? null;
+}
+
+async function createInternalNote(payload: Record<string, unknown>) {
+  await supabaseServiceFetch("axiom_workspace_activity", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function POST(request: Request) {
+  const { adminEmail } = await requireAxiomAdmin();
+  const formData = await request.formData();
+  const workspaceId = cleanInput(formData.get("workspace_id"));
+  const note = cleanInput(formData.get("note"));
+  const noteType = cleanInput(formData.get("note_type")) || "general_note";
+  const returnTo = cleanInput(formData.get("return_to"));
+
+  if (!workspaceId) {
+    return redirectWithStatus(request, returnTo, "", "workspace");
+  }
+
+  if (!note || note.length < 3) {
+    return redirectWithStatus(request, returnTo, workspaceId, "missing");
+  }
+
+  const workspace = await getWorkspace(workspaceId);
+
+  if (!workspace) {
+    return redirectWithStatus(request, returnTo, workspaceId, "workspace");
+  }
+
+  await createInternalNote({
+    workspace_id: workspace.id,
+    customer_id: workspace.customer_id,
+    actor_type: "axiom",
+    actor_label: adminEmail || "Axiom admin",
+    activity_type: "internal_note",
+    title: "Internal admin note",
+    body: note.slice(0, 4000),
+    metadata: {
+      note_type: noteType,
+      workspace_name: workspace.workspace_name,
+    },
+    is_client_visible: false,
+  });
+
+  return redirectWithStatus(request, returnTo, workspace.id, "saved");
+}
+
+export function GET(request: Request) {
+  return NextResponse.redirect(new URL("/admin/proposals", request.url), 303);
+}
