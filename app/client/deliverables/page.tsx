@@ -3,8 +3,23 @@ import { loadClientPortalData } from "../../../lib/axiom-client-portal-data";
 
 export const dynamic = "force-dynamic";
 
+const clientVisibleStatuses = new Set(["ready_for_review", "approved", "delivered"]);
+
 function tidy(value: string | null | undefined) {
   return value ? value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) : "Not set";
+}
+
+function clientStatusLabel(status: string | null | undefined) {
+  switch (status) {
+    case "ready_for_review":
+      return "Ready for review";
+    case "approved":
+      return "Approved";
+    case "delivered":
+      return "Final delivery";
+    default:
+      return tidy(status);
+  }
 }
 
 function formatDate(value: string | null | undefined) {
@@ -21,7 +36,7 @@ function formatDate(value: string | null | undefined) {
 
 export default async function ClientPortalDeliverablesPage() {
   const data = await loadClientPortalData("/client/deliverables");
-  const rows = data.deliverables;
+  const rows = data.deliverables.filter((row) => clientVisibleStatuses.has(row.status));
   const latest = rows[0];
   const reviewCount = rows.filter((row) => row.status === "ready_for_review").length;
   const approvedCount = rows.filter((row) => row.status === "approved").length;
@@ -39,13 +54,13 @@ export default async function ClientPortalDeliverablesPage() {
           <aside className="border border-[#9ed39f]/35 bg-black p-5">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">Latest</p>
             <h2 className="mt-3 break-words text-2xl font-black uppercase tracking-[-0.04em]">{latest?.title || "None yet"}</h2>
-            <p className="mt-3 text-sm leading-7 text-white/68">{latest ? `${tidy(latest.status)} · ${formatDate(latest.delivered_at || latest.created_at)}` : "No files have been released yet."}</p>
+            <p className="mt-3 text-sm leading-7 text-white/68">{latest ? `${clientStatusLabel(latest.status)} · ${formatDate(latest.delivered_at || latest.created_at)}` : "No files have been released yet."}</p>
           </aside>
         </div>
       </section>
 
       <section className="mx-auto mt-6 grid max-w-[1440px] gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <article className="border border-[#9ed39f]/24 bg-[#030804] p-5"><p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">Total</p><h2 className="mt-3 text-4xl font-black">{rows.length}</h2></article>
+        <article className="border border-[#9ed39f]/24 bg-[#030804] p-5"><p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">Visible files</p><h2 className="mt-3 text-4xl font-black">{rows.length}</h2></article>
         <article className="border border-[#9ed39f]/24 bg-[#030804] p-5"><p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">For review</p><h2 className="mt-3 text-4xl font-black">{reviewCount}</h2></article>
         <article className="border border-[#9ed39f]/24 bg-[#030804] p-5"><p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">Approved</p><h2 className="mt-3 text-4xl font-black">{approvedCount}</h2></article>
         <article className="border border-[#9ed39f]/24 bg-[#030804] p-5"><p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">Final</p><h2 className="mt-3 text-4xl font-black">{finalCount}</h2></article>
@@ -60,7 +75,7 @@ export default async function ClientPortalDeliverablesPage() {
           {rows.length ? rows.map((row) => (
             <article key={row.id} className="grid gap-4 border border-[#9ed39f]/24 bg-black p-5 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">{tidy(row.status)}</p>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">{clientStatusLabel(row.status)}</p>
                 <h3 className="mt-3 break-words text-2xl font-black uppercase tracking-[-0.05em]">{row.title}</h3>
                 <p className="mt-2 text-sm leading-7 text-white/68">{row.description || tidy(row.deliverable_type)}</p>
                 <p className="mt-3 text-xs font-bold uppercase tracking-[0.14em] text-white/48">{row.original_filename || `Version ${row.version}`}</p>
