@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAxiomAdmin } from "../../../../lib/axiom-admin";
 import { formatDate, label } from "../../../../lib/axiom-admin-dashboard";
-import { AdminSection, AdminShell, StatCard, buttonClass, statusPill } from "../../../../components/admin/AdminShell";
+import { AdminSection, AdminShell, StatCard, buttonClass, primaryButtonClass, statusPill } from "../../../../components/admin/AdminShell";
 
 export const metadata: Metadata = {
   title: "Client Documents | Axiom Architect Admin",
@@ -217,6 +217,16 @@ export default async function AdminProposalDocumentsPage() {
                       <p className="mt-4 text-sm leading-7 text-white/68">
                         {view.document.description || "No client description recorded."}
                       </p>
+                      {view.document.storage_bucket && view.document.storage_path ? (
+                        <a
+                          href={`/api/admin/proposals/documents/${view.document.id}/download`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`${primaryButtonClass} mt-5`}
+                        >
+                          Open file
+                        </a>
+                      ) : null}
                     </div>
 
                     <aside className="border border-[#9ed39f]/18 bg-[#030804] p-5 text-sm leading-7 text-white/68">
