@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getAxiomAuthContext, getAxiomClientWorkspaceByCustomerId } from "../../../lib/axiom-auth";
 
 export const metadata: Metadata = {
   title: "Start Custom Proposal | Axiom Architect",
@@ -12,6 +14,8 @@ export const metadata: Metadata = {
     follow: true,
   },
 };
+
+export const dynamic = "force-dynamic";
 
 type SearchParams = {
   error?: string;
@@ -48,6 +52,16 @@ export default async function BespokeProposalApplyPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
+  const authContext = await getAxiomAuthContext();
+
+  if (authContext.user && authContext.customer) {
+    const serviceWorkspace = await getAxiomClientWorkspaceByCustomerId(authContext.customer.id);
+
+    if (serviceWorkspace) {
+      redirect("/client");
+    }
+  }
+
   const params = await searchParams;
   const message = errorMessage(params.error);
 
