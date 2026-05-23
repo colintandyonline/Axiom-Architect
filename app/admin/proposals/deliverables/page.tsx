@@ -397,6 +397,9 @@ export default async function AdminProposalDeliverablesPage({ searchParams }: Pa
                           <p><strong className="text-[#9ed39f]">Scope:</strong> {label(view.proposal?.scope_type)}</p>
                           <p><strong className="text-[#9ed39f]">Updated:</strong> {formatDate(view.workspace.updated_at)}</p>
                         </div>
+                        <div className="mt-5 flex flex-wrap gap-3">
+                          <Link href={`/admin/proposals/${view.workspace.id}`} className={buttonClass}>Open workspace</Link>
+                        </div>
                         <ExistingDeliverables deliverables={view.deliverables} />
                       </div>
                       <UploaderForm view={view} />
