@@ -155,6 +155,32 @@ function formatSize(bytes: number | null) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function DocumentStatusForm({ documentId, reviewStatus, labelText, primary = false }: { documentId: string; reviewStatus: string; labelText: string; primary?: boolean }) {
+  return (
+    <form action="/api/admin/proposals/documents/status" method="post">
+      <input type="hidden" name="document_id" value={documentId} />
+      <input type="hidden" name="review_status" value={reviewStatus} />
+      <input type="hidden" name="return_to" value="/admin/proposals/documents" />
+      <button type="submit" className={primary ? primaryButtonClass : buttonClass}>
+        {labelText}
+      </button>
+    </form>
+  );
+}
+
+function DocumentReviewControls({ document }: { document: DocumentRecord }) {
+  const status = document.review_status || "under_review";
+
+  return (
+    <div className="mt-5 flex flex-wrap gap-3">
+      {status !== "reviewed" ? <DocumentStatusForm documentId={document.id} reviewStatus="reviewed" labelText="Mark reviewed" primary /> : null}
+      {status !== "needs_clarification" ? <DocumentStatusForm documentId={document.id} reviewStatus="needs_clarification" labelText="Needs clarification" /> : null}
+      {status !== "under_review" ? <DocumentStatusForm documentId={document.id} reviewStatus="under_review" labelText="Back to review" /> : null}
+      {status !== "archived" ? <DocumentStatusForm documentId={document.id} reviewStatus="archived" labelText="Archive" /> : null}
+    </div>
+  );
+}
+
 export default async function AdminProposalDocumentsPage() {
   const { adminEmail } = await requireAxiomAdmin();
   const data = await getDocumentAdminData();
@@ -234,6 +260,7 @@ export default async function AdminProposalDocumentsPage() {
                           </a>
                         ) : null}
                       </div>
+                      <DocumentReviewControls document={view.document} />
                     </div>
 
                     <aside className="border border-[#9ed39f]/18 bg-[#030804] p-5 text-sm leading-7 text-white/68">
@@ -244,6 +271,7 @@ export default async function AdminProposalDocumentsPage() {
                         <p><strong className="text-[#9ed39f]">Workspace:</strong> {view.workspace?.workspace_name || "Workspace not found"}</p>
                         <p><strong className="text-[#9ed39f]">Phase:</strong> {label(view.workspace?.current_phase)}</p>
                         <p><strong className="text-[#9ed39f]">Uploaded:</strong> {formatDate(view.document.uploaded_at)}</p>
+                        <p><strong className="text-[#9ed39f]">Reviewed:</strong> {formatDate(view.document.reviewed_at)}</p>
                         <p><strong className="text-[#9ed39f]">Size:</strong> {formatSize(view.document.file_size_bytes)}</p>
                         <p><strong className="text-[#9ed39f]">MIME:</strong> {view.document.mime_type || "—"}</p>
                         <p><strong className="text-[#9ed39f]">Source:</strong> {label(view.document.upload_source || view.document.uploaded_by)}</p>
