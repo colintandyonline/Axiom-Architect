@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getAxiomAuthContext } from "../../../lib/axiom-auth";
+import { getAxiomAuthContext, getAxiomClientWorkspaceByCustomerId } from "../../../lib/axiom-auth";
 import {
   bespokeProposalFields,
   bespokeProposalSections,
@@ -108,6 +108,12 @@ export default async function ClientProposalPage({
 
   if (!authContext.customer) {
     redirect("/bespoke/apply?error=customer");
+  }
+
+  const existingWorkspace = await getAxiomClientWorkspaceByCustomerId(authContext.customer.id);
+
+  if (existingWorkspace) {
+    redirect("/client");
   }
 
   const params = await searchParams;
