@@ -393,6 +393,9 @@ export default async function AdminProposalClientsPage() {
                         <p className="mt-2 text-sm leading-7 text-white/72">{view.nextAdminAction}</p>
                       </div>
                       <div className="mt-5 flex flex-wrap gap-3">
+                        {view.workspace ? (
+                          <Link href={`/admin/proposals/${view.workspace.id}`} className={buttonClass}>Open workspace</Link>
+                        ) : null}
                         <Link href="/admin/proposals/documents" className={buttonClass}>View documents</Link>
                         <Link href="/admin/proposals/deliverables" className={buttonClass}>Manage deliverables</Link>
                       </div>
