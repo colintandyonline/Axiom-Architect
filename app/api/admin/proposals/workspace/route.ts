@@ -4,17 +4,6 @@ import { requireAxiomAdmin } from "../../../../../lib/axiom-admin";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const allowedWorkspaceStatuses = new Set(["active", "paused", "completed", "archived"]);
-const allowedWorkspacePhases = new Set([
-  "discovery",
-  "proposal_review",
-  "evidence_review",
-  "blueprint_preparation",
-  "delivery_review",
-  "implementation_planning",
-  "complete",
-]);
-
 type WorkspaceRecord = {
   id: string;
   customer_id: string;
@@ -120,8 +109,6 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const workspaceId = cleanInput(formData.get("workspace_id"));
   const returnTo = cleanInput(formData.get("return_to"));
-  const status = cleanInput(formData.get("status"));
-  const currentPhase = cleanInput(formData.get("current_phase"));
   const currentPriority = cleanInput(formData.get("current_priority"));
   const nextClientAction = cleanInput(formData.get("next_client_action"));
   const axiomReviewFocus = cleanInput(formData.get("axiom_review_focus"));
@@ -130,13 +117,7 @@ export async function POST(request: Request) {
     return redirectWithStatus(request, returnTo, "", "workspace");
   }
 
-  if (!allowedWorkspaceStatuses.has(status) || !allowedWorkspacePhases.has(currentPhase)) {
-    return redirectWithStatus(request, returnTo, workspaceId, "invalid");
-  }
-
   const workspace = await updateWorkspace(workspaceId, {
-    status,
-    current_phase: currentPhase,
     current_priority: currentPriority || null,
     next_client_action: nextClientAction || null,
     axiom_review_focus: axiomReviewFocus || null,
@@ -154,11 +135,11 @@ export async function POST(request: Request) {
     actor_type: "axiom",
     actor_label: adminEmail || "Axiom admin",
     activity_type: "workspace_status_updated",
-    title: "Workspace status updated",
-    body: `${workspace.workspace_name} moved to ${currentPhase.replace(/_/g, " ")} with priority: ${currentPriority || "none set"}.`,
+    title: "Workspace state updated",
+    body: `${workspace.workspace_name} workspace state was updated. Priority: ${currentPriority || "none set"}.`,
     metadata: {
-      status,
-      current_phase: currentPhase,
+      status: workspace.status,
+      current_phase: workspace.current_phase,
       current_priority: currentPriority || null,
       next_client_action: nextClientAction || null,
       axiom_review_focus: axiomReviewFocus || null,
