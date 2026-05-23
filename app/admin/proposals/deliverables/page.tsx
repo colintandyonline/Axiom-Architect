@@ -5,9 +5,9 @@ import { formatDate, label } from "../../../../lib/axiom-admin-dashboard";
 import { AdminSection, AdminShell, buttonClass, primaryButtonClass, statusPill } from "../../../../components/admin/AdminShell";
 
 export const metadata: Metadata = {
-  title: "Send Deliverables | Axiom Architect Admin",
+  title: "Sent Deliverables | Axiom Architect Admin",
   description:
-    "Internal Axiom Architect admin page for uploading workflow deliverables to proposal client workspaces.",
+    "Internal Axiom Architect admin page for uploading and controlling workflow deliverables sent to proposal client workspaces.",
 };
 
 export const dynamic = "force-dynamic";
@@ -181,6 +181,10 @@ function clientName(view: DeliverableWorkspaceView) {
   );
 }
 
+function clientContact(view: DeliverableWorkspaceView) {
+  return view.proposal?.email || view.customer?.email || "Email not set";
+}
+
 function defaultTitle(view: DeliverableWorkspaceView) {
   const scope = view.proposal?.scope_type?.replace(/_/g, " ") || "Workflow";
   return `${scope.charAt(0).toUpperCase()}${scope.slice(1)} deliverable v1`;
@@ -341,9 +345,9 @@ export default async function AdminProposalDeliverablesPage({ searchParams }: Pa
   return (
     <AdminShell
       adminEmail={adminEmail}
-      eyebrow="Send deliverables"
-      title="Release files to proposal clients."
-      intro="Upload deliverables as internal drafts first, then release them intentionally to the client portal when they are ready."
+      eyebrow="Sent deliverables"
+      title="Files sent to proposal clients."
+      intro="Control what Axiom has sent, who received it, and whether each deliverable is internal-only or visible in the client portal."
       activePath="/admin/proposals/deliverables"
     >
       {message && (
@@ -369,10 +373,10 @@ export default async function AdminProposalDeliverablesPage({ searchParams }: Pa
 
       <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mx-auto grid max-w-[1440px] gap-8">
-          <AdminSection eyebrow="Uploader" title="Choose a client workspace">
+          <AdminSection eyebrow="Delivery control" title="Choose a client workspace">
             <div className="mb-6 flex flex-wrap gap-3">
-              <Link href="/admin/proposals" className={buttonClass}>Back to proposal clients</Link>
-              <Link href="/client/deliverables" className={buttonClass}>Client deliverables view</Link>
+              <Link href="/admin/proposals" className={buttonClass}>Proposal clients</Link>
+              <Link href="/admin/proposals/documents" className={buttonClass}>Client documents</Link>
             </div>
 
             <div className="grid gap-5">
@@ -386,7 +390,7 @@ export default async function AdminProposalDeliverablesPage({ searchParams }: Pa
                           {statusPill(view.proposal?.proposal_status)}
                         </div>
                         <h3 className="mt-4 text-2xl font-black uppercase leading-tight tracking-[-0.05em] text-white">{clientName(view)}</h3>
-                        <p className="mt-2 text-sm leading-7 text-white/68">{view.proposal?.contact_name || view.customer?.full_name || "Contact not set"} · {view.proposal?.email || view.customer?.email || "Email not set"}</p>
+                        <p className="mt-2 text-sm leading-7 text-white/68">{view.proposal?.contact_name || view.customer?.full_name || "Contact not set"} · {clientContact(view)}</p>
                         <div className="mt-4 grid gap-3 text-sm leading-7 text-white/68 md:grid-cols-2">
                           <p><strong className="text-[#9ed39f]">Workspace:</strong> {view.workspace.workspace_name}</p>
                           <p><strong className="text-[#9ed39f]">Phase:</strong> {label(view.workspace.current_phase)}</p>
