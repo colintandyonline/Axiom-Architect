@@ -12,6 +12,9 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+const clientVisibleStatuses = new Set(["ready_for_review", "approved", "delivered"]);
+const internalStatuses = new Set(["preparing", "pending"]);
+
 type SearchParamValue = string | string[] | undefined;
 
 type PageProps = {
@@ -142,7 +145,13 @@ function firstParam(value: SearchParamValue) {
 function uploadMessage(status?: string) {
   switch (status) {
     case "success":
-      return { title: "Deliverable sent.", text: "The file was uploaded, assigned to the workspace, and added to the client deliverables area." };
+      return { title: "Deliverable saved.", text: "The file was uploaded and recorded. Client visibility depends on the selected status." };
+    case "status-updated":
+      return { title: "Status updated.", text: "The deliverable visibility state has been updated." };
+    case "status-invalid":
+      return { title: "Status blocked.", text: "That deliverable status is not allowed." };
+    case "status-failed":
+      return { title: "Status failed.", text: "The deliverable status could not be updated." };
     case "too-large":
       return { title: "File too large.", text: "Deliverable uploads are currently limited to 50MB." };
     case "type":
@@ -175,6 +184,71 @@ function clientName(view: DeliverableWorkspaceView) {
 function defaultTitle(view: DeliverableWorkspaceView) {
   const scope = view.proposal?.scope_type?.replace(/_/g, " ") || "Workflow";
   return `${scope.charAt(0).toUpperCase()}${scope.slice(1)} deliverable v1`;
+}
+
+function visibilityLabel(status: string | null) {
+  if (status && clientVisibleStatuses.has(status)) {
+    return "client visible";
+  }
+
+  return "internal only";
+}
+
+function StatusUpdateForm({ deliverableId, status, labelText, primary = false }: { deliverableId: string; status: string; labelText: string; primary?: boolean }) {
+  return (
+    <form action="/api/admin/proposals/deliverable/status" method="post">
+      <input type="hidden" name="deliverable_id" value={deliverableId} />
+      <input type="hidden" name="status" value={status} />
+      <button type="submit" className={primary ? primaryButtonClass : buttonClass}>
+        {labelText}
+      </button>
+    </form>
+  );
+}
+
+function ExistingDeliverables({ deliverables }: { deliverables: DeliverableRecord[] }) {
+  if (deliverables.length === 0) {
+    return (
+      <div className="mt-5 border border-[#9ed39f]/16 bg-[#030804] p-4">
+        <p className="text-[0.66rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">Existing deliverables</p>
+        <p className="mt-2 text-sm leading-7 text-white/68">No deliverables have been created for this workspace yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-5 border border-[#9ed39f]/16 bg-[#030804] p-4">
+      <p className="text-[0.66rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">Existing deliverables</p>
+      <div className="mt-4 grid gap-3">
+        {deliverables.map((deliverable) => {
+          const status = deliverable.status || "preparing";
+          const isInternal = internalStatuses.has(status);
+
+          return (
+            <article key={deliverable.id} className="border border-[#9ed39f]/14 bg-black/40 p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <div className="flex flex-wrap gap-2">
+                    {statusPill(status)}
+                    {statusPill(visibilityLabel(status))}
+                  </div>
+                  <h4 className="mt-3 text-sm font-black uppercase leading-tight tracking-[-0.03em] text-white">{deliverable.title}</h4>
+                  <p className="mt-2 break-words text-xs font-bold uppercase tracking-[0.12em] text-white/44">{deliverable.original_filename || "No filename recorded"}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/50">{formatDate(deliverable.delivered_at || deliverable.created_at)}</p>
+                </div>
+                <div className="flex flex-wrap gap-2 lg:justify-end">
+                  {isInternal && <StatusUpdateForm deliverableId={deliverable.id} status="ready_for_review" labelText="Release for review" primary />}
+                  {status === "ready_for_review" && <StatusUpdateForm deliverableId={deliverable.id} status="approved" labelText="Mark approved" />}
+                  {status !== "delivered" && <StatusUpdateForm deliverableId={deliverable.id} status="delivered" labelText="Mark final" />}
+                  {!isInternal && <StatusUpdateForm deliverableId={deliverable.id} status="preparing" labelText="Hide from client" />}
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function UploaderForm({ view }: { view: DeliverableWorkspaceView }) {
@@ -210,11 +284,12 @@ function UploaderForm({ view }: { view: DeliverableWorkspaceView }) {
         </label>
         <label className="grid gap-2 text-[0.66rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">
           Status
-          <select name="status" defaultValue="delivered" className="min-h-11 border border-[#9ed39f]/30 bg-black px-3 text-sm font-semibold normal-case tracking-normal text-white outline-none focus:border-[#9ed39f]">
-            <option value="delivered">Delivered</option>
-            <option value="ready_for_review">Ready for review</option>
-            <option value="approved">Approved</option>
-            <option value="preparing">Preparing</option>
+          <select name="status" defaultValue="preparing" className="min-h-11 border border-[#9ed39f]/30 bg-black px-3 text-sm font-semibold normal-case tracking-normal text-white outline-none focus:border-[#9ed39f]">
+            <option value="preparing">Preparing — internal only</option>
+            <option value="pending">Pending — internal only</option>
+            <option value="ready_for_review">Ready for review — client visible</option>
+            <option value="approved">Approved — client visible</option>
+            <option value="delivered">Delivered — client visible</option>
           </select>
         </label>
       </div>
@@ -229,7 +304,7 @@ function UploaderForm({ view }: { view: DeliverableWorkspaceView }) {
         <input name="file" type="file" required className="min-h-11 border border-[#9ed39f]/30 bg-black px-3 py-2 text-sm font-semibold normal-case tracking-normal text-white file:mr-4 file:border-0 file:bg-[#9ed39f] file:px-4 file:py-2 file:text-xs file:font-black file:uppercase file:tracking-[0.16em] file:text-black" />
       </label>
 
-      <button type="submit" className={primaryButtonClass}>Send deliverable</button>
+      <button type="submit" className={primaryButtonClass}>Save deliverable</button>
     </form>
   );
 }
@@ -259,13 +334,17 @@ export default async function AdminProposalDeliverablesPage({ searchParams }: Pa
     }))
     .filter((view) => view.proposal);
 
+  const allDeliverables = views.flatMap((view) => view.deliverables);
+  const internalCount = allDeliverables.filter((deliverable) => internalStatuses.has(deliverable.status || "preparing")).length;
+  const visibleCount = allDeliverables.filter((deliverable) => clientVisibleStatuses.has(deliverable.status || "")).length;
+
   return (
     <AdminShell
       adminEmail={adminEmail}
       eyebrow="Send deliverables"
       title="Release files to proposal clients."
-      intro="Upload a workflow document from the admin side and Axiom will store it in the private deliverables bucket, assign it to the correct customer workspace, and expose it in the client Deliverables area."
-      activePath="/admin/proposals"
+      intro="Upload deliverables as internal drafts first, then release them intentionally to the client portal when they are ready."
+      activePath="/admin/proposals/deliverables"
     >
       {message && (
         <section className="bg-[#9ed39f] px-4 py-5 text-black sm:px-6 lg:px-8">
@@ -279,6 +358,14 @@ export default async function AdminProposalDeliverablesPage({ searchParams }: Pa
           </div>
         </section>
       )}
+
+      <section className="bg-[#9ed39f] px-4 py-10 text-white sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-5 md:grid-cols-3">
+          <article className="border border-black bg-[#061009] p-5"><p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">Workspaces</p><h2 className="mt-3 text-4xl font-black">{views.length}</h2></article>
+          <article className="border border-black bg-[#061009] p-5"><p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">Internal only</p><h2 className="mt-3 text-4xl font-black">{internalCount}</h2></article>
+          <article className="border border-black bg-[#061009] p-5"><p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">Client visible</p><h2 className="mt-3 text-4xl font-black">{visibleCount}</h2></article>
+        </div>
+      </section>
 
       <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mx-auto grid max-w-[1440px] gap-8">
@@ -306,10 +393,7 @@ export default async function AdminProposalDeliverablesPage({ searchParams }: Pa
                           <p><strong className="text-[#9ed39f]">Scope:</strong> {label(view.proposal?.scope_type)}</p>
                           <p><strong className="text-[#9ed39f]">Updated:</strong> {formatDate(view.workspace.updated_at)}</p>
                         </div>
-                        <div className="mt-5 border border-[#9ed39f]/16 bg-[#030804] p-4">
-                          <p className="text-[0.66rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">Existing deliverables</p>
-                          <p className="mt-2 text-sm leading-7 text-white/68">{view.deliverables.length > 0 ? `${view.deliverables.length} deliverable record(s) already released for this workspace.` : "No deliverables have been released to this workspace yet."}</p>
-                        </div>
+                        <ExistingDeliverables deliverables={view.deliverables} />
                       </div>
                       <UploaderForm view={view} />
                     </div>
