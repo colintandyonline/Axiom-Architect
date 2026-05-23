@@ -10,7 +10,6 @@ export type AxiomAuthUser = {
   email_confirmed_at?: string | null;
   phone?: string | null;
   confirmed_at?: string | null;
-  last_sign_in_at?: string | null;
   app_metadata?: Record<string, unknown>;
   user_metadata?: Record<string, unknown>;
   created_at?: string;
@@ -25,6 +24,14 @@ export type AxiomLinkedCustomer = {
   business_name: string | null;
   account_status: string;
   last_login_at: string | null;
+};
+
+export type AxiomClientWorkspaceRoute = {
+  id: string;
+  customer_id: string;
+  service_request_id: string | null;
+  workspace_name: string;
+  status: string | null;
 };
 
 export type AxiomAuthContext = {
@@ -160,6 +167,28 @@ export async function getAxiomCustomerByEmail(email?: string | null) {
   );
 
   return records?.[0] ?? null;
+}
+
+export async function getAxiomClientWorkspaceByCustomerId(customerId?: string | null) {
+  if (!customerId) {
+    return null;
+  }
+
+  const records = await supabaseServiceFetch<AxiomClientWorkspaceRoute[]>(
+    `axiom_client_workspaces?select=id,customer_id,service_request_id,workspace_name,status&customer_id=eq.${encodeURIComponent(customerId)}&order=created_at.desc&limit=1`,
+  );
+
+  return records?.[0] ?? null;
+}
+
+export async function hasAxiomClientWorkspace(customerId?: string | null) {
+  return Boolean(await getAxiomClientWorkspaceByCustomerId(customerId));
+}
+
+export function shouldRouteServiceClientToPortal(path?: string | null) {
+  const redirectPath = getAuthRedirectPath(path);
+
+  return ["/dashboard", "/client/proposal", "/bespoke", "/bespoke/apply"].includes(redirectPath);
 }
 
 export async function getAxiomAuthContext(): Promise<AxiomAuthContext> {
