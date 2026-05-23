@@ -335,6 +335,10 @@ export default async function AdminProposalClientsPage() {
       <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mx-auto grid max-w-[1440px] gap-8">
           <AdminSection eyebrow="Business pipeline" title="Proposal-client segmentation">
+            <div className="mb-6 flex flex-wrap gap-3">
+              <Link href="/admin/proposals/documents" className={buttonClass}>Client documents</Link>
+              <Link href="/admin/proposals/deliverables" className={buttonClass}>Sent deliverables</Link>
+            </div>
             <div className="grid gap-4 lg:grid-cols-4">
               <SegmentColumn title="Needs review" views={reviewQueue} />
               <SegmentColumn title="Workspace / proposal" views={preparedQueue} />
@@ -389,8 +393,8 @@ export default async function AdminProposalClientsPage() {
                         <p className="mt-2 text-sm leading-7 text-white/72">{view.nextAdminAction}</p>
                       </div>
                       <div className="mt-5 flex flex-wrap gap-3">
-                        <Link href="/client/documents" className={buttonClass}>Client docs view</Link>
-                        <Link href="/client/deliverables" className={buttonClass}>Deliverables view</Link>
+                        <Link href="/admin/proposals/documents" className={buttonClass}>View documents</Link>
+                        <Link href="/admin/proposals/deliverables" className={buttonClass}>Manage deliverables</Link>
                       </div>
                     </aside>
                   </article>
