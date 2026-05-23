@@ -273,6 +273,32 @@ function DetailLine({ labelText, value }: { labelText: string; value: string | n
   );
 }
 
+function DocumentStatusForm({ documentId, workspaceId, reviewStatus, labelText, primary = false }: { documentId: string; workspaceId: string; reviewStatus: string; labelText: string; primary?: boolean }) {
+  return (
+    <form action="/api/admin/proposals/documents/status" method="post">
+      <input type="hidden" name="document_id" value={documentId} />
+      <input type="hidden" name="review_status" value={reviewStatus} />
+      <input type="hidden" name="return_to" value={`/admin/proposals/${workspaceId}`} />
+      <button type="submit" className={primary ? primaryButtonClass : buttonClass}>
+        {labelText}
+      </button>
+    </form>
+  );
+}
+
+function DocumentReviewControls({ document, workspaceId }: { document: DocumentRecord; workspaceId: string }) {
+  const status = document.review_status || "under_review";
+
+  return (
+    <div className="mt-4 flex flex-wrap gap-3">
+      {status !== "reviewed" ? <DocumentStatusForm documentId={document.id} workspaceId={workspaceId} reviewStatus="reviewed" labelText="Mark reviewed" primary /> : null}
+      {status !== "needs_clarification" ? <DocumentStatusForm documentId={document.id} workspaceId={workspaceId} reviewStatus="needs_clarification" labelText="Needs clarification" /> : null}
+      {status !== "under_review" ? <DocumentStatusForm documentId={document.id} workspaceId={workspaceId} reviewStatus="under_review" labelText="Back to review" /> : null}
+      {status !== "archived" ? <DocumentStatusForm documentId={document.id} workspaceId={workspaceId} reviewStatus="archived" labelText="Archive" /> : null}
+    </div>
+  );
+}
+
 export default async function AdminProposalWorkspacePage({ params }: PageProps) {
   const { adminEmail } = await requireAxiomAdmin();
   const { workspaceId } = await params;
@@ -372,6 +398,7 @@ export default async function AdminProposalWorkspacePage({ params }: PageProps) 
                       <p className="mt-2 break-words text-xs font-bold uppercase tracking-[0.12em] text-white/44">{document.original_filename}</p>
                       <p className="mt-2 text-sm leading-7 text-white/62">{document.description || "No client description recorded."}</p>
                       <p className="mt-2 text-xs leading-5 text-white/46">{formatDate(document.uploaded_at)} · {formatSize(document.file_size_bytes)} · {document.mime_type || "MIME not recorded"}</p>
+                      <DocumentReviewControls document={document} workspaceId={data.workspace.id} />
                     </div>
                     {document.storage_bucket && document.storage_path ? (
                       <a
