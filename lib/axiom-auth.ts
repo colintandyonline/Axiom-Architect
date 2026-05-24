@@ -30,6 +30,8 @@ export type AxiomClientWorkspaceRoute = {
   id: string;
   customer_id: string;
   service_request_id: string | null;
+  order_id: string | null;
+  workspace_type: string | null;
   workspace_name: string;
   status: string | null;
 };
@@ -175,7 +177,7 @@ export async function getAxiomClientWorkspaceByCustomerId(customerId?: string | 
   }
 
   const records = await supabaseServiceFetch<AxiomClientWorkspaceRoute[]>(
-    `axiom_client_workspaces?select=id,customer_id,service_request_id,workspace_name,status&customer_id=eq.${encodeURIComponent(customerId)}&order=created_at.desc&limit=1`,
+    `axiom_client_workspaces?select=id,customer_id,service_request_id,order_id,workspace_type,workspace_name,status&customer_id=eq.${encodeURIComponent(customerId)}&order=created_at.desc&limit=1`,
   );
 
   return records?.[0] ?? null;
