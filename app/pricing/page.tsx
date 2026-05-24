@@ -189,12 +189,6 @@ const tiers: PricingTier[] = [
   }),
 ];
 
-const specialistOutcomes = [
-  axiomPackageModels.ai_operating_protocol,
-  axiomPackageModels.agent_instruction_kit,
-  axiomPackageModels.implementation_workbook,
-];
-
 export default async function PricingPage() {
   const { user, customer } = await getAxiomAuthContext();
   const isSignedIn = Boolean(user && customer);
@@ -214,7 +208,7 @@ export default async function PricingPage() {
                 Choose a fixed package or request a bespoke workflow proposal.
               </h1>
               <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-                Packages are defined services with clear deliverable bundles. Proposals are for custom-scoped work where the workflow, tools, budget, sensitivity, and implementation needs must be reviewed before the right deliverables are chosen.
+                Buy a defined package when the service level is clear. Request a custom proposal when the workflow needs to be scoped before the right plan, price, and deliverables are confirmed.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <a href="/signup?tier=workflow-audit&account=required" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white">
@@ -250,10 +244,10 @@ export default async function PricingPage() {
                 Choose this when you already know the level of help you need: audit, blueprint, operating pack, stewardship, departmental system, or enterprise architecture system.
               </p>
               <div className="mt-5 grid gap-3 text-sm leading-7 text-[#e6f6e7]/72 sm:grid-cols-2">
-                <p><strong className="text-[#9ed39f]">Starts with:</strong> checkout and product intake.</p>
+                <p><strong className="text-[#9ed39f]">Starts with:</strong> checkout and guided intake.</p>
                 <p><strong className="text-[#9ed39f]">Best for:</strong> clear fixed-scope needs.</p>
-                <p><strong className="text-[#9ed39f]">Output:</strong> predefined deliverable bundle.</p>
-                <p><strong className="text-[#9ed39f]">Portal route:</strong> package client workspace.</p>
+                <p><strong className="text-[#9ed39f]">You receive:</strong> the deliverables listed in the package.</p>
+                <p><strong className="text-[#9ed39f]">Next step:</strong> choose a package below.</p>
               </div>
             </article>
 
@@ -265,13 +259,13 @@ export default async function PricingPage() {
                 Request a custom proposal
               </h2>
               <p className="mt-4 text-base leading-8 text-[#e6f6e7]/76">
-                Choose this when the work needs scoping first: complex workflows, sensitive data, technical implementation, multi-tool systems, or unclear requirements.
+                Choose this when the work needs shaping first: complex workflows, sensitive data, technical implementation, multi-tool systems, or unclear requirements.
               </p>
               <div className="mt-5 grid gap-3 text-sm leading-7 text-[#e6f6e7]/72 sm:grid-cols-2">
-                <p><strong className="text-[#9ed39f]">Starts with:</strong> protected proposal intake.</p>
+                <p><strong className="text-[#9ed39f]">Starts with:</strong> a short project brief.</p>
                 <p><strong className="text-[#9ed39f]">Best for:</strong> bespoke or uncertain scope.</p>
-                <p><strong className="text-[#9ed39f]">Output:</strong> recommended deliverable bundle.</p>
-                <p><strong className="text-[#9ed39f]">Portal route:</strong> proposal client workspace.</p>
+                <p><strong className="text-[#9ed39f]">You receive:</strong> a recommended route before work begins.</p>
+                <p><strong className="text-[#9ed39f]">Next step:</strong> request a proposal.</p>
               </div>
             </article>
           </section>
@@ -375,33 +369,12 @@ export default async function PricingPage() {
             })}
           </div>
 
-          <section className="mt-12 border border-[#9ed39f]/30 bg-[#041008] p-6 text-[#e6f6e7]/78">
-            <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">
-              Specialist outcomes
-            </p>
-            <h2 className="mt-4 text-3xl font-black uppercase tracking-[-0.05em] text-white">
-              Added when the client specification calls for them.
-            </h2>
-            <p className="mt-4 max-w-4xl text-base leading-8">
-              Some deliverables are sold inside larger packages or scoped through a bespoke proposal. The proposal intake decides whether these are needed based on the workflow, tools, people, implementation requirement, sensitivity, and guardrails.
-            </p>
-            <div className="mt-6 grid gap-4 lg:grid-cols-3">
-              {specialistOutcomes.map((outcome) => (
-                <article key={outcome.key} className="border border-[#9ed39f]/18 bg-black/42 p-5">
-                  <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{outcome.status}</p>
-                  <h3 className="mt-3 text-xl font-black uppercase tracking-[-0.04em] text-white">{outcome.name}</h3>
-                  <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/72">{outcome.shortDescription}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-
           <div className="mt-10 border border-[#9ed39f]/30 bg-[#041008] p-6 text-[#e6f6e7]/78">
             <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">
               How to begin
             </p>
             <p className="mt-4 max-w-4xl text-base leading-8">
-              Buy a defined package if you already know the service level you want. Request a custom proposal if the scope needs review first. Both routes use the same deliverable model, but the proposal route chooses the bundle after the workflow specification is reviewed.
+              Choose a package if you know what you need. Request a proposal if you want Axiom Architect to help define the right route first.
             </p>
           </div>
         </div>
