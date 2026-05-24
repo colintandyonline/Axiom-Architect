@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateAxiomJsonWithOpenAi } from "../../../../lib/axiom-ai.server";
+import { getAxiomPackageByCheckoutSlug } from "../../../../lib/axiom-package-model";
 import { assertAxiomReportJson } from "../../../../lib/axiom-report-validation";
 import type {
   AxiomProductSlug,
@@ -51,15 +52,6 @@ type GenerateRequestBody = {
   report_id?: string;
 };
 
-const productReportTypeMap: Record<AxiomProductSlug, AxiomReportType> = {
-  "workflow-audit": "diagnostic_report",
-  "workflow-blueprint": "implementation_blueprint",
-  "custom-operating-pack": "operating_pack",
-  "workflow-stewardship": "optimisation_review",
-  "departmental-ecosystem": "ecosystem_architecture",
-  "architect-residency": "enterprise_architecture_system",
-};
-
 const productReportFocusMap: Record<AxiomProductSlug, string> = {
   "workflow-audit":
     "Create a focused diagnostic report for one workflow. Prioritise bottlenecks, risk points, AI-support opportunities, and immediate next steps.",
@@ -74,8 +66,6 @@ const productReportFocusMap: Record<AxiomProductSlug, string> = {
   "architect-residency":
     "Create an Axiom Enterprise Architecture System report. This is the flagship fixed-price product, not a residency, deployment service, live consulting package, training programme, or on-site engagement. Prioritise enterprise system structure, workflow dependencies, data flows, tool-stack fit, risk controls, human review gates, automation boundaries, and a practical implementation roadmap. Do not use the terms residency, on-site, workshop, training session, 1:1, direct oversight, deployment partnership, or live operations in the client-facing report.",
 };
-
-const allowedProductSlugs = new Set<AxiomProductSlug>(Object.keys(productReportTypeMap) as AxiomProductSlug[]);
 
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -230,12 +220,23 @@ async function markReportGenerationFailed(reportId: string) {
 
 function getProductSlug(report: ReportRecord, submission: WorkflowSubmissionRecord, order: OrderRecord | null) {
   const slug = report.tier_slug || submission.tier_slug || order?.tier_slug;
+  const packageModel = getAxiomPackageByCheckoutSlug(slug);
 
-  if (!slug || !allowedProductSlugs.has(slug as AxiomProductSlug)) {
+  if (!slug || !packageModel?.checkoutSlug) {
     throw new Error("Unsupported or missing product slug for report generation.");
   }
 
-  return slug as AxiomProductSlug;
+  return packageModel.checkoutSlug as AxiomProductSlug;
+}
+
+function getReportType(productSlug: AxiomProductSlug) {
+  const packageModel = getAxiomPackageByCheckoutSlug(productSlug);
+
+  if (!packageModel) {
+    throw new Error(`No canonical package found for report product slug: ${productSlug}`);
+  }
+
+  return packageModel.reportType as AxiomReportType;
 }
 
 function recommendedReportStatus(reportJson: AxiomReportJson) {
@@ -308,11 +309,12 @@ function buildUserPrompt({
   order: OrderRecord | null;
   productSlug: AxiomProductSlug;
 }) {
+  const reportType = getReportType(productSlug);
   const source = {
     target_report_schema: {
       schema_version: 2,
       product_slug: productSlug,
-      report_type: productReportTypeMap[productSlug],
+      report_type: reportType,
       product_report_focus: productReportFocusMap[productSlug],
       required_top_level_keys: [
         "schema_version",
@@ -362,7 +364,7 @@ The report must follow this exact TypeScript-compatible JSON shape:
 {
   "schema_version": 2,
   "product_slug": "${productSlug}",
-  "report_type": "${productReportTypeMap[productSlug]}",
+  "report_type": "${reportType}",
   "report_status": "generated",
   "generated_at": "ISO timestamp",
   "client": { "name": string|null, "email": string|null, "business_name": string|null },
