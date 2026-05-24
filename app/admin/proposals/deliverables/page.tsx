@@ -11,7 +11,7 @@ import { AdminSection, AdminShell, buttonClass, primaryButtonClass, statusPill }
 export const metadata: Metadata = {
   title: "Sent Deliverables | Axiom Architect Admin",
   description:
-    "Internal Axiom Architect admin page for uploading and controlling workflow deliverables sent to proposal client workspaces.",
+    "Internal Axiom Architect admin page for uploading and controlling workflow deliverables sent to client workspaces.",
 };
 
 export const dynamic = "force-dynamic";
@@ -48,10 +48,21 @@ type CustomerRecord = {
   business_name: string | null;
 };
 
+type OrderRecord = {
+  id: string;
+  customer_id: string | null;
+  tier_slug: string | null;
+  service_name: string | null;
+  status: string | null;
+  payment_status: string | null;
+  created_at: string | null;
+};
+
 type WorkspaceRecord = {
   id: string;
   customer_id: string;
   service_request_id: string | null;
+  order_id: string | null;
   workspace_name: string;
   status: string | null;
   current_phase: string | null;
@@ -73,6 +84,7 @@ type DeliverableRecord = {
 type DeliverableWorkspaceView = {
   workspace: WorkspaceRecord;
   proposal: ProposalRequestRecord | null;
+  order: OrderRecord | null;
   customer: CustomerRecord | null;
   deliverables: DeliverableRecord[];
 };
@@ -119,15 +131,18 @@ async function supabaseFetch<T>(path: string): Promise<T | null> {
 }
 
 async function getUploaderData() {
-  const [proposals, customers, workspaces, deliverables] = await Promise.all([
+  const [proposals, customers, orders, workspaces, deliverables] = await Promise.all([
     supabaseFetch<ProposalRequestRecord[]>(
       "axiom_service_requests?select=id,customer_id,request_type,status,proposal_status,contact_name,email,business_name,scope_type,support_type,created_at&source=eq.client_proposal_form&order=created_at.desc&limit=150",
     ),
     supabaseFetch<CustomerRecord[]>(
       "axiom_customers?select=id,email,full_name,business_name&order=created_at.desc&limit=250",
     ),
+    supabaseFetch<OrderRecord[]>(
+      "axiom_orders?select=id,customer_id,tier_slug,service_name,status,payment_status,created_at&order=created_at.desc&limit=250",
+    ),
     supabaseFetch<WorkspaceRecord[]>(
-      "axiom_client_workspaces?select=id,customer_id,service_request_id,workspace_name,status,current_phase,current_priority,updated_at&order=updated_at.desc&limit=250",
+      "axiom_client_workspaces?select=id,customer_id,service_request_id,order_id,workspace_name,status,current_phase,current_priority,updated_at&order=updated_at.desc&limit=250",
     ),
     supabaseFetch<DeliverableRecord[]>(
       "axiom_workspace_deliverables?select=id,workspace_id,customer_id,title,status,original_filename,delivered_at,created_at&order=created_at.desc&limit=400",
@@ -137,6 +152,7 @@ async function getUploaderData() {
   return {
     proposals: proposals || [],
     customers: customers || [],
+    orders: orders || [],
     workspaces: workspaces || [],
     deliverables: deliverables || [],
   };
@@ -173,6 +189,14 @@ function uploadMessage(status?: string) {
   }
 }
 
+function workspaceRoute(view: DeliverableWorkspaceView) {
+  return view.proposal ? "Proposal workspace" : "Package workspace";
+}
+
+function routeStatus(view: DeliverableWorkspaceView) {
+  return view.proposal?.proposal_status || view.order?.status || view.order?.payment_status || null;
+}
+
 function clientName(view: DeliverableWorkspaceView) {
   return (
     view.proposal?.business_name ||
@@ -181,7 +205,7 @@ function clientName(view: DeliverableWorkspaceView) {
     view.customer?.full_name ||
     view.proposal?.email ||
     view.customer?.email ||
-    "Unnamed proposal client"
+    "Unnamed client"
   );
 }
 
@@ -190,8 +214,13 @@ function clientContact(view: DeliverableWorkspaceView) {
 }
 
 function defaultTitle(view: DeliverableWorkspaceView) {
-  const scope = view.proposal?.scope_type?.replace(/_/g, " ") || "Workflow";
-  return `${scope.charAt(0).toUpperCase()}${scope.slice(1)} deliverable v1`;
+  const source = view.proposal?.scope_type || view.order?.service_name || view.order?.tier_slug || "Workflow";
+  const cleanSource = source.replace(/_/g, " ");
+  return `${cleanSource.charAt(0).toUpperCase()}${cleanSource.slice(1)} deliverable v1`;
+}
+
+function scopeLabel(view: DeliverableWorkspaceView) {
+  return label(view.proposal?.scope_type || view.order?.service_name || view.order?.tier_slug);
 }
 
 function visibilityLabel(status: string | null) {
@@ -325,6 +354,7 @@ export default async function AdminProposalDeliverablesPage({ searchParams }: Pa
   const data = await getUploaderData();
   const customersById = new Map(data.customers.map((customer) => [customer.id, customer]));
   const proposalsById = new Map(data.proposals.map((proposal) => [proposal.id, proposal]));
+  const ordersById = new Map(data.orders.map((order) => [order.id, order]));
   const deliverablesByWorkspaceId = new Map<string, DeliverableRecord[]>();
 
   for (const deliverable of data.deliverables) {
@@ -334,15 +364,23 @@ export default async function AdminProposalDeliverablesPage({ searchParams }: Pa
   }
 
   const views: DeliverableWorkspaceView[] = data.workspaces
-    .filter((workspace) => workspace.service_request_id)
-    .map((workspace) => ({
-      workspace,
-      proposal: workspace.service_request_id ? proposalsById.get(workspace.service_request_id) || null : null,
-      customer: customersById.get(workspace.customer_id) || null,
-      deliverables: deliverablesByWorkspaceId.get(workspace.id) || [],
-    }))
-    .filter((view) => view.proposal);
+    .filter((workspace) => workspace.service_request_id || workspace.order_id)
+    .map((workspace) => {
+      const proposal = workspace.service_request_id ? proposalsById.get(workspace.service_request_id) || null : null;
+      const order = workspace.order_id ? ordersById.get(workspace.order_id) || null : null;
 
+      return {
+        workspace,
+        proposal,
+        order,
+        customer: customersById.get(workspace.customer_id) || null,
+        deliverables: deliverablesByWorkspaceId.get(workspace.id) || [],
+      };
+    })
+    .filter((view) => view.proposal || view.order || view.customer);
+
+  const proposalWorkspaceCount = views.filter((view) => view.proposal).length;
+  const packageWorkspaceCount = views.filter((view) => !view.proposal && view.order).length;
   const allDeliverables = views.flatMap((view) => view.deliverables);
   const internalCount = allDeliverables.filter((deliverable) => internalStatuses.has(deliverable.status || "preparing")).length;
   const visibleCount = allDeliverables.filter((deliverable) => clientVisibleStatuses.has(deliverable.status || "")).length;
@@ -351,7 +389,7 @@ export default async function AdminProposalDeliverablesPage({ searchParams }: Pa
     <AdminShell
       adminEmail={adminEmail}
       eyebrow="Sent deliverables"
-      title="Files sent to proposal clients."
+      title="Files sent to client workspaces."
       intro="Control what Axiom has sent, who received it, and whether each deliverable is internal-only or visible in the client portal."
       activePath="/admin/proposals/deliverables"
     >
@@ -369,8 +407,10 @@ export default async function AdminProposalDeliverablesPage({ searchParams }: Pa
       )}
 
       <section className="bg-[#9ed39f] px-4 py-10 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-5 md:grid-cols-5">
           <article className="border border-black bg-[#061009] p-5"><p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">Workspaces</p><h2 className="mt-3 text-4xl font-black">{views.length}</h2></article>
+          <article className="border border-black bg-[#061009] p-5"><p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">Proposals</p><h2 className="mt-3 text-4xl font-black">{proposalWorkspaceCount}</h2></article>
+          <article className="border border-black bg-[#061009] p-5"><p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">Packages</p><h2 className="mt-3 text-4xl font-black">{packageWorkspaceCount}</h2></article>
           <article className="border border-black bg-[#061009] p-5"><p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">Internal only</p><h2 className="mt-3 text-4xl font-black">{internalCount}</h2></article>
           <article className="border border-black bg-[#061009] p-5"><p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">Client visible</p><h2 className="mt-3 text-4xl font-black">{visibleCount}</h2></article>
         </div>
@@ -392,14 +432,15 @@ export default async function AdminProposalDeliverablesPage({ searchParams }: Pa
                       <div>
                         <div className="flex flex-wrap gap-3">
                           {statusPill(view.workspace.status)}
-                          {statusPill(view.proposal?.proposal_status)}
+                          {statusPill(workspaceRoute(view))}
+                          {statusPill(routeStatus(view))}
                         </div>
                         <h3 className="mt-4 text-2xl font-black uppercase leading-tight tracking-[-0.05em] text-white">{clientName(view)}</h3>
                         <p className="mt-2 text-sm leading-7 text-white/68">{view.proposal?.contact_name || view.customer?.full_name || "Contact not set"} · {clientContact(view)}</p>
                         <div className="mt-4 grid gap-3 text-sm leading-7 text-white/68 md:grid-cols-2">
                           <p><strong className="text-[#9ed39f]">Workspace:</strong> {view.workspace.workspace_name}</p>
                           <p><strong className="text-[#9ed39f]">Phase:</strong> {label(view.workspace.current_phase)}</p>
-                          <p><strong className="text-[#9ed39f]">Scope:</strong> {label(view.proposal?.scope_type)}</p>
+                          <p><strong className="text-[#9ed39f]">Scope:</strong> {scopeLabel(view)}</p>
                           <p><strong className="text-[#9ed39f]">Updated:</strong> {formatDate(view.workspace.updated_at)}</p>
                         </div>
                         <div className="mt-5 flex flex-wrap gap-3">
@@ -413,8 +454,8 @@ export default async function AdminProposalDeliverablesPage({ searchParams }: Pa
                 ))
               ) : (
                 <article className="border border-[#9ed39f]/20 bg-black/36 p-6">
-                  <h3 className="text-2xl font-black uppercase tracking-[-0.05em] text-white">No proposal workspaces found.</h3>
-                  <p className="mt-3 text-sm leading-7 text-white/68">Create or activate a client workspace from the proposal flow before sending deliverables.</p>
+                  <h3 className="text-2xl font-black uppercase tracking-[-0.05em] text-white">No client workspaces found.</h3>
+                  <p className="mt-3 text-sm leading-7 text-white/68">Create or activate a proposal workspace, or wait for a package checkout to create a package workspace.</p>
                 </article>
               )}
             </div>
