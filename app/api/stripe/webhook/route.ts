@@ -28,6 +28,10 @@ type OrderRecord = {
   id: string;
 };
 
+type WorkspaceRecord = {
+  id: string;
+};
+
 function isCheckoutProductSlug(value: string | null | undefined): value is AxiomCheckoutProductSlug {
   return typeof value === "string" && (axiomCheckoutProductSlugs as readonly string[]).includes(value);
 }
@@ -344,6 +348,83 @@ async function createWorkflowSlot({
   });
 }
 
+async function createPackageWorkspaceBridge({
+  customerId,
+  orderId,
+  packageModel,
+}: {
+  customerId: string;
+  orderId: string;
+  packageModel: AxiomPackageModel;
+}) {
+  try {
+    const existingWorkspaces = await supabaseFetch<WorkspaceRecord[]>(
+      `axiom_client_workspaces?select=id&order_id=eq.${encodeURIComponent(orderId)}&limit=1`,
+    );
+
+    if (existingWorkspaces[0]?.id) {
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const workspaces = await supabaseFetch<WorkspaceRecord[]>(
+      "axiom_client_workspaces?select=id",
+      {
+        method: "POST",
+        prefer: "return=representation",
+        body: JSON.stringify({
+          customer_id: customerId,
+          order_id: orderId,
+          workspace_name: `${packageModel.name} workspace`,
+          workspace_type: "package_client_portal",
+          status: "active",
+          current_phase: "discovery",
+          current_priority: "Complete the workflow intake",
+          next_client_action: "Complete your workflow intake so Axiom Architect can prepare the right output.",
+          axiom_review_focus: packageModel.shortDescription,
+          last_activity_at: now,
+          updated_at: now,
+        }),
+      },
+    );
+
+    const workspace = workspaces[0];
+
+    if (!workspace?.id) {
+      return;
+    }
+
+    await supabaseFetch("axiom_workspace_activity", {
+      method: "POST",
+      prefer: "return=minimal",
+      body: JSON.stringify({
+        workspace_id: workspace.id,
+        customer_id: customerId,
+        actor_type: "system",
+        actor_label: "Axiom Architect",
+        activity_type: "package_workspace_created",
+        title: `${packageModel.name} workspace opened`,
+        body: "Your private workspace has been prepared for intake, updates, and deliverables.",
+        metadata: {
+          order_id: orderId,
+          package_key: packageModel.key,
+          checkout_slug: packageModel.checkoutSlug,
+          public_slug: packageModel.publicSlug,
+          report_type: packageModel.reportType,
+          service_route: packageModel.serviceRoute,
+        },
+        is_client_visible: true,
+      }),
+    });
+  } catch (error) {
+    console.warn("Package workspace bridge skipped", {
+      orderId,
+      packageKey: packageModel.key,
+      error,
+    });
+  }
+}
+
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (session.payment_status !== "paid") {
     return;
@@ -376,6 +457,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     orderId: order.id,
     product,
     schema,
+  });
+
+  await createPackageWorkspaceBridge({
+    customerId: customer.id,
+    orderId: order.id,
+    packageModel,
   });
 }
 
