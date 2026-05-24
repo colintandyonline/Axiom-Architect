@@ -357,14 +357,13 @@ async function upsertReportDeliverable({
     order_id: orderId,
     tier_slug: report.tier_slug || submission.tier_slug,
     canonical_deliverable_type: canonicalDeliverableType,
-    database_deliverable_type: "final_report",
     report_delivery_url: externalUrl,
   };
   const existingDeliverable = await getExistingReportDeliverable(workspace.id, report.id);
   const payload = {
     workspace_id: workspace.id,
     customer_id: customerId,
-    deliverable_type: "final_report",
+    deliverable_type: canonicalDeliverableType,
     title,
     description: summary,
     status: "delivered",
