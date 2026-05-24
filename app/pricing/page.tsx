@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { ProductSystemVisual } from "../../components/ProductSystemVisual";
 import { getAxiomAuthContext } from "../../lib/axiom-auth";
+import {
+  axiomPackageModels,
+  getAxiomPackageDeliverables,
+  type AxiomPackageKey,
+} from "../../lib/axiom-package-model";
 
 export const metadata: Metadata = {
   title: "Axiom Architect Pricing | AI Workflow Architecture Packages",
@@ -53,75 +58,81 @@ type ProductSlug =
   | "departmental-ecosystem"
   | "architect-residency";
 
-const tiers: Array<{
+type PricingTier = {
   slug: ProductSlug;
   publicSlug?: string;
+  packageKey?: AxiomPackageKey;
   name: string;
   header: string;
   price: string;
   label: string;
   summary: string;
   includes: string[];
+  bestFor?: string[];
   featured?: boolean;
-}> = [
-  {
+};
+
+function packageTier({
+  slug,
+  publicSlug,
+  packageKey,
+  header,
+  price,
+  label,
+  featured,
+}: {
+  slug: ProductSlug;
+  publicSlug?: string;
+  packageKey: AxiomPackageKey;
+  header: string;
+  price: string;
+  label: string;
+  featured?: boolean;
+}): PricingTier {
+  const packageModel = axiomPackageModels[packageKey];
+  const deliverables = getAxiomPackageDeliverables(packageKey);
+
+  return {
+    slug,
+    publicSlug,
+    packageKey,
+    name: packageModel.name,
+    header,
+    price,
+    label,
+    summary: packageModel.shortDescription,
+    includes: [
+      ...packageModel.clientReceives,
+      ...deliverables.slice(0, 4).map((deliverable) => deliverable.title),
+    ],
+    bestFor: packageModel.bestFor,
+    featured,
+  };
+}
+
+const tiers: PricingTier[] = [
+  packageTier({
     slug: "workflow-audit",
-    name: "Workflow Audit",
+    packageKey: "workflow_audit",
     header: "Entry diagnostic",
     price: "$49",
     label: "Focused diagnostic",
-    summary:
-      "Diagnose one workflow and identify bottlenecks, AI opportunities, risks, and practical next steps.",
-    includes: [
-      "One workflow submission",
-      "Current workflow diagnosis",
-      "Bottlenecks and weak points",
-      "Automation suitability notes",
-      "AI assistant opportunity map",
-      "Risk and review requirements",
-      "Recommended next steps",
-      "Branded audit report",
-    ],
-  },
-  {
+  }),
+  packageTier({
     slug: "workflow-blueprint",
-    name: "Workflow Blueprint",
+    packageKey: "workflow_blueprint",
     header: "Implementation plan",
     price: "$149",
     label: "Recommended plan",
-    summary:
-      "Turn the audit into a practical implementation plan with review gates, assistant roles, tool recommendations, and a 30-day sequence.",
     featured: true,
-    includes: [
-      "Everything in Workflow Audit",
-      "Future-state workflow design",
-      "Recommended assistant roles",
-      "Human-in-the-loop review gates",
-      "Tool stack recommendations",
-      "Implementation sequence",
-      "30-day operating plan",
-      "Branded blueprint report",
-    ],
-  },
-  {
+  }),
+  packageTier({
     slug: "custom-operating-pack",
-    name: "Custom Operating Pack",
+    packageKey: "custom_operating_pack",
     header: "Complete workflow system",
     price: "$399",
     label: "Complete workflow asset",
-    summary:
-      "Build the full workflow system: protocol, assistant instructions, workbook assets, handoff guidance, and quality-control checkpoints.",
-    includes: [
-      "Everything in Workflow Blueprint",
-      "Custom operating protocol",
-      "Reusable instruction blocks",
-      "Agent or assistant guidance",
-      "Implementation workbook assets",
-      "Team handoff guide",
-      "Quality-control checkpoints",
-      "Branded operating pack",
-    ],
-  },
+  }),
   {
     slug: "workflow-stewardship",
     name: "Workflow Stewardship",
@@ -129,7 +140,7 @@ const tiers: Array<{
     price: "$299/mo",
     label: "Ongoing optimisation",
     summary:
-      "A monthly operating review for AI-supported workflows that keep changing. Each cycle collects updates from the client, reviews drift, risks, tool changes, bottlenecks, and improvement opportunities, then turns them into a clear stewardship brief.",
+      "A monthly operating review for AI-supported workflows that keep changing after the first delivery.",
     includes: [
       "Monthly stewardship intake prompt",
       "Review of workflow changes, errors, and bottlenecks",
@@ -139,6 +150,11 @@ const tiers: Array<{
       "Monthly stewardship brief in the dashboard",
       "30-day improvement window for relevant report updates",
       "Light email support for minor workflow questions",
+    ],
+    bestFor: [
+      "Clients whose workflow changes month to month",
+      "Teams that need ongoing review instead of a one-off report",
+      "Businesses already using an Axiom blueprint or operating pack",
     ],
   },
   {
@@ -157,27 +173,26 @@ const tiers: Array<{
       "Universal Axiom documentation guide",
       "Master implementation roadmap for the quarter",
     ],
+    bestFor: [
+      "Teams with several connected workflows",
+      "Departments with unclear handoffs or duplicated work",
+      "Operators who need a shared workflow architecture",
+    ],
   },
-  {
+  packageTier({
     slug: "architect-residency",
     publicSlug: "enterprise-architecture-system",
-    name: "Axiom Enterprise Architecture System",
+    packageKey: "ai_workflow_system_build",
     header: "Flagship enterprise architecture",
     price: "$2,499",
     label: "Flagship enterprise product",
-    summary:
-      "A fixed-price flagship architecture package for complex workflow systems that need enterprise-level structure, dependency mapping, automation boundaries, risk controls, tool-stack guidance, and a complete dashboard-delivered operating roadmap.",
-    includes: [
-      "Expanded enterprise intake sequence",
-      "Complex workflow and dependency architecture review",
-      "Current-state and future-state system map",
-      "Advanced AI and automation suitability model",
-      "Risk, exception, and human review gate design",
-      "Tool stack and data-flow architecture guidance",
-      "Enterprise implementation roadmap",
-      "Dashboard-delivered architecture report",
-    ],
-  },
+  }),
+];
+
+const specialistOutcomes = [
+  axiomPackageModels.ai_operating_protocol,
+  axiomPackageModels.agent_instruction_kit,
+  axiomPackageModels.implementation_workbook,
 ];
 
 export default async function PricingPage() {
@@ -193,13 +208,13 @@ export default async function PricingPage() {
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div>
               <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-                Six-product ladder
+                Package ladder
               </p>
               <h1 className="mt-6 max-w-4xl text-[clamp(2.55rem,5.2vw,5rem)] font-black uppercase leading-[0.92] tracking-[-0.07em] text-white">
-                Workflow architecture packages with clear upgrade paths.
+                Workflow architecture packages with defined deliverable outcomes.
               </h1>
               <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-                Start with diagnosis, move into implementation planning, build operating assets, then scale into ongoing support, departmental architecture, or a fixed-price flagship enterprise architecture system.
+                Start with diagnosis, move into implementation planning, build operating assets, then scale into ongoing support, departmental architecture, or a flagship workflow system build. Each package now maps to a clear deliverable bundle.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <a href="/signup?tier=workflow-audit&account=required" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white">
@@ -214,7 +229,7 @@ export default async function PricingPage() {
             <div className="grid gap-5">
               <ProductSystemVisual kind="architect-residency" />
               <div className="grid grid-cols-3 gap-3">
-                {["Diagnose", "Systemise", "Scale"].map((item) => (
+                {["Diagnose", "Define", "Deliver"].map((item) => (
                   <div key={item} className="border border-[#9ed39f]/25 bg-[#061008]/86 px-3 py-4 text-center">
                     <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{item}</p>
                   </div>
@@ -253,14 +268,35 @@ export default async function PricingPage() {
                     {tier.summary}
                   </p>
 
-                  <ul className="mt-6 space-y-3">
-                    {tier.includes.map((item) => (
-                      <li key={item} className="flex gap-3 text-sm leading-6">
-                        <span className="mt-1.5 h-2 w-2 shrink-0 bg-[#9ed39f] transition duration-200 group-hover:bg-black" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {tier.bestFor ? (
+                    <div className="mt-6 border border-[#9ed39f]/22 bg-black/30 p-4 transition duration-200 group-hover:border-black/20 group-hover:bg-black/10">
+                      <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 group-hover:text-black/68">
+                        Best for
+                      </p>
+                      <ul className="mt-3 space-y-2">
+                        {tier.bestFor.slice(0, 3).map((item) => (
+                          <li key={item} className="flex gap-3 text-sm leading-6">
+                            <span className="mt-2 h-1.5 w-1.5 shrink-0 bg-[#9ed39f] transition duration-200 group-hover:bg-black" />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
+                  <div className="mt-6">
+                    <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 group-hover:text-black/68">
+                      Client receives
+                    </p>
+                    <ul className="mt-3 space-y-3">
+                      {tier.includes.map((item) => (
+                        <li key={item} className="flex gap-3 text-sm leading-6">
+                          <span className="mt-1.5 h-2 w-2 shrink-0 bg-[#9ed39f] transition duration-200 group-hover:bg-black" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
                   {isSignedIn ? (
                     <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -301,12 +337,33 @@ export default async function PricingPage() {
             })}
           </div>
 
+          <section className="mt-12 border border-[#9ed39f]/30 bg-[#041008] p-6 text-[#e6f6e7]/78">
+            <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">
+              Specialist outcomes
+            </p>
+            <h2 className="mt-4 text-3xl font-black uppercase tracking-[-0.05em] text-white">
+              Added when the client specification calls for them.
+            </h2>
+            <p className="mt-4 max-w-4xl text-base leading-8">
+              Some deliverables are sold inside larger packages or scoped through a bespoke proposal. The proposal intake decides whether these are needed based on the workflow, tools, people, implementation requirement, sensitivity, and guardrails.
+            </p>
+            <div className="mt-6 grid gap-4 lg:grid-cols-3">
+              {specialistOutcomes.map((outcome) => (
+                <article key={outcome.key} className="border border-[#9ed39f]/18 bg-black/42 p-5">
+                  <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{outcome.status}</p>
+                  <h3 className="mt-3 text-xl font-black uppercase tracking-[-0.04em] text-white">{outcome.name}</h3>
+                  <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/72">{outcome.shortDescription}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
           <div className="mt-10 border border-[#9ed39f]/30 bg-[#041008] p-6 text-[#e6f6e7]/78">
             <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">
               How to begin
             </p>
             <p className="mt-4 max-w-4xl text-base leading-8">
-              Select a package, create your secure client account, complete checkout, and submit the intake matched to that product. Your report workspace opens after payment is confirmed.
+              Select a package, create your secure client account, complete checkout, and submit the intake matched to that product. For bespoke work, submit a proposal request so the deliverable bundle can be matched to your workflow specification.
             </p>
           </div>
         </div>
