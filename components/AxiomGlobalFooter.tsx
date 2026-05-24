@@ -4,6 +4,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+const workflowAuditSignupHref = "/signup?tier=workflow-audit&account=required";
+
 const publicPagePaths = new Set([
   "/",
   "/audit",
@@ -30,7 +32,7 @@ const siteLinks = [
 ];
 
 const serviceLinks = [
-  { label: "Start Audit", href: "/signup" },
+  { label: "Start Audit", href: workflowAuditSignupHref },
   { label: "Custom Proposal", href: "/bespoke/apply" },
   { label: "Workflow Packages", href: "/audit" },
   { label: "Compare Pricing", href: "/pricing" },
@@ -136,7 +138,7 @@ export function AxiomGlobalFooter() {
         { label: "Log Out", href: "/logout" },
       ]
     : [
-        { label: "Start Audit", href: "/signup" },
+        { label: "Start Audit", href: workflowAuditSignupHref },
         { label: "Login", href: "/login" },
       ];
 
@@ -165,7 +167,7 @@ export function AxiomGlobalFooter() {
             </p>
 
             <div className="mt-7 grid gap-3 sm:max-w-md sm:grid-cols-2">
-              <a href="/signup" className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-5 text-center text-[0.68rem] font-black uppercase tracking-[0.17em] text-black transition hover:bg-white">
+              <a href={workflowAuditSignupHref} className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-5 text-center text-[0.68rem] font-black uppercase tracking-[0.17em] text-black transition hover:bg-white">
                 Start Audit
               </a>
               <a href="/bespoke/apply" className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f]/40 bg-black px-5 text-center text-[0.68rem] font-black uppercase tracking-[0.17em] text-white transition hover:border-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">
