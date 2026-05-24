@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-type PageProps = { params: Promise<{ workspaceId: string }>; searchParams?: Promise<{ note?: string | string[]; workspace?: string | string[] }> };
+type PageProps = { params: Promise<{ workspaceId: string }>; searchParams?: Promise<{ note?: string | string[]; workspace?: string | string[]; clientUpdate?: string | string[] }> };
 type JsonRecord = Record<string, unknown>;
 
 type WorkspaceRecord = {
@@ -203,6 +203,15 @@ function workspaceMessage(status?: string) {
   }
 }
 
+function clientUpdateMessage(status?: string) {
+  switch (status) {
+    case "sent": return { eyebrow: "Client update", title: "Client update sent.", text: "The update was added to the client portal and the visible workspace timeline." };
+    case "missing": return { eyebrow: "Client update", title: "Update missing.", text: "Write a client update before sending it." };
+    case "workspace": return { eyebrow: "Client update", title: "Workspace not found.", text: "The update could not be attached to this workspace." };
+    default: return null;
+  }
+}
+
 function valueFromPayload(payload: JsonRecord | null, key: string) {
   const value = payload?.[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -239,11 +248,13 @@ function activityTypeLabel(type: string | null | undefined) {
     case "deliverable_status_updated": return "Deliverable status update";
     case "internal_note": return "Internal admin note";
     case "workspace_status_updated": return "Workspace status update";
+    case "client_update_sent": return "Client update sent";
     default: return label(type) === "Not set" ? "Workspace activity" : label(type);
   }
 }
 
 function activityLaneLabel(activity: ActivityRecord) {
+  if (activity.activity_type === "client_update_sent") return "Client update";
   if (activity.activity_type === "internal_note") return "Admin note";
   if (activity.activity_type === "workspace_status_updated") return "Admin control";
   if (activity.actor_type === "client") return "Client action";
@@ -264,6 +275,7 @@ function activityGroupLabel(activity: ActivityRecord) {
     case "deliverable_status_updated": return "Delivery";
     case "internal_note": return "Internal";
     case "workspace_status_updated": return "Control";
+    case "client_update_sent": return "Client update";
     default: return "Operations";
   }
 }
@@ -316,6 +328,18 @@ function WorkspaceStatusForm({ workspace }: { workspace: WorkspaceRecord }) {
   );
 }
 
+function ClientUpdateForm({ workspaceId }: { workspaceId: string }) {
+  return (
+    <form action="/api/admin/proposals/client-update" method="post" className="grid gap-4 border border-[#9ed39f]/18 bg-black/34 p-5">
+      <input type="hidden" name="workspace_id" value={workspaceId} />
+      <input type="hidden" name="return_to" value={`/admin/proposals/${workspaceId}`} />
+      <label className="grid gap-2 text-[0.66rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">Subject<input name="subject" type="text" defaultValue="Workspace update" className="min-h-11 border border-[#9ed39f]/30 bg-black px-3 text-sm font-semibold normal-case tracking-normal text-white outline-none placeholder:text-white/30 focus:border-[#9ed39f]" /></label>
+      <label className="grid gap-2 text-[0.66rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">Client-visible update<textarea name="update_text" rows={5} required placeholder="Write a clear update the client should see in their portal..." className="min-h-32 border border-[#9ed39f]/30 bg-black px-3 py-3 text-sm font-semibold normal-case tracking-normal text-white outline-none placeholder:text-white/30 focus:border-[#9ed39f]" /></label>
+      <button type="submit" className={primaryButtonClass}>Send client update</button>
+    </form>
+  );
+}
+
 function InternalNoteForm({ workspaceId }: { workspaceId: string }) {
   return (
     <form action="/api/admin/proposals/notes" method="post" className="grid gap-4 border border-[#9ed39f]/18 bg-black/34 p-5">
@@ -343,7 +367,7 @@ export default async function AdminProposalWorkspacePage({ params, searchParams 
   const { adminEmail } = await requireAxiomAdmin();
   const { workspaceId } = await params;
   const query = searchParams ? await searchParams : {};
-  const notice = noteMessage(firstParam(query.note)) || workspaceMessage(firstParam(query.workspace));
+  const notice = noteMessage(firstParam(query.note)) || workspaceMessage(firstParam(query.workspace)) || clientUpdateMessage(firstParam(query.clientUpdate));
   const data = await getWorkspacePageData(workspaceId);
 
   if (!data.workspace) notFound();
@@ -356,7 +380,7 @@ export default async function AdminProposalWorkspacePage({ params, searchParams 
   const internalActivityCount = data.activities.length - clientVisibleActivityCount;
 
   return (
-    <AdminShell adminEmail={adminEmail} eyebrow="Client workspace" title={clientName(data.customer, data.proposal)} intro="Single-client proposal command centre for proposal context, files received, files sent, notes, and activity state." activePath="/admin/proposals">
+    <AdminShell adminEmail={adminEmail} eyebrow="Client workspace" title={clientName(data.customer, data.proposal)} intro="Single-client proposal command centre for proposal context, files received, files sent, client updates, notes, and activity state." activePath="/admin/proposals">
       {notice ? <section className="bg-[#9ed39f] px-4 py-5 text-black sm:px-6 lg:px-8"><div className="mx-auto flex max-w-[1440px] flex-col gap-3 md:flex-row md:items-center md:justify-between"><div><p className="text-[0.66rem] font-black uppercase tracking-[0.2em]">{notice.eyebrow}</p><h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">{notice.title}</h2><p className="mt-1 text-sm font-semibold leading-6 text-black/72">{notice.text}</p></div><Link href={`/admin/proposals/${data.workspace.id}`} className="inline-flex min-h-11 items-center justify-center border border-black px-4 text-[0.7rem] font-black uppercase tracking-[0.16em] text-black hover:bg-black hover:text-[#9ed39f]">Clear</Link></div></section> : null}
 
       <section className="bg-[#9ed39f] px-4 py-14 text-white sm:px-6 lg:px-8"><div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-5"><StatCard title="Documents" value={String(data.documents.length)} helper="Client-uploaded files" /><StatCard title="Review docs" value={String(underReviewDocuments)} helper="Uploaded or under review" /><StatCard title="Deliverables" value={String(data.deliverables.length)} helper="Axiom-created records" /><StatCard title="Visible" value={String(visibleDeliverables.length)} helper="Released to client" /><StatCard title="Internal" value={String(internalDeliverables)} helper="Hidden from client" /></div></section>
@@ -367,6 +391,7 @@ export default async function AdminProposalWorkspacePage({ params, searchParams 
         <section className="grid gap-8 xl:grid-cols-[1.05fr_0.95fr]"><AdminSection eyebrow="Proposal brief" title="Workflow context"><div className="grid gap-5"><div className="border border-[#9ed39f]/18 bg-black/34 p-5"><p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">Submitted summary</p><p className="mt-3 text-sm leading-8 text-white/74">{proposalSummary(data.proposal)}</p></div><div className="grid gap-3 md:grid-cols-2"><DetailLine labelText="Contact" value={data.proposal?.contact_name || data.customer?.full_name} /><DetailLine labelText="Email" value={clientEmail(data.customer, data.proposal)} /><DetailLine labelText="Role" value={data.proposal?.role} /><DetailLine labelText="Website" value={data.proposal?.website} /><DetailLine labelText="Scope" value={label(data.proposal?.scope_type)} /><DetailLine labelText="Support" value={label(data.proposal?.support_type)} /><DetailLine labelText="Timeline" value={label(data.proposal?.timeline)} /><DetailLine labelText="Budget" value={label(data.proposal?.budget_range)} /><DetailLine labelText="Sensitive data" value={label(data.proposal?.sensitive_data)} /><DetailLine labelText="Submitted" value={formatDate(data.proposal?.created_at)} /></div></div></AdminSection><AdminSection eyebrow="Workspace state" title="Control summary"><div className="grid gap-3"><div className="flex flex-wrap gap-3">{statusPill(data.workspace.status)}{statusPill(data.workspace.current_phase)}{statusPill(data.proposal?.proposal_status)}</div><DetailLine labelText="Workspace" value={data.workspace.workspace_name} /><DetailLine labelText="Priority" value={data.workspace.current_priority} /><DetailLine labelText="Next client action" value={data.workspace.next_client_action} /><DetailLine labelText="Axiom review focus" value={data.workspace.axiom_review_focus} /><DetailLine labelText="Last activity" value={formatDate(data.workspace.last_activity_at || data.workspace.updated_at)} /><DetailLine labelText="Customer account" value={label(data.customer?.account_status)} /><DetailLine labelText="Last login" value={formatDate(data.customer?.last_login_at)} /></div></AdminSection></section>
 
         <AdminSection eyebrow="Workspace controls" title="Update workspace state"><WorkspaceStatusForm workspace={data.workspace} /></AdminSection>
+        <AdminSection eyebrow="Client updates" title="Send client-visible update"><ClientUpdateForm workspaceId={data.workspace.id} /></AdminSection>
         <AdminSection eyebrow="Internal notes" title="Add admin-only note"><InternalNoteForm workspaceId={data.workspace.id} /></AdminSection>
 
         <AdminSection eyebrow="Files received" title="Client-uploaded documents">{data.documents.length > 0 ? <div className="grid gap-4">{data.documents.map((document) => <article key={document.id} className="grid gap-5 border border-[#9ed39f]/18 bg-black/34 p-5 lg:grid-cols-[1fr_auto] lg:items-center"><div><div className="flex flex-wrap gap-2">{statusPill(document.review_status)}{statusPill(document.document_category)}</div><h3 className="mt-3 break-words text-xl font-black uppercase tracking-[-0.04em] text-white">{document.title || document.original_filename}</h3><p className="mt-2 break-words text-xs font-bold uppercase tracking-[0.12em] text-white/44">{document.original_filename}</p><p className="mt-2 text-sm leading-7 text-white/62">{document.description || "No client description recorded."}</p><p className="mt-2 text-xs leading-5 text-white/46">{formatDate(document.uploaded_at)} · {formatSize(document.file_size_bytes)} · {document.mime_type || "MIME not recorded"}</p><DocumentReviewControls document={document} workspaceId={data.workspace.id} /></div>{document.storage_bucket && document.storage_path ? <a href={`/api/admin/proposals/documents/${document.id}/download`} target="_blank" rel="noopener noreferrer" className={primaryButtonClass}>Open file</a> : null}</article>)}</div> : <article className="border border-[#9ed39f]/20 bg-black/36 p-6"><h3 className="text-2xl font-black uppercase tracking-[-0.05em] text-white">No files received yet.</h3><p className="mt-3 text-sm leading-7 text-white/68">Client-uploaded evidence will appear here.</p></article>}</AdminSection>
