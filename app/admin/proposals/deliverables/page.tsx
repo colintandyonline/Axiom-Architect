@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAxiomAdmin } from "../../../../lib/axiom-admin";
 import { formatDate, label } from "../../../../lib/axiom-admin-dashboard";
+import {
+  axiomDeliverableDefinitions,
+  axiomDeliverableTypes,
+} from "../../../../lib/axiom-package-model";
 import { AdminSection, AdminShell, buttonClass, primaryButtonClass, statusPill } from "../../../../components/admin/AdminShell";
 
 export const metadata: Metadata = {
@@ -275,15 +279,16 @@ function UploaderForm({ view }: { view: DeliverableWorkspaceView }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <label className="grid gap-2 text-[0.66rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">
           Deliverable type
-          <select name="deliverable_type" defaultValue="workflow_blueprint" className="min-h-11 border border-[#9ed39f]/30 bg-black px-3 text-sm font-semibold normal-case tracking-normal text-white outline-none focus:border-[#9ed39f]">
-            <option value="workflow_blueprint">Workflow blueprint</option>
-            <option value="workflow_audit">Workflow audit</option>
-            <option value="implementation_blueprint">Implementation blueprint</option>
-            <option value="ai_operating_protocol">AI operating protocol</option>
-            <option value="assistant_instruction_kit">Assistant instruction kit</option>
-            <option value="automation_plan">Automation plan</option>
-            <option value="final_report">Final report</option>
-            <option value="supporting_file">Supporting file</option>
+          <select name="deliverable_type" defaultValue="workflow_diagnosis" className="min-h-11 border border-[#9ed39f]/30 bg-black px-3 text-sm font-semibold normal-case tracking-normal text-white outline-none focus:border-[#9ed39f]">
+            {axiomDeliverableTypes.map((deliverableType) => {
+              const deliverable = axiomDeliverableDefinitions[deliverableType];
+
+              return (
+                <option key={deliverable.type} value={deliverable.type}>
+                  {deliverable.title}
+                </option>
+              );
+            })}
           </select>
         </label>
         <label className="grid gap-2 text-[0.66rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">
