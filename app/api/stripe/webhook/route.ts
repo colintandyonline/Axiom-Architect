@@ -5,7 +5,7 @@ import {
   getAxiomPackageByCheckoutSlug,
   type AxiomCheckoutProductSlug,
   type AxiomPackageModel,
-} from "../../../lib/axiom-package-model";
+} from "../../../../lib/axiom-package-model";
 
 export const runtime = "nodejs";
 
