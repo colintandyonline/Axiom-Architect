@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireAxiomAdmin } from "../../../../../lib/axiom-admin";
+import {
+  getAxiomPackageByCheckoutSlug,
+  type AxiomDeliverableType,
+} from "../../../../../lib/axiom-package-model";
 
 export const runtime = "nodejs";
 
@@ -26,6 +30,8 @@ type ReportRecord = {
 type WorkflowSubmissionRecord = {
   id: string;
   customer_id: string | null;
+  order_id: string | null;
+  tier_slug: string | null;
   workflow_title: string | null;
 };
 
@@ -33,6 +39,16 @@ type CustomerRecord = {
   email: string | null;
   full_name: string | null;
   business_name: string | null;
+};
+
+type WorkspaceRecord = {
+  id: string;
+  customer_id: string;
+};
+
+type DeliverableRecord = {
+  id: string;
+  metadata: Record<string, unknown> | null;
 };
 
 const allowedActions = new Set<AdminReportAction>([
@@ -43,6 +59,15 @@ const allowedActions = new Set<AdminReportAction>([
   "queue",
   "deliver",
 ]);
+
+const productReportDeliverableMap: Record<string, AxiomDeliverableType> = {
+  "workflow-audit": "workflow_diagnosis",
+  "workflow-blueprint": "implementation_sequence",
+  "custom-operating-pack": "handoff_pack",
+  "workflow-stewardship": "stewardship_review",
+  "departmental-ecosystem": "departmental_architecture_map",
+  "architect-residency": "enterprise_architecture_report",
+};
 
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -133,7 +158,7 @@ async function getWorkflowSubmission(submissionId?: string | null) {
   }
 
   const submissions = await supabaseFetch<WorkflowSubmissionRecord[]>(
-    `axiom_workflow_submissions?select=id,customer_id,workflow_title&id=eq.${encodeURIComponent(submissionId)}&limit=1`,
+    `axiom_workflow_submissions?select=id,customer_id,order_id,tier_slug,workflow_title&id=eq.${encodeURIComponent(submissionId)}&limit=1`,
   );
 
   return submissions[0] ?? null;
@@ -210,7 +235,7 @@ function escapeHtml(value: string) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
+    .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
 
@@ -224,6 +249,165 @@ function reportTitle(report: ReportRecord, submission: WorkflowSubmissionRecord 
 
 function reportDeliveryUrl(request: Request, submissionId: string) {
   return `${appUrl(request)}/dashboard/report?submission_id=${encodeURIComponent(submissionId)}`;
+}
+
+function reportSummary(report: ReportRecord) {
+  return report.client_summary ||
+    (typeof report.report_json?.delivery?.dashboard_summary === "string"
+      ? report.report_json.delivery.dashboard_summary
+      : "Your Axiom Architect workflow report is ready to review in your dashboard.");
+}
+
+function getCanonicalReportDeliverableType(report: ReportRecord, submission: WorkflowSubmissionRecord) {
+  const productSlug = report.tier_slug || submission.tier_slug || "";
+  return productReportDeliverableMap[productSlug] || "workflow_diagnosis";
+}
+
+async function getReportWorkspace({
+  customerId,
+  orderId,
+  report,
+  submission,
+}: {
+  customerId: string;
+  orderId: string | null;
+  report: ReportRecord;
+  submission: WorkflowSubmissionRecord;
+}) {
+  if (orderId) {
+    const orderWorkspaces = await supabaseFetch<WorkspaceRecord[]>(
+      `axiom_client_workspaces?select=id,customer_id&order_id=eq.${encodeURIComponent(orderId)}&limit=1`,
+    );
+
+    if (orderWorkspaces[0]?.id) {
+      return orderWorkspaces[0];
+    }
+  }
+
+  const customerWorkspaces = await supabaseFetch<WorkspaceRecord[]>(
+    `axiom_client_workspaces?select=id,customer_id&customer_id=eq.${encodeURIComponent(customerId)}&order=updated_at.desc&limit=1`,
+  );
+
+  if (customerWorkspaces[0]?.id) {
+    return customerWorkspaces[0];
+  }
+
+  const productSlug = report.tier_slug || submission.tier_slug || null;
+  const packageModel = getAxiomPackageByCheckoutSlug(productSlug);
+  const now = new Date().toISOString();
+  const workspaces = await supabaseFetch<WorkspaceRecord[]>(
+    "axiom_client_workspaces?select=id,customer_id",
+    {
+      method: "POST",
+      prefer: "return=representation",
+      body: JSON.stringify({
+        customer_id: customerId,
+        order_id: orderId,
+        workspace_name: `${packageModel?.name || reportTitle(report, submission)} workspace`,
+        workspace_type: "report_delivery_workspace",
+        status: "active",
+        current_phase: "review_and_approval",
+        current_priority: "Review delivered report",
+        next_client_action: "Open and review your delivered Axiom Architect report.",
+        axiom_review_focus: packageModel?.shortDescription || reportSummary(report),
+        last_activity_at: now,
+        updated_at: now,
+      }),
+    },
+  );
+
+  return workspaces[0] ?? null;
+}
+
+async function getExistingReportDeliverable(workspaceId: string, reportId: string) {
+  const deliverables = await supabaseFetch<DeliverableRecord[]>(
+    `axiom_workspace_deliverables?select=id,metadata&workspace_id=eq.${encodeURIComponent(workspaceId)}&order=created_at.desc&limit=100`,
+  );
+
+  return deliverables.find((deliverable) => deliverable.metadata?.report_id === reportId) ?? null;
+}
+
+async function upsertReportDeliverable({
+  request,
+  report,
+  submission,
+  customerId,
+}: {
+  request: Request;
+  report: ReportRecord;
+  submission: WorkflowSubmissionRecord;
+  customerId: string;
+}) {
+  const orderId = report.order_id || submission.order_id || null;
+  const workspace = await getReportWorkspace({ customerId, orderId, report, submission });
+
+  if (!workspace?.id) {
+    throw new Error("No client workspace was available for report delivery.");
+  }
+
+  const now = new Date().toISOString();
+  const title = reportTitle(report, submission);
+  const summary = reportSummary(report);
+  const externalUrl = reportDeliveryUrl(request, submission.id);
+  const canonicalDeliverableType = getCanonicalReportDeliverableType(report, submission);
+  const metadata = {
+    source: "axiom_audit_reports",
+    report_id: report.id,
+    submission_id: submission.id,
+    order_id: orderId,
+    tier_slug: report.tier_slug || submission.tier_slug,
+    canonical_deliverable_type: canonicalDeliverableType,
+    database_deliverable_type: "final_report",
+    report_delivery_url: externalUrl,
+  };
+  const existingDeliverable = await getExistingReportDeliverable(workspace.id, report.id);
+  const payload = {
+    workspace_id: workspace.id,
+    customer_id: customerId,
+    deliverable_type: "final_report",
+    title,
+    description: summary,
+    status: "delivered",
+    version: "v1",
+    approval_required: false,
+    external_url: externalUrl,
+    delivered_at: now,
+    metadata,
+    updated_at: now,
+  };
+
+  if (existingDeliverable?.id) {
+    await supabaseFetch(`axiom_workspace_deliverables?id=eq.${encodeURIComponent(existingDeliverable.id)}`, {
+      method: "PATCH",
+      prefer: "return=minimal",
+      body: JSON.stringify(payload),
+    });
+  } else {
+    await supabaseFetch("axiom_workspace_deliverables", {
+      method: "POST",
+      prefer: "return=minimal",
+      body: JSON.stringify({
+        ...payload,
+        created_at: now,
+      }),
+    });
+  }
+
+  await supabaseFetch("axiom_workspace_activity", {
+    method: "POST",
+    prefer: "return=minimal",
+    body: JSON.stringify({
+      workspace_id: workspace.id,
+      customer_id: customerId,
+      actor_type: "axiom",
+      actor_label: "Axiom Architect",
+      activity_type: "report_delivered",
+      title: "Report delivered",
+      body: `${title} has been released to the client portal.`,
+      metadata,
+      is_client_visible: true,
+    }),
+  });
 }
 
 async function sendReportDeliveryEmail({
@@ -247,10 +431,7 @@ async function sendReportDeliveryEmail({
   const title = reportTitle(report, submission);
   const clientName = customer.full_name?.trim() || customer.business_name?.trim() || "there";
   const reportUrl = reportDeliveryUrl(request, submission.id);
-  const summary = report.client_summary ||
-    (typeof report.report_json?.delivery?.dashboard_summary === "string"
-      ? report.report_json.delivery.dashboard_summary
-      : "Your Axiom Architect workflow report is ready to review in your dashboard.");
+  const summary = reportSummary(report);
 
   const escapedName = escapeHtml(clientName);
   const escapedTitle = escapeHtml(title);
@@ -310,13 +491,29 @@ async function deliverReport(request: Request, reportId: string) {
     throw new Error("Linked workflow submission was not found.");
   }
 
-  const customer = await getCustomer(report.customer_id || submission.customer_id);
+  const customerId = report.customer_id || submission.customer_id;
+  const customer = await getCustomer(customerId);
 
   if (!customer) {
     throw new Error("Linked customer was not found.");
   }
 
   await sendReportDeliveryEmail({ request, report, submission, customer });
+
+  try {
+    await upsertReportDeliverable({
+      request,
+      report,
+      submission,
+      customerId: customerId || "",
+    });
+  } catch (error) {
+    console.warn("Report workspace deliverable bridge skipped", {
+      reportId: report.id,
+      submissionId: submission.id,
+      error,
+    });
+  }
 
   const now = new Date().toISOString();
   const updatedReportJson = report.report_json
@@ -384,7 +581,7 @@ export async function POST(request: Request) {
 
     if (action === "deliver") {
       await deliverReport(request, reportId);
-      return redirectBack(request, returnPath, "success", action, "Report email sent to the linked customer.");
+      return redirectBack(request, returnPath, "success", action, "Report email sent and client portal deliverable updated.");
     }
 
     if (action === "needs_revision") {
