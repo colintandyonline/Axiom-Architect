@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import {
+  axiomCheckoutProductSlugs,
+  getAxiomPackageByCheckoutSlug,
+  type AxiomCheckoutProductSlug,
+  type AxiomPackageModel,
+} from "../../../lib/axiom-package-model";
 
 export const runtime = "nodejs";
-
-type ProductSlug =
-  | "workflow-audit"
-  | "workflow-blueprint"
-  | "custom-operating-pack"
-  | "workflow-stewardship"
-  | "departmental-ecosystem"
-  | "architect-residency";
 
 type CustomerRecord = {
   id: string;
@@ -30,15 +28,8 @@ type OrderRecord = {
   id: string;
 };
 
-function isProductSlug(value: string | null | undefined): value is ProductSlug {
-  return (
-    value === "workflow-audit" ||
-    value === "workflow-blueprint" ||
-    value === "custom-operating-pack" ||
-    value === "workflow-stewardship" ||
-    value === "departmental-ecosystem" ||
-    value === "architect-residency"
-  );
+function isCheckoutProductSlug(value: string | null | undefined): value is AxiomCheckoutProductSlug {
+  return typeof value === "string" && (axiomCheckoutProductSlugs as readonly string[]).includes(value);
 }
 
 function getStripeClient() {
@@ -108,6 +99,10 @@ function classifyWebhookError(error: unknown) {
 
   if (message.includes("missing a valid Axiom product slug")) {
     return "missing_valid_product_slug";
+  }
+
+  if (message.includes("No canonical package found")) {
+    return "missing_canonical_package";
   }
 
   if (message.includes("missing customer email")) {
@@ -186,7 +181,7 @@ function getMetadataValue(
 function getCheckoutProductSlug(session: Stripe.Checkout.Session) {
   const tier = getMetadataValue(session, "tier") || getMetadataValue(session, "product_slug");
 
-  return isProductSlug(tier) ? tier : null;
+  return isCheckoutProductSlug(tier) ? tier : null;
 }
 
 function isAxiomCheckoutSession(session: Stripe.Checkout.Session) {
@@ -197,6 +192,10 @@ function isAxiomCheckoutSession(session: Stripe.Checkout.Session) {
     productSlug &&
       (metadata.tier ||
         metadata.product_slug ||
+        metadata.package_key ||
+        metadata.public_slug ||
+        metadata.report_type ||
+        metadata.service_route ||
         metadata.auth_user_id ||
         metadata.axiom_customer_id ||
         metadata.customer_email ||
@@ -204,7 +203,7 @@ function isAxiomCheckoutSession(session: Stripe.Checkout.Session) {
   );
 }
 
-async function getProductBySlug(slug: ProductSlug) {
+async function getProductBySlug(slug: AxiomCheckoutProductSlug) {
   const products = await supabaseFetch<ProductRecord[]>(
     `axiom_products?select=id,slug,name&slug=eq.${encodeURIComponent(slug)}&active=eq.true&limit=1`,
   );
@@ -276,12 +275,14 @@ async function upsertOrder({
   session,
   customerId,
   product,
+  packageModel,
 }: {
   session: Stripe.Checkout.Session;
   customerId: string;
   product: ProductRecord;
+  packageModel: AxiomPackageModel;
 }) {
-  const serviceName = getMetadataValue(session, "service_name", product.name);
+  const serviceName = getMetadataValue(session, "service_name", packageModel.name || product.name);
   const stripeCustomerId = getSessionString(session, "customer");
   const stripePaymentIntentId = getSessionString(session, "payment_intent");
 
@@ -354,6 +355,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     throw new Error("Checkout session is missing a valid Axiom product slug");
   }
 
+  const packageModel = getAxiomPackageByCheckoutSlug(tier);
+
+  if (!packageModel) {
+    throw new Error(`No canonical package found for slug: ${tier}`);
+  }
+
   const product = await getProductBySlug(tier);
   const schema = await getActiveIntakeSchema(product.id);
   const customer = await upsertCustomer(session);
@@ -361,6 +368,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     session,
     customerId: customer.id,
     product,
+    packageModel,
   });
 
   await createWorkflowSlot({
