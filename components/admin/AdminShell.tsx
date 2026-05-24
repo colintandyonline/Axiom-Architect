@@ -33,11 +33,11 @@ function AdminNavGroup({
   activePath: string;
 }) {
   return (
-    <div className="grid gap-2 lg:grid-cols-[auto_1fr] lg:items-center">
-      <p className="whitespace-nowrap text-[0.58rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]/62">
+    <section className="min-w-0 border border-[#9ed39f]/18 bg-[#020704] p-3">
+      <p className="mb-3 text-[0.58rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]/72">
         {labelText}
       </p>
-      <div className="flex gap-2 overflow-x-auto pb-1 text-[0.62rem] font-black uppercase tracking-[0.14em]">
+      <div className="flex flex-wrap gap-2 text-[0.62rem] font-black uppercase tracking-[0.14em]">
         {items.map(([text, href]) => {
           const isActive = activePath === href || (href !== "/admin" && activePath.startsWith(`${href}/`));
 
@@ -45,7 +45,7 @@ function AdminNavGroup({
             <Link
               key={href}
               href={href}
-              className={`shrink-0 border px-3 py-2.5 transition ${
+              className={`inline-flex min-h-10 items-center justify-center border px-3 py-2 text-center transition ${
                 isActive
                   ? "border-[#9ed39f] bg-[#9ed39f] text-black"
                   : "border-[#9ed39f]/30 text-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
@@ -56,7 +56,7 @@ function AdminNavGroup({
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -106,9 +106,9 @@ export function AdminShell({
       </section>
 
       <nav className="sticky top-0 z-20 border-b border-[#9ed39f]/20 bg-black/94 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-[1440px] gap-3 xl:grid-cols-[0.96fr_1.04fr] xl:items-start">
+        <div className="mx-auto grid max-w-[1440px] gap-3 xl:grid-cols-[0.95fr_1.05fr]">
           <AdminNavGroup labelText="Admin core" items={adminCoreNavItems} activePath={activePath} />
-          <AdminNavGroup labelText="Proposal ops" items={proposalNavItems} activePath={activePath} />
+          <AdminNavGroup labelText="Proposal operations" items={proposalNavItems} activePath={activePath} />
         </div>
       </nav>
 
