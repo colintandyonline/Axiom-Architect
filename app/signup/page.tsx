@@ -42,7 +42,7 @@ function isProductSlug(value?: string | null): value is ProductSlug {
 
 function getSelectedTier(value?: string | null): ProductSlug {
   const normalisedValue = normaliseProductSlug(value);
-  return isProductSlug(normalisedValue) ? normalisedValue : "workflow-blueprint";
+  return isProductSlug(normalisedValue) ? normalisedValue : "workflow-audit";
 }
 
 function errorMessage(error?: string) {
