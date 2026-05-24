@@ -1,4 +1,8 @@
 import Link from "next/link";
+import {
+  axiomDeliverableDefinitions,
+  type AxiomDeliverableType,
+} from "../../../lib/axiom-package-model";
 import { loadClientPortalData } from "../../../lib/axiom-client-portal-data";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +24,44 @@ function clientStatusLabel(status: string | null | undefined) {
     default:
       return tidy(status);
   }
+}
+
+function canonicalDeliverableType(metadata: Record<string, unknown> | null | undefined) {
+  const value = metadata?.canonical_deliverable_type;
+  return typeof value === "string" && value in axiomDeliverableDefinitions
+    ? (value as AxiomDeliverableType)
+    : null;
+}
+
+function clientDeliverableLabel(row: {
+  deliverable_type: string;
+  metadata?: Record<string, unknown> | null;
+}) {
+  const canonicalType = canonicalDeliverableType(row.metadata);
+
+  if (canonicalType) {
+    return axiomDeliverableDefinitions[canonicalType].title;
+  }
+
+  return tidy(row.deliverable_type);
+}
+
+function clientDeliverableDescription(row: {
+  deliverable_type: string;
+  description: string | null;
+  metadata?: Record<string, unknown> | null;
+}) {
+  if (row.description) {
+    return row.description;
+  }
+
+  const canonicalType = canonicalDeliverableType(row.metadata);
+
+  if (canonicalType) {
+    return axiomDeliverableDefinitions[canonicalType].clientOutcome;
+  }
+
+  return tidy(row.deliverable_type);
 }
 
 function formatDate(value: string | null | undefined) {
@@ -75,9 +117,12 @@ export default async function ClientPortalDeliverablesPage() {
           {rows.length ? rows.map((row) => (
             <article key={row.id} className="grid gap-4 border border-[#9ed39f]/24 bg-black p-5 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f]">{clientStatusLabel(row.status)}</p>
+                <div className="flex flex-wrap gap-2">
+                  <p className="inline-flex bg-[#9ed39f] px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-black">{clientStatusLabel(row.status)}</p>
+                  <p className="inline-flex border border-[#9ed39f]/35 px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">{clientDeliverableLabel(row)}</p>
+                </div>
                 <h3 className="mt-3 break-words text-2xl font-black uppercase tracking-[-0.05em]">{row.title}</h3>
-                <p className="mt-2 text-sm leading-7 text-white/68">{row.description || tidy(row.deliverable_type)}</p>
+                <p className="mt-2 text-sm leading-7 text-white/68">{clientDeliverableDescription(row)}</p>
                 <p className="mt-3 text-xs font-bold uppercase tracking-[0.14em] text-white/48">{row.original_filename || `Version ${row.version}`}</p>
               </div>
               <div className="flex flex-col gap-3 text-left text-xs font-bold uppercase tracking-[0.14em] text-white/54 lg:items-end lg:text-right">
