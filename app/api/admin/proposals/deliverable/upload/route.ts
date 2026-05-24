@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireAxiomAdmin } from "../../../../../../lib/axiom-admin";
+import {
+  axiomDeliverableTypes,
+  type AxiomDeliverableType,
+} from "../../../../../../lib/axiom-package-model";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,6 +45,35 @@ type DeliverableRecord = {
   storage_path: string | null;
 };
 
+const databaseDeliverableTypes = new Set([
+  "architecture_blueprint",
+  "workflow_map",
+  "automation_suitability_review",
+  "ai_operating_protocol",
+  "implementation_workbook",
+  "governance_plan",
+  "final_report",
+  "other",
+]);
+
+const canonicalToDatabaseDeliverableType: Record<AxiomDeliverableType, string> = {
+  workflow_diagnosis: "final_report",
+  workflow_map: "workflow_map",
+  risk_review_matrix: "governance_plan",
+  automation_opportunity_map: "automation_suitability_review",
+  ai_assistant_opportunity_map: "automation_suitability_review",
+  tool_stack_architecture: "architecture_blueprint",
+  implementation_sequence: "implementation_workbook",
+  ai_operating_protocol: "ai_operating_protocol",
+  agent_instruction_kit: "other",
+  implementation_workbook: "implementation_workbook",
+  developer_build_brief: "architecture_blueprint",
+  stewardship_review: "final_report",
+  departmental_architecture_map: "architecture_blueprint",
+  enterprise_architecture_report: "final_report",
+  handoff_pack: "final_report",
+};
+
 function getSupabaseServiceConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -57,6 +90,22 @@ function getSupabaseServiceConfig() {
 
 function cleanInput(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function isCanonicalDeliverableType(value: string): value is AxiomDeliverableType {
+  return (axiomDeliverableTypes as readonly string[]).includes(value);
+}
+
+function getDatabaseDeliverableType(value: string) {
+  if (isCanonicalDeliverableType(value)) {
+    return canonicalToDatabaseDeliverableType[value];
+  }
+
+  if (databaseDeliverableTypes.has(value)) {
+    return value;
+  }
+
+  return "other";
 }
 
 function redirectToProposals(request: Request, status: string) {
@@ -209,7 +258,8 @@ export async function POST(request: Request) {
 
   const title = cleanInput(formData.get("title")) || file.name || "Axiom deliverable";
   const description = cleanInput(formData.get("description"));
-  const deliverableType = cleanInput(formData.get("deliverable_type")) || "workflow_blueprint";
+  const canonicalDeliverableType = cleanInput(formData.get("deliverable_type")) || "workflow_diagnosis";
+  const deliverableType = getDatabaseDeliverableType(canonicalDeliverableType);
   const status = cleanInput(formData.get("status")) || "delivered";
   const version = cleanInput(formData.get("version")) || "v1";
   const filename = safeFilename(file.name || "axiom-deliverable");
@@ -236,6 +286,10 @@ export async function POST(request: Request) {
     mime_type: file.type || "application/octet-stream",
     file_size_bytes: file.size,
     delivered_at: status === "delivered" ? new Date().toISOString() : null,
+    metadata: {
+      canonical_deliverable_type: canonicalDeliverableType,
+      database_deliverable_type: deliverableType,
+    },
   });
 
   if (!deliverable) {
@@ -255,6 +309,7 @@ export async function POST(request: Request) {
       storage_bucket: storageBucket,
       storage_path: objectPath,
       original_filename: file.name || filename,
+      canonical_deliverable_type: canonicalDeliverableType,
       deliverable_type: deliverableType,
     },
     is_client_visible: true,
