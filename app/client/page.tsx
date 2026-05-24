@@ -44,16 +44,16 @@ export default async function ClientPortalOverviewPage() {
 
   const statusCards = [
     {
-      label: "Proposal",
-      value: serviceRequest ? formatLabel(serviceRequest.status) : "Not submitted",
-      text: serviceRequest?.proposal_status
-        ? `Proposal: ${formatLabel(serviceRequest.proposal_status)}`
-        : "Submit a proposal to start the review.",
+      label: "Workspace status",
+      value: workspace ? formatLabel(workspace.status) : "Not started",
+      text: workspace?.current_priority || "Your workspace will update once Axiom begins review.",
     },
     {
-      label: "Stage",
+      label: "Current phase",
       value: workspace ? formatLabel(workspace.current_phase) : "Not started",
-      text: workspace?.current_priority || "Your current focus will appear here.",
+      text: serviceRequest?.proposal_status
+        ? `Proposal: ${formatLabel(serviceRequest.proposal_status)}`
+        : "The current service phase will appear here.",
     },
     {
       label: "Next action",
@@ -143,6 +143,11 @@ export default async function ClientPortalOverviewPage() {
             <h2 className="mt-5 text-[clamp(2.1rem,4vw,4.4rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-black">
               {workspace ? formatLabel(workspace.current_phase) : "Ready when you are."}
             </h2>
+            {workspace ? (
+              <p className="mt-4 text-[0.72rem] font-black uppercase tracking-[0.18em] text-black/62">
+                {formatLabel(workspace.status)} · {workspace.current_priority || "Priority not set"}
+              </p>
+            ) : null}
           </div>
           <p className="max-w-4xl text-base leading-8 text-black/76 sm:text-lg">
             {workspace?.next_client_action ||
@@ -181,12 +186,24 @@ export default async function ClientPortalOverviewPage() {
               <p className="text-sm font-semibold leading-7 text-white md:text-base">{workspace?.workspace_name || "No workspace yet"}</p>
             </div>
             <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.32fr_1fr] md:items-center">
-              <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Review</p>
-              <p className="text-sm font-semibold leading-7 text-white md:text-base">{serviceRequest ? formatLabel(serviceRequest.status) : "No proposal yet"}</p>
+              <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Status</p>
+              <p className="text-sm font-semibold leading-7 text-white md:text-base">{workspace ? formatLabel(workspace.status) : "Not started"}</p>
+            </div>
+            <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.32fr_1fr] md:items-center">
+              <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Phase</p>
+              <p className="text-sm font-semibold leading-7 text-white md:text-base">{workspace ? formatLabel(workspace.current_phase) : "Not started"}</p>
+            </div>
+            <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.32fr_1fr] md:items-center">
+              <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Priority</p>
+              <p className="text-sm font-semibold leading-7 text-white md:text-base">{workspace?.current_priority || "No current priority set"}</p>
+            </div>
+            <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.32fr_1fr] md:items-start">
+              <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Next action</p>
+              <p className="text-sm font-semibold leading-7 text-white md:text-base">{workspace?.next_client_action || "No action is needed from you right now."}</p>
             </div>
             <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.32fr_1fr] md:items-center">
               <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Updated</p>
-              <p className="text-sm font-semibold leading-7 text-white md:text-base">{formatDate(latestActivity?.created_at)}</p>
+              <p className="text-sm font-semibold leading-7 text-white md:text-base">{formatDate(latestActivity?.created_at || workspace?.updated_at)}</p>
             </div>
             <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.32fr_1fr] md:items-start">
               <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Latest</p>
