@@ -51,11 +51,13 @@ export const metadata: Metadata = {
   },
 };
 
+type ProductVisualKind = Parameters<typeof ProductSystemVisual>[0]["kind"];
+
 type PricingDisplay = {
   header: string;
   price: string;
   label: string;
-  visualKind: string;
+  visualKind: ProductVisualKind;
   featured?: boolean;
 };
 
