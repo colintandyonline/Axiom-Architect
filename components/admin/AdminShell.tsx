@@ -7,18 +7,58 @@ export const eyebrowClass = "text-[0.68rem] font-black uppercase tracking-[0.2em
 export const buttonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f]/35 bg-black px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black";
 export const primaryButtonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-black transition hover:bg-white";
 
-const adminNavItems = [
+const adminCoreNavItems = [
   ["Overview", "/admin"],
   ["Clients", "/admin/clients"],
   ["Orders", "/admin/orders"],
   ["Workflows", "/admin/workflows"],
   ["Reports", "/admin/reports"],
+  ["Analytics", "/admin/analytics"],
+] as const;
+
+const proposalNavItems = [
   ["Proposal clients", "/admin/proposals"],
   ["Files received", "/admin/proposals/documents"],
   ["Sent deliverables", "/admin/proposals/deliverables"],
   ["Client updates", "/admin/proposals/updates"],
-  ["Analytics", "/admin/analytics"],
 ] as const;
+
+function AdminNavGroup({
+  labelText,
+  items,
+  activePath,
+}: {
+  labelText: string;
+  items: readonly (readonly [string, string])[];
+  activePath: string;
+}) {
+  return (
+    <div className="grid gap-2 lg:grid-cols-[auto_1fr] lg:items-center">
+      <p className="whitespace-nowrap text-[0.58rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]/62">
+        {labelText}
+      </p>
+      <div className="flex gap-2 overflow-x-auto pb-1 text-[0.62rem] font-black uppercase tracking-[0.14em]">
+        {items.map(([text, href]) => {
+          const isActive = activePath === href || (href !== "/admin" && activePath.startsWith(`${href}/`));
+
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`shrink-0 border px-3 py-2.5 transition ${
+                isActive
+                  ? "border-[#9ed39f] bg-[#9ed39f] text-black"
+                  : "border-[#9ed39f]/30 text-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
+              }`}
+            >
+              {text}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function statusPill(status?: string | null) {
   return (
@@ -65,21 +105,10 @@ export function AdminShell({
         </div>
       </section>
 
-      <nav className="sticky top-0 z-20 border-b border-[#9ed39f]/20 bg-black/92 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-[1440px] gap-3 overflow-x-auto text-[0.68rem] font-black uppercase tracking-[0.16em]">
-          {adminNavItems.map(([text, href]) => (
-            <Link
-              key={href}
-              href={href}
-              className={`shrink-0 border px-4 py-3 transition ${
-                activePath === href
-                  ? "border-[#9ed39f] bg-[#9ed39f] text-black"
-                  : "border-[#9ed39f]/30 text-[#9ed39f] hover:bg-[#9ed39f] hover:text-black"
-              }`}
-            >
-              {text}
-            </Link>
-          ))}
+      <nav className="sticky top-0 z-20 border-b border-[#9ed39f]/20 bg-black/94 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-[1440px] gap-3 xl:grid-cols-[0.96fr_1.04fr] xl:items-start">
+          <AdminNavGroup labelText="Admin core" items={adminCoreNavItems} activePath={activePath} />
+          <AdminNavGroup labelText="Proposal ops" items={proposalNavItems} activePath={activePath} />
         </div>
       </nav>
 
