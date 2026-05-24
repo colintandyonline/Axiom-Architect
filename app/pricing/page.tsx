@@ -208,13 +208,13 @@ export default async function PricingPage() {
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div>
               <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-                Package ladder
+                Defined packages and custom proposals
               </p>
               <h1 className="mt-6 max-w-4xl text-[clamp(2.55rem,5.2vw,5rem)] font-black uppercase leading-[0.92] tracking-[-0.07em] text-white">
-                Workflow architecture packages with defined deliverable outcomes.
+                Choose a fixed package or request a bespoke workflow proposal.
               </h1>
               <p className="mt-6 max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-                Start with diagnosis, move into implementation planning, build operating assets, then scale into ongoing support, departmental architecture, or a flagship workflow system build. Each package now maps to a clear deliverable bundle.
+                Packages are defined services with clear deliverable bundles. Proposals are for custom-scoped work where the workflow, tools, budget, sensitivity, and implementation needs must be reviewed before the right deliverables are chosen.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <a href="/signup?tier=workflow-audit&account=required" className="inline-flex min-h-14 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white">
@@ -229,7 +229,7 @@ export default async function PricingPage() {
             <div className="grid gap-5">
               <ProductSystemVisual kind="architect-residency" />
               <div className="grid grid-cols-3 gap-3">
-                {["Diagnose", "Define", "Deliver"].map((item) => (
+                {["Package", "Proposal", "Deliver"].map((item) => (
                   <div key={item} className="border border-[#9ed39f]/25 bg-[#061008]/86 px-3 py-4 text-center">
                     <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{item}</p>
                   </div>
@@ -237,6 +237,44 @@ export default async function PricingPage() {
               </div>
             </div>
           </div>
+
+          <section className="mt-12 grid gap-5 lg:grid-cols-2">
+            <article className="rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
+              <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-black">
+                Route one
+              </p>
+              <h2 className="mt-5 text-3xl font-black uppercase leading-tight tracking-[-0.05em] text-white">
+                Buy a defined package
+              </h2>
+              <p className="mt-4 text-base leading-8 text-[#e6f6e7]/76">
+                Choose this when you already know the level of help you need: audit, blueprint, operating pack, stewardship, departmental system, or enterprise architecture system.
+              </p>
+              <div className="mt-5 grid gap-3 text-sm leading-7 text-[#e6f6e7]/72 sm:grid-cols-2">
+                <p><strong className="text-[#9ed39f]">Starts with:</strong> checkout and product intake.</p>
+                <p><strong className="text-[#9ed39f]">Best for:</strong> clear fixed-scope needs.</p>
+                <p><strong className="text-[#9ed39f]">Output:</strong> predefined deliverable bundle.</p>
+                <p><strong className="text-[#9ed39f]">Portal route:</strong> package client workspace.</p>
+              </div>
+            </article>
+
+            <article className="rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
+              <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-black">
+                Route two
+              </p>
+              <h2 className="mt-5 text-3xl font-black uppercase leading-tight tracking-[-0.05em] text-white">
+                Request a custom proposal
+              </h2>
+              <p className="mt-4 text-base leading-8 text-[#e6f6e7]/76">
+                Choose this when the work needs scoping first: complex workflows, sensitive data, technical implementation, multi-tool systems, or unclear requirements.
+              </p>
+              <div className="mt-5 grid gap-3 text-sm leading-7 text-[#e6f6e7]/72 sm:grid-cols-2">
+                <p><strong className="text-[#9ed39f]">Starts with:</strong> protected proposal intake.</p>
+                <p><strong className="text-[#9ed39f]">Best for:</strong> bespoke or uncertain scope.</p>
+                <p><strong className="text-[#9ed39f]">Output:</strong> recommended deliverable bundle.</p>
+                <p><strong className="text-[#9ed39f]">Portal route:</strong> proposal client workspace.</p>
+              </div>
+            </article>
+          </section>
 
           <div className="mt-12 grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
             {tiers.map((tier) => {
@@ -363,7 +401,7 @@ export default async function PricingPage() {
               How to begin
             </p>
             <p className="mt-4 max-w-4xl text-base leading-8">
-              Select a package, create your secure client account, complete checkout, and submit the intake matched to that product. For bespoke work, submit a proposal request so the deliverable bundle can be matched to your workflow specification.
+              Buy a defined package if you already know the service level you want. Request a custom proposal if the scope needs review first. Both routes use the same deliverable model, but the proposal route chooses the bundle after the workflow specification is reviewed.
             </p>
           </div>
         </div>
