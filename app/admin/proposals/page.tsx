@@ -265,6 +265,21 @@ function SegmentColumn({ title, views }: { title: string; views: ProposalView[] 
   );
 }
 
+function CommandArea({ href, eyebrow, title, text, count }: { href: string; eyebrow: string; title: string; text: string; count: string }) {
+  return (
+    <Link href={href} className="group border border-[#9ed39f]/24 bg-black/36 p-5 transition hover:border-[#9ed39f] hover:bg-[#9ed39f]">
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] group-hover:text-black/70">{eyebrow}</p>
+        <span className="border border-[#9ed39f]/35 px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[#9ed39f] group-hover:border-black group-hover:text-black">
+          {count}
+        </span>
+      </div>
+      <h3 className="mt-5 text-2xl font-black uppercase leading-tight tracking-[-0.055em] text-white group-hover:text-black">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-white/66 group-hover:text-black/72">{text}</p>
+    </Link>
+  );
+}
+
 export default async function AdminProposalClientsPage() {
   const { adminEmail } = await requireAxiomAdmin();
   const data = await getProposalAdminData();
@@ -334,10 +349,45 @@ export default async function AdminProposalClientsPage() {
 
       <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mx-auto grid max-w-[1440px] gap-8">
+          <AdminSection eyebrow="Command centre" title="Proposal control areas">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <CommandArea
+                href="/admin/proposals"
+                eyebrow="Workspace queue"
+                title="Proposal clients"
+                text="Open proposal clients, review their brief, and move into the single-client workspace command centre."
+                count={String(proposalViews.length)}
+              />
+              <CommandArea
+                href="/admin/proposals/documents"
+                eyebrow="Evidence"
+                title="Client documents"
+                text="Review client-uploaded PDFs, screenshots, notes, and supporting workflow material."
+                count={String(data.documents.length)}
+              />
+              <CommandArea
+                href="/admin/proposals/deliverables"
+                eyebrow="Delivery"
+                title="Sent deliverables"
+                text="Upload, release, and monitor Axiom-created files sent back to the client portal."
+                count={String(data.deliverables.length)}
+              />
+              <CommandArea
+                href="/admin/proposals/updates"
+                eyebrow="Messages"
+                title="Client updates"
+                text="Monitor client-visible updates and confirm which messages are still sent or marked as read."
+                count="read"
+              />
+            </div>
+          </AdminSection>
+
           <AdminSection eyebrow="Business pipeline" title="Proposal-client segmentation">
             <div className="mb-6 flex flex-wrap gap-3">
+              <Link href="/admin/proposals" className={buttonClass}>Proposal clients</Link>
               <Link href="/admin/proposals/documents" className={buttonClass}>Client documents</Link>
               <Link href="/admin/proposals/deliverables" className={buttonClass}>Sent deliverables</Link>
+              <Link href="/admin/proposals/updates" className={buttonClass}>Client updates</Link>
             </div>
             <div className="grid gap-4 lg:grid-cols-4">
               <SegmentColumn title="Needs review" views={reviewQueue} />
@@ -398,6 +448,7 @@ export default async function AdminProposalClientsPage() {
                         ) : null}
                         <Link href="/admin/proposals/documents" className={buttonClass}>View documents</Link>
                         <Link href="/admin/proposals/deliverables" className={buttonClass}>Manage deliverables</Link>
+                        <Link href="/admin/proposals/updates" className={buttonClass}>Client updates</Link>
                       </div>
                     </aside>
                   </article>
