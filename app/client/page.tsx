@@ -5,7 +5,7 @@ import { loadClientPortalData } from "../../lib/axiom-client-portal-data";
 export const metadata: Metadata = {
   title: "Client Workspace | Axiom Architect",
   description:
-    "Your private Axiom Architect workspace for proposal progress, updates, files, outputs, billing, and account details.",
+    "Your private Axiom Architect workspace for package progress, proposal progress, updates, files, outputs, billing, and account details.",
 };
 
 export const dynamic = "force-dynamic";
@@ -41,6 +41,11 @@ export default async function ClientPortalOverviewPage() {
   const latestActivity = liveData.latestActivity;
   const clientName = liveData.customer.full_name || liveData.user.email || "Client";
   const businessName = liveData.customer.business_name || "Your business";
+  const isPackageWorkspace = Boolean(workspace?.order_id);
+  const routeLabel = isPackageWorkspace ? "Package workspace" : "Client workspace";
+  const noWorkspaceNextAction = isPackageWorkspace
+    ? "Complete your package intake from the dashboard when you are ready. Once it is received, report progress and deliverables will appear here."
+    : "Submit a proposal intake when you are ready. Once it is received, the next action and review status will appear here.";
 
   const statusCards = [
     {
@@ -51,9 +56,11 @@ export default async function ClientPortalOverviewPage() {
     {
       label: "Current phase",
       value: workspace ? formatLabel(workspace.current_phase) : "Not started",
-      text: serviceRequest?.proposal_status
-        ? `Proposal: ${formatLabel(serviceRequest.proposal_status)}`
-        : "The current service phase will appear here.",
+      text: isPackageWorkspace
+        ? "Package progress appears here as intake, report preparation, and delivery move forward."
+        : serviceRequest?.proposal_status
+          ? `Proposal: ${formatLabel(serviceRequest.proposal_status)}`
+          : "The current service phase will appear here.",
     },
     {
       label: "Next action",
@@ -81,23 +88,33 @@ export default async function ClientPortalOverviewPage() {
     {
       href: "/client/deliverables",
       title: "Deliverables",
-      text: "View blueprints, reports, maps, protocols, and handoff files.",
+      text: isPackageWorkspace
+        ? "Open delivered reports, workflow maps, and package outputs."
+        : "View blueprints, reports, maps, protocols, and handoff files.",
     },
     {
       href: "/client/billing",
       title: "Billing",
-      text: "Review proposal value, invoices, and payment status.",
+      text: isPackageWorkspace
+        ? "Review your package order, payment status, and receipts."
+        : "Review proposal value, invoices, and payment status.",
     },
     {
       href: "/client/account",
       title: "Account",
       text: "Confirm your contact, business, and access details.",
     },
-    {
-      href: "/client/proposal",
-      title: "Proposal intake",
-      text: "Open the detailed proposal form for custom work.",
-    },
+    isPackageWorkspace
+      ? {
+          href: "/dashboard/intake",
+          title: "Package intake",
+          text: "Complete or update the workflow intake connected to your package.",
+        }
+      : {
+          href: "/client/proposal",
+          title: "Proposal intake",
+          text: "Open the detailed proposal form for custom work.",
+        },
   ];
 
   return (
@@ -106,7 +123,7 @@ export default async function ClientPortalOverviewPage() {
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(158,211,159,0.11)_1px,transparent_1px),linear-gradient(90deg,rgba(158,211,159,0.11)_1px,transparent_1px)] [background-size:44px_44px]" />
         <div className="relative mx-auto max-w-[1440px]">
           <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-            Client workspace
+            {routeLabel}
           </p>
 
           <div className="mt-6 grid gap-8 lg:grid-cols-[0.95fr_0.55fr] lg:items-end">
@@ -150,8 +167,7 @@ export default async function ClientPortalOverviewPage() {
             ) : null}
           </div>
           <p className="max-w-4xl text-base leading-8 text-black/76 sm:text-lg">
-            {workspace?.next_client_action ||
-              "Submit a proposal intake when you are ready. Once it is received, the next action and review status will appear here."}
+            {workspace?.next_client_action || noWorkspaceNextAction}
           </p>
         </div>
       </section>
@@ -225,7 +241,7 @@ export default async function ClientPortalOverviewPage() {
               </h2>
             </div>
             <p className="max-w-3xl text-base leading-8 text-[#e6f6e7]/75 sm:text-lg">
-              Each area has a clear job: progress, files, outputs, billing, account details, or proposal intake.
+              Each area has a clear job: progress, files, outputs, billing, account details, or intake.
             </p>
           </div>
 
