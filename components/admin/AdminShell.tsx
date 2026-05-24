@@ -16,6 +16,7 @@ const adminNavItems = [
   ["Proposal clients", "/admin/proposals"],
   ["Files received", "/admin/proposals/documents"],
   ["Sent deliverables", "/admin/proposals/deliverables"],
+  ["Client updates", "/admin/proposals/updates"],
   ["Analytics", "/admin/analytics"],
 ] as const;
 
