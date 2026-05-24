@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ProductSystemVisual } from "../../components/ProductSystemVisual";
 import { getAxiomAuthContext } from "../../lib/axiom-auth";
 import {
+  axiomDirectPurchasePackages,
   axiomPackageModels,
   getAxiomPackageDeliverables,
   type AxiomPackageKey,
@@ -50,144 +51,55 @@ export const metadata: Metadata = {
   },
 };
 
-type ProductSlug =
-  | "workflow-audit"
-  | "workflow-blueprint"
-  | "custom-operating-pack"
-  | "workflow-stewardship"
-  | "departmental-ecosystem"
-  | "architect-residency";
-
-type PricingTier = {
-  slug: ProductSlug;
-  publicSlug?: string;
-  packageKey?: AxiomPackageKey;
-  name: string;
+type PricingDisplay = {
   header: string;
   price: string;
   label: string;
-  summary: string;
-  includes: string[];
-  bestFor?: string[];
+  visualKind: string;
   featured?: boolean;
 };
 
-function packageTier({
-  slug,
-  publicSlug,
-  packageKey,
-  header,
-  price,
-  label,
-  featured,
-}: {
-  slug: ProductSlug;
-  publicSlug?: string;
-  packageKey: AxiomPackageKey;
-  header: string;
-  price: string;
-  label: string;
-  featured?: boolean;
-}): PricingTier {
-  const packageModel = axiomPackageModels[packageKey];
-  const deliverables = getAxiomPackageDeliverables(packageKey);
-
-  return {
-    slug,
-    publicSlug,
-    packageKey,
-    name: packageModel.name,
-    header,
-    price,
-    label,
-    summary: packageModel.shortDescription,
-    includes: [
-      ...packageModel.clientReceives,
-      ...deliverables.slice(0, 4).map((deliverable) => deliverable.title),
-    ],
-    bestFor: packageModel.bestFor,
-    featured,
-  };
-}
-
-const tiers: PricingTier[] = [
-  packageTier({
-    slug: "workflow-audit",
-    packageKey: "workflow_audit",
+const pricingDisplay: Partial<Record<AxiomPackageKey, PricingDisplay>> = {
+  workflow_audit: {
     header: "Entry diagnostic",
     price: "$49",
     label: "Focused diagnostic",
-  }),
-  packageTier({
-    slug: "workflow-blueprint",
-    packageKey: "workflow_blueprint",
+    visualKind: "workflow-audit",
+  },
+  workflow_blueprint: {
     header: "Implementation plan",
     price: "$149",
     label: "Recommended plan",
+    visualKind: "workflow-blueprint",
     featured: true,
-  }),
-  packageTier({
-    slug: "custom-operating-pack",
-    packageKey: "custom_operating_pack",
+  },
+  custom_operating_pack: {
     header: "Complete workflow system",
     price: "$399",
     label: "Complete workflow asset",
-  }),
-  {
-    slug: "workflow-stewardship",
-    name: "Workflow Stewardship",
+    visualKind: "custom-operating-pack",
+  },
+  workflow_stewardship: {
     header: "Monthly workflow stewardship",
     price: "$299/mo",
     label: "Ongoing optimisation",
-    summary:
-      "A monthly operating review for AI-supported workflows that keep changing after the first delivery.",
-    includes: [
-      "Monthly stewardship intake prompt",
-      "Review of workflow changes, errors, and bottlenecks",
-      "AI/tool update scan for relevant improvements",
-      "Updated priority list and next-step guidance",
-      "Human review gate and risk-control check",
-      "Monthly stewardship brief in the dashboard",
-      "30-day improvement window for relevant report updates",
-      "Light email support for minor workflow questions",
-    ],
-    bestFor: [
-      "Clients whose workflow changes month to month",
-      "Teams that need ongoing review instead of a one-off report",
-      "Businesses already using an Axiom blueprint or operating pack",
-    ],
+    visualKind: "workflow-stewardship",
   },
-  {
-    slug: "departmental-ecosystem",
-    name: "Departmental Ecosystem",
+  departmental_ecosystem: {
     header: "Departmental ecosystem",
     price: "$999",
     label: "Multi-workflow system",
-    summary:
-      "Map and connect up to five core workflows into a shared operating system for a team, department, or scaling business unit.",
-    includes: [
-      "Up to five core workflow maps",
-      "Cross-departmental handoff logic",
-      "Centralised data source strategy",
-      "Interdependency mapping",
-      "Universal Axiom documentation guide",
-      "Master implementation roadmap for the quarter",
-    ],
-    bestFor: [
-      "Teams with several connected workflows",
-      "Departments with unclear handoffs or duplicated work",
-      "Operators who need a shared workflow architecture",
-    ],
+    visualKind: "departmental-ecosystem",
   },
-  packageTier({
-    slug: "architect-residency",
-    publicSlug: "enterprise-architecture-system",
-    packageKey: "ai_workflow_system_build",
+  enterprise_architecture_system: {
     header: "Flagship enterprise architecture",
     price: "$2,499",
     label: "Flagship enterprise product",
-  }),
-];
+    visualKind: "architect-residency",
+  },
+};
+
+const directPackageModels = axiomDirectPurchasePackages.map((packageKey) => axiomPackageModels[packageKey]);
 
 export default async function PricingPage() {
   const { user, customer } = await getAxiomAuthContext();
@@ -271,57 +183,66 @@ export default async function PricingPage() {
           </section>
 
           <div className="mt-12 grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
-            {tiers.map((tier) => {
-              const publicSlug = tier.publicSlug || tier.slug;
+            {directPackageModels.map((packageModel) => {
+              const checkoutSlug = packageModel.checkoutSlug;
+              const display = pricingDisplay[packageModel.key];
+
+              if (!checkoutSlug || !display) {
+                return null;
+              }
+
+              const deliverables = getAxiomPackageDeliverables(packageModel.key);
+              const includes = [
+                ...packageModel.clientReceives,
+                ...deliverables.slice(0, 4).map((deliverable) => deliverable.title),
+              ];
 
               return (
                 <article
-                  key={tier.slug}
+                  key={packageModel.key}
                   className="group rounded-[2rem] border border-[#9ed39f]/34 bg-[#030804] p-6 text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)] transition duration-200 hover:border-black hover:bg-[#9ed39f] hover:text-black hover:shadow-[0_0_70px_rgba(158,211,159,0.24)]"
                 >
-                  <ProductSystemVisual kind={tier.slug} />
+                  <ProductSystemVisual kind={display.visualKind} />
 
                   <p className="mt-6 inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-black transition duration-200 group-hover:border-black group-hover:bg-black group-hover:text-[#9ed39f]">
-                    {tier.label}
+                    {display.label}
                   </p>
 
                   <p className="mt-5 text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f] transition duration-200 group-hover:text-black/64">
-                    {tier.header}
+                    {display.header}
                   </p>
 
                   <div className="mt-3 flex items-start justify-between gap-5">
                     <h2 className="text-2xl font-black uppercase tracking-[-0.04em] sm:text-3xl">
-                      {tier.name}
+                      {packageModel.name}
                     </h2>
-                    <p className="text-4xl font-black tracking-[-0.06em]">{tier.price}</p>
+                    <p className="text-4xl font-black tracking-[-0.06em]">{display.price}</p>
                   </div>
 
                   <p className="mt-5 text-base leading-7 text-[#e6f6e7]/78 transition duration-200 group-hover:text-black/76">
-                    {tier.summary}
+                    {packageModel.clientSummary}
                   </p>
 
-                  {tier.bestFor ? (
-                    <div className="mt-6 border border-[#9ed39f]/22 bg-black/30 p-4 transition duration-200 group-hover:border-black/20 group-hover:bg-black/10">
-                      <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 group-hover:text-black/68">
-                        Best for
-                      </p>
-                      <ul className="mt-3 space-y-2">
-                        {tier.bestFor.slice(0, 3).map((item) => (
-                          <li key={item} className="flex gap-3 text-sm leading-6">
-                            <span className="mt-2 h-1.5 w-1.5 shrink-0 bg-[#9ed39f] transition duration-200 group-hover:bg-black" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
+                  <div className="mt-6 border border-[#9ed39f]/22 bg-black/30 p-4 transition duration-200 group-hover:border-black/20 group-hover:bg-black/10">
+                    <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 group-hover:text-black/68">
+                      Best for
+                    </p>
+                    <ul className="mt-3 space-y-2">
+                      {packageModel.bestFor.slice(0, 3).map((item) => (
+                        <li key={item} className="flex gap-3 text-sm leading-6">
+                          <span className="mt-2 h-1.5 w-1.5 shrink-0 bg-[#9ed39f] transition duration-200 group-hover:bg-black" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
                   <div className="mt-6">
                     <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 group-hover:text-black/68">
                       Client receives
                     </p>
                     <ul className="mt-3 space-y-3">
-                      {tier.includes.map((item) => (
+                      {includes.map((item) => (
                         <li key={item} className="flex gap-3 text-sm leading-6">
                           <span className="mt-1.5 h-2 w-2 shrink-0 bg-[#9ed39f] transition duration-200 group-hover:bg-black" />
                           <span>{item}</span>
@@ -333,13 +254,13 @@ export default async function PricingPage() {
                   {isSignedIn ? (
                     <div className="mt-8 grid gap-3 sm:grid-cols-2">
                       <a
-                        href={`/products/${publicSlug}`}
+                        href={`/products/${packageModel.publicSlug}`}
                         className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f]/45 bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 hover:border-black hover:bg-white hover:text-black group-hover:!border-black group-hover:!bg-white group-hover:!text-black"
                       >
                         Learn more
                       </a>
                       <form action="/api/checkout" method="post">
-                        <input type="hidden" name="tier" value={tier.slug} />
+                        <input type="hidden" name="tier" value={checkoutSlug} />
                         <button
                           type="submit"
                           className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-black hover:text-white group-hover:!border-black group-hover:!bg-black group-hover:!text-white"
@@ -351,13 +272,13 @@ export default async function PricingPage() {
                   ) : (
                     <div className="mt-8 grid gap-3 sm:grid-cols-2">
                       <a
-                        href={`/products/${publicSlug}`}
+                        href={`/products/${packageModel.publicSlug}`}
                         className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f]/45 bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 hover:border-black hover:bg-white hover:text-black group-hover:!border-black group-hover:!bg-white group-hover:!text-black"
                       >
                         Learn more
                       </a>
                       <a
-                        href={`/signup?tier=${publicSlug}&account=required`}
+                        href={`/signup?tier=${checkoutSlug}&account=required`}
                         className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-black hover:text-white group-hover:!border-black group-hover:!bg-black group-hover:!text-white"
                       >
                         Start this package
