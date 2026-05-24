@@ -64,6 +64,19 @@ function clientDeliverableDescription(row: {
   return tidy(row.deliverable_type);
 }
 
+function deliverableHref(row: {
+  id: string;
+  storage_bucket: string | null;
+  storage_path: string | null;
+  external_url?: string | null;
+}) {
+  if (row.storage_bucket && row.storage_path) {
+    return `/api/client/deliverables/${row.id}/download`;
+  }
+
+  return row.external_url || null;
+}
+
 function formatDate(value: string | null | undefined) {
   if (!value) return "Not recorded";
 
@@ -114,32 +127,36 @@ export default async function ClientPortalDeliverablesPage() {
           <Link href="/client/operations" className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f] px-5 text-xs font-black uppercase tracking-[0.18em] text-[#9ed39f] hover:bg-[#9ed39f] hover:text-black">Back to operations</Link>
         </div>
         <div className="mt-8 grid gap-4">
-          {rows.length ? rows.map((row) => (
-            <article key={row.id} className="grid gap-4 border border-[#9ed39f]/24 bg-black p-5 lg:grid-cols-[1fr_auto] lg:items-center">
-              <div>
-                <div className="flex flex-wrap gap-2">
-                  <p className="inline-flex bg-[#9ed39f] px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-black">{clientStatusLabel(row.status)}</p>
-                  <p className="inline-flex border border-[#9ed39f]/35 px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">{clientDeliverableLabel(row)}</p>
+          {rows.length ? rows.map((row) => {
+            const href = deliverableHref(row);
+
+            return (
+              <article key={row.id} className="grid gap-4 border border-[#9ed39f]/24 bg-black p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div>
+                  <div className="flex flex-wrap gap-2">
+                    <p className="inline-flex bg-[#9ed39f] px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-black">{clientStatusLabel(row.status)}</p>
+                    <p className="inline-flex border border-[#9ed39f]/35 px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">{clientDeliverableLabel(row)}</p>
+                  </div>
+                  <h3 className="mt-3 break-words text-2xl font-black uppercase tracking-[-0.05em]">{row.title}</h3>
+                  <p className="mt-2 text-sm leading-7 text-white/68">{clientDeliverableDescription(row)}</p>
+                  <p className="mt-3 text-xs font-bold uppercase tracking-[0.14em] text-white/48">{row.original_filename || `Version ${row.version}`}</p>
                 </div>
-                <h3 className="mt-3 break-words text-2xl font-black uppercase tracking-[-0.05em]">{row.title}</h3>
-                <p className="mt-2 text-sm leading-7 text-white/68">{clientDeliverableDescription(row)}</p>
-                <p className="mt-3 text-xs font-bold uppercase tracking-[0.14em] text-white/48">{row.original_filename || `Version ${row.version}`}</p>
-              </div>
-              <div className="flex flex-col gap-3 text-left text-xs font-bold uppercase tracking-[0.14em] text-white/54 lg:items-end lg:text-right">
-                <p>{formatDate(row.delivered_at || row.created_at)}</p>
-                {row.storage_bucket && row.storage_path && (
-                  <a
-                    href={`/api/client/deliverables/${row.id}/download`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex min-h-11 items-center justify-center border border-[#9ed39f] px-4 text-xs font-black uppercase tracking-[0.16em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black"
-                  >
-                    Open deliverable
-                  </a>
-                )}
-              </div>
-            </article>
-          )) : <article className="border border-[#9ed39f]/24 bg-black p-6"><h3 className="text-2xl font-black uppercase tracking-[-0.05em]">No outputs attached.</h3><p className="mt-3 text-sm leading-7 text-white/68">Nothing has been released for this workspace yet.</p></article>}
+                <div className="flex flex-col gap-3 text-left text-xs font-bold uppercase tracking-[0.14em] text-white/54 lg:items-end lg:text-right">
+                  <p>{formatDate(row.delivered_at || row.created_at)}</p>
+                  {href && (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-11 items-center justify-center border border-[#9ed39f] px-4 text-xs font-black uppercase tracking-[0.16em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black"
+                    >
+                      Open deliverable
+                    </a>
+                  )}
+                </div>
+              </article>
+            );
+          }) : <article className="border border-[#9ed39f]/24 bg-black p-6"><h3 className="text-2xl font-black uppercase tracking-[-0.05em]">No outputs attached.</h3><p className="mt-3 text-sm leading-7 text-white/68">Nothing has been released for this workspace yet.</p></article>}
         </div>
       </section>
     </main>
