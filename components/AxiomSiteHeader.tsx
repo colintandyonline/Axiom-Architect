@@ -4,6 +4,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+const workflowAuditSignupHref = "/signup?tier=workflow-audit&account=required";
+
 const mainLinks = [
   { label: "Home", href: "/" },
   { label: "Workflow Audit", href: "/audit" },
@@ -143,7 +145,7 @@ export function AxiomSiteHeader() {
   const openDesktopSidebar = () => setDesktopSidebarOpen(true);
   const authHref = signedIn ? "/logout" : "/login";
   const authLabel = signedIn ? "Log Out" : "Login";
-  const primaryHref = signedIn ? "/dashboard" : "/signup";
+  const primaryHref = signedIn ? "/dashboard" : workflowAuditSignupHref;
   const primaryLabel = signedIn ? "Dashboard" : "Start Audit";
 
   const accountActions = (
