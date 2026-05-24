@@ -10,10 +10,42 @@ export const axiomDeliverableTypes = [
   "agent_instruction_kit",
   "implementation_workbook",
   "developer_build_brief",
+  "stewardship_review",
+  "departmental_architecture_map",
+  "enterprise_architecture_report",
   "handoff_pack",
 ] as const;
 
 export type AxiomDeliverableType = (typeof axiomDeliverableTypes)[number];
+
+export const axiomCheckoutProductSlugs = [
+  "workflow-audit",
+  "workflow-blueprint",
+  "custom-operating-pack",
+  "workflow-stewardship",
+  "departmental-ecosystem",
+  "architect-residency",
+] as const;
+
+export type AxiomCheckoutProductSlug = (typeof axiomCheckoutProductSlugs)[number];
+
+export const axiomReportTypes = [
+  "workflow_audit_report",
+  "workflow_blueprint_report",
+  "custom_operating_pack_report",
+  "workflow_stewardship_review",
+  "departmental_ecosystem_report",
+  "enterprise_architecture_system_report",
+  "ai_operating_protocol_report",
+  "agent_instruction_kit_report",
+  "implementation_workbook",
+  "developer_build_brief",
+  "bespoke_scope_report",
+] as const;
+
+export type AxiomReportType = (typeof axiomReportTypes)[number];
+
+export type AxiomServiceRoute = "package" | "proposal" | "both";
 
 export type AxiomDeliverableDefinition = {
   type: AxiomDeliverableType;
@@ -89,6 +121,24 @@ export const axiomDeliverableDefinitions: Record<AxiomDeliverableType, AxiomDeli
     clientOutcome: "A build-ready brief covering scope, technical surfaces, data boundaries, acceptance criteria, and delivery sequence.",
     adminPurpose: "Use for developer-ready implementation, repository work, system builds, or automation builds.",
   },
+  stewardship_review: {
+    type: "stewardship_review",
+    title: "Stewardship review",
+    clientOutcome: "A recurring review of workflow drift, tool changes, risks, bottlenecks, and improvement priorities.",
+    adminPurpose: "Use for monthly stewardship clients and ongoing optimisation cycles.",
+  },
+  departmental_architecture_map: {
+    type: "departmental_architecture_map",
+    title: "Departmental architecture map",
+    clientOutcome: "A connected view of multiple workflows, dependencies, handoffs, shared tools, and departmental operating logic.",
+    adminPurpose: "Use for departmental ecosystem projects and multi-workflow architecture reviews.",
+  },
+  enterprise_architecture_report: {
+    type: "enterprise_architecture_report",
+    title: "Enterprise architecture report",
+    clientOutcome: "A full architecture report for complex workflow systems, risk controls, dependencies, automation boundaries, and implementation planning.",
+    adminPurpose: "Use for flagship enterprise architecture system projects and high-complexity delivery.",
+  },
   handoff_pack: {
     type: "handoff_pack",
     title: "Handoff pack",
@@ -100,10 +150,13 @@ export const axiomDeliverableDefinitions: Record<AxiomDeliverableType, AxiomDeli
 export const axiomPackageKeys = [
   "workflow_audit",
   "workflow_blueprint",
+  "custom_operating_pack",
+  "workflow_stewardship",
+  "departmental_ecosystem",
+  "enterprise_architecture_system",
   "ai_operating_protocol",
   "agent_instruction_kit",
   "implementation_workbook",
-  "custom_operating_pack",
   "ai_workflow_system_build",
 ] as const;
 
@@ -112,8 +165,15 @@ export type AxiomPackageKey = (typeof axiomPackageKeys)[number];
 export type AxiomPackageModel = {
   key: AxiomPackageKey;
   name: string;
+  publicSlug: string;
+  checkoutSlug: AxiomCheckoutProductSlug | null;
+  reportType: AxiomReportType;
+  serviceRoute: AxiomServiceRoute;
+  canBuyDirectly: boolean;
+  canRequestAsProposal: boolean;
   status: string;
   shortDescription: string;
+  clientSummary: string;
   bestFor: string[];
   standardDeliverables: AxiomDeliverableType[];
   clientReceives: string[];
@@ -124,8 +184,15 @@ export const axiomPackageModels: Record<AxiomPackageKey, AxiomPackageModel> = {
   workflow_audit: {
     key: "workflow_audit",
     name: "Workflow Audit",
+    publicSlug: "workflow-audit",
+    checkoutSlug: "workflow-audit",
+    reportType: "workflow_audit_report",
+    serviceRoute: "package",
+    canBuyDirectly: true,
+    canRequestAsProposal: false,
     status: "Launch package",
     shortDescription: "A focused diagnostic for one workflow, process, tool stack, or operating problem.",
+    clientSummary: "Buy this when you need a clear diagnosis before changing tools, adding AI, or automating a workflow.",
     bestFor: [
       "Unclear process friction",
       "Repeated manual effort",
@@ -151,8 +218,15 @@ export const axiomPackageModels: Record<AxiomPackageKey, AxiomPackageModel> = {
   workflow_blueprint: {
     key: "workflow_blueprint",
     name: "Workflow Blueprint",
+    publicSlug: "workflow-blueprint",
+    checkoutSlug: "workflow-blueprint",
+    reportType: "workflow_blueprint_report",
+    serviceRoute: "package",
+    canBuyDirectly: true,
+    canRequestAsProposal: false,
     status: "Blueprint package",
     shortDescription: "A future-state operating model built from a diagnosed workflow.",
+    clientSummary: "Buy this when you need the diagnosed workflow turned into a practical operating model and implementation route.",
     bestFor: [
       "Teams ready to redesign a process",
       "Businesses needing role and handoff clarity",
@@ -175,11 +249,152 @@ export const axiomPackageModels: Record<AxiomPackageKey, AxiomPackageModel> = {
     ],
     adminGuidance: "Use this when diagnosis needs to become a structured future workflow and delivery plan.",
   },
+  custom_operating_pack: {
+    key: "custom_operating_pack",
+    name: "Custom Operating Pack",
+    publicSlug: "custom-operating-pack",
+    checkoutSlug: "custom-operating-pack",
+    reportType: "custom_operating_pack_report",
+    serviceRoute: "package",
+    canBuyDirectly: true,
+    canRequestAsProposal: true,
+    status: "Operating pack",
+    shortDescription: "A bundled operating pack for a workflow, team, or business function.",
+    clientSummary: "Buy this when you need several practical workflow assets bundled into one operating pack.",
+    bestFor: [
+      "Clients needing a practical pack but not a full custom build",
+      "Operators who need templates, instructions, workflow maps, and review gates",
+      "Teams moving from diagnosis into repeatable execution",
+    ],
+    standardDeliverables: [
+      "workflow_map",
+      "ai_operating_protocol",
+      "agent_instruction_kit",
+      "implementation_workbook",
+      "handoff_pack",
+    ],
+    clientReceives: [
+      "Operating pack PDF",
+      "Workflow map",
+      "AI protocol",
+      "Assistant instructions",
+      "Workbook or checklist",
+      "Handoff notes",
+    ],
+    adminGuidance: "Use this when the client needs several practical operating assets bundled together.",
+  },
+  workflow_stewardship: {
+    key: "workflow_stewardship",
+    name: "Workflow Stewardship",
+    publicSlug: "workflow-stewardship",
+    checkoutSlug: "workflow-stewardship",
+    reportType: "workflow_stewardship_review",
+    serviceRoute: "package",
+    canBuyDirectly: true,
+    canRequestAsProposal: true,
+    status: "Ongoing optimisation",
+    shortDescription: "A recurring review cycle for workflows that keep changing after the first delivery.",
+    clientSummary: "Buy this when you need ongoing review, drift checks, and improvement guidance after an initial workflow delivery.",
+    bestFor: [
+      "Clients whose workflow changes month to month",
+      "Teams that need ongoing review instead of a one-off report",
+      "Businesses already using an Axiom blueprint or operating pack",
+    ],
+    standardDeliverables: [
+      "stewardship_review",
+      "risk_review_matrix",
+      "implementation_sequence",
+      "handoff_pack",
+    ],
+    clientReceives: [
+      "Monthly stewardship brief",
+      "Workflow change review",
+      "Updated priority list",
+      "Risk-control check",
+      "Next-step guidance",
+    ],
+    adminGuidance: "Use this for retained clients whose workflow needs repeated review and updates.",
+  },
+  departmental_ecosystem: {
+    key: "departmental_ecosystem",
+    name: "Departmental Ecosystem",
+    publicSlug: "departmental-ecosystem",
+    checkoutSlug: "departmental-ecosystem",
+    reportType: "departmental_ecosystem_report",
+    serviceRoute: "package",
+    canBuyDirectly: true,
+    canRequestAsProposal: true,
+    status: "Multi-workflow system",
+    shortDescription: "A departmental architecture package for multiple connected workflows.",
+    clientSummary: "Buy this when a team or department needs several workflows mapped into one shared operating system.",
+    bestFor: [
+      "Teams with several connected workflows",
+      "Departments with unclear handoffs or duplicated work",
+      "Operators who need a shared workflow architecture",
+    ],
+    standardDeliverables: [
+      "departmental_architecture_map",
+      "workflow_map",
+      "tool_stack_architecture",
+      "risk_review_matrix",
+      "implementation_sequence",
+      "handoff_pack",
+    ],
+    clientReceives: [
+      "Departmental architecture report",
+      "Up to five workflow maps",
+      "Cross-workflow handoff logic",
+      "Shared tool and data-flow guidance",
+      "Quarter roadmap",
+    ],
+    adminGuidance: "Use this when multiple workflows need to be connected into a single operating model.",
+  },
+  enterprise_architecture_system: {
+    key: "enterprise_architecture_system",
+    name: "Axiom Enterprise Architecture System",
+    publicSlug: "enterprise-architecture-system",
+    checkoutSlug: "architect-residency",
+    reportType: "enterprise_architecture_system_report",
+    serviceRoute: "both",
+    canBuyDirectly: true,
+    canRequestAsProposal: true,
+    status: "Flagship enterprise product",
+    shortDescription: "A fixed-price flagship architecture package for complex workflow systems.",
+    clientSummary: "Buy or scope this when the work needs enterprise-level architecture, dependencies, governance, and implementation planning.",
+    bestFor: [
+      "Complex workflow systems",
+      "High-risk or high-dependency operations",
+      "Clients needing enterprise-level architecture and implementation direction",
+    ],
+    standardDeliverables: [
+      "enterprise_architecture_report",
+      "workflow_diagnosis",
+      "tool_stack_architecture",
+      "risk_review_matrix",
+      "implementation_sequence",
+      "handoff_pack",
+    ],
+    clientReceives: [
+      "Enterprise architecture report",
+      "Current-state and future-state system map",
+      "Risk and exception model",
+      "Tool stack and data-flow guidance",
+      "Implementation roadmap",
+    ],
+    adminGuidance: "Use this for the highest-complexity fixed-price architecture route.",
+  },
   ai_operating_protocol: {
     key: "ai_operating_protocol",
     name: "Custom AI Operating Protocol",
-    status: "Protocol package",
+    publicSlug: "ai-operating-protocol",
+    checkoutSlug: null,
+    reportType: "ai_operating_protocol_report",
+    serviceRoute: "proposal",
+    canBuyDirectly: false,
+    canRequestAsProposal: true,
+    status: "Protocol outcome",
     shortDescription: "Rules for using AI safely and repeatedly inside a defined workflow.",
+    clientSummary: "Request this when your team needs clear AI rules, boundaries, review gates, and repeatable usage standards.",
     bestFor: [
       "Teams using AI inconsistently",
       "Sensitive or quality-critical workflows",
@@ -204,8 +419,15 @@ export const axiomPackageModels: Record<AxiomPackageKey, AxiomPackageModel> = {
   agent_instruction_kit: {
     key: "agent_instruction_kit",
     name: "Agent Instruction Kit",
-    status: "Assistant package",
+    publicSlug: "agent-instruction-kit",
+    checkoutSlug: null,
+    reportType: "agent_instruction_kit_report",
+    serviceRoute: "proposal",
+    canBuyDirectly: false,
+    canRequestAsProposal: true,
+    status: "Assistant outcome",
     shortDescription: "Role-specific assistant instructions designed around a real workflow and its controls.",
+    clientSummary: "Request this when you need assistant roles and instructions built around a real workflow.",
     bestFor: [
       "Clients who want repeatable AI assistants rather than random chat use",
       "Internal support, research, reporting, intake, or operations assistants",
@@ -229,8 +451,15 @@ export const axiomPackageModels: Record<AxiomPackageKey, AxiomPackageModel> = {
   implementation_workbook: {
     key: "implementation_workbook",
     name: "Implementation Workbook",
-    status: "Action package",
+    publicSlug: "implementation-workbook",
+    checkoutSlug: null,
+    reportType: "implementation_workbook",
+    serviceRoute: "proposal",
+    canBuyDirectly: false,
+    canRequestAsProposal: true,
+    status: "Action outcome",
     shortDescription: "A practical action workbook for applying an approved audit or blueprint.",
+    clientSummary: "Request this when you need an implementation workbook rather than a full build.",
     bestFor: [
       "Clients who want to execute internally",
       "Teams needing ownership, checklists, and sequencing",
@@ -246,38 +475,18 @@ export const axiomPackageModels: Record<AxiomPackageKey, AxiomPackageModel> = {
     ],
     adminGuidance: "Use this when the client needs guided internal execution rather than a custom build.",
   },
-  custom_operating_pack: {
-    key: "custom_operating_pack",
-    name: "Custom Operating Pack",
-    status: "Operating pack",
-    shortDescription: "A bundled operating pack for a workflow, team, or business function.",
-    bestFor: [
-      "Clients needing a practical pack but not a full custom build",
-      "Operators who need templates, instructions, workflow maps, and review gates",
-      "Teams moving from diagnosis into repeatable execution",
-    ],
-    standardDeliverables: [
-      "workflow_map",
-      "ai_operating_protocol",
-      "agent_instruction_kit",
-      "implementation_workbook",
-      "handoff_pack",
-    ],
-    clientReceives: [
-      "Operating pack PDF",
-      "Workflow map",
-      "AI protocol",
-      "Assistant instructions",
-      "Workbook or checklist",
-      "Handoff notes",
-    ],
-    adminGuidance: "Use this when the client needs several practical operating assets bundled together.",
-  },
   ai_workflow_system_build: {
     key: "ai_workflow_system_build",
     name: "AI Workflow System Build",
-    status: "Build package",
+    publicSlug: "ai-workflow-system-build",
+    checkoutSlug: null,
+    reportType: "developer_build_brief",
+    serviceRoute: "proposal",
+    canBuyDirectly: false,
+    canRequestAsProposal: true,
+    status: "Bespoke build route",
     shortDescription: "A larger service path for designing and building the operating system around the work.",
+    clientSummary: "Request this when architecture needs to become a working implementation, automation layer, dashboard, or connected system.",
     bestFor: [
       "Higher-budget bespoke clients",
       "Clients needing implementation, tooling, repository work, automation, dashboards, or integrations",
@@ -303,9 +512,43 @@ export const axiomPackageModels: Record<AxiomPackageKey, AxiomPackageModel> = {
   },
 };
 
+export const axiomDirectPurchasePackages = axiomPackageKeys.filter(
+  (packageKey) => axiomPackageModels[packageKey].canBuyDirectly,
+);
+
+export const axiomProposalPackages = axiomPackageKeys.filter(
+  (packageKey) => axiomPackageModels[packageKey].canRequestAsProposal,
+);
+
+export const axiomCheckoutSlugToPackageKey = Object.fromEntries(
+  axiomPackageKeys
+    .map((packageKey) => axiomPackageModels[packageKey])
+    .filter((packageModel) => packageModel.checkoutSlug)
+    .map((packageModel) => [packageModel.checkoutSlug, packageModel.key]),
+) as Partial<Record<AxiomCheckoutProductSlug, AxiomPackageKey>>;
+
+export const axiomPublicSlugToPackageKey = Object.fromEntries(
+  axiomPackageKeys.map((packageKey) => {
+    const packageModel = axiomPackageModels[packageKey];
+    return [packageModel.publicSlug, packageModel.key];
+  }),
+) as Record<string, AxiomPackageKey>;
+
 export function getAxiomPackageModel(packageKey: string | null | undefined) {
   if (!packageKey) return null;
   return axiomPackageModels[packageKey as AxiomPackageKey] || null;
+}
+
+export function getAxiomPackageByCheckoutSlug(checkoutSlug: string | null | undefined) {
+  if (!checkoutSlug) return null;
+  const packageKey = axiomCheckoutSlugToPackageKey[checkoutSlug as AxiomCheckoutProductSlug];
+  return packageKey ? axiomPackageModels[packageKey] : null;
+}
+
+export function getAxiomPackageByPublicSlug(publicSlug: string | null | undefined) {
+  if (!publicSlug) return null;
+  const packageKey = axiomPublicSlugToPackageKey[publicSlug];
+  return packageKey ? axiomPackageModels[packageKey] : null;
 }
 
 export function getAxiomDeliverableDefinition(deliverableType: string | null | undefined) {
@@ -339,11 +582,15 @@ export function recommendAxiomPackageFromProposal({
   const implementation = `${implementationRequired || ""}`.toLowerCase();
   const budget = `${budgetRange || ""}`.toLowerCase();
 
-  if (support.includes("full guarded system build") || scope.includes("enterprise") || budget.includes("$10,000")) {
+  if (support.includes("full guarded system build") || implementation.includes("repository")) {
     return axiomPackageModels.ai_workflow_system_build;
   }
 
-  if (support.includes("developer-ready") || scope.includes("developer-ready") || implementation.includes("repository")) {
+  if (scope.includes("enterprise") || budget.includes("$10,000")) {
+    return axiomPackageModels.enterprise_architecture_system;
+  }
+
+  if (support.includes("developer-ready") || scope.includes("developer-ready")) {
     return axiomPackageModels.ai_workflow_system_build;
   }
 
@@ -353,6 +600,10 @@ export function recommendAxiomPackageFromProposal({
 
   if (support.includes("automation design") || scope.includes("automation")) {
     return axiomPackageModels.workflow_blueprint;
+  }
+
+  if (support.includes("manual implementation")) {
+    return axiomPackageModels.implementation_workbook;
   }
 
   if (support.includes("workflow diagnosis") || support.includes("blueprint")) {
