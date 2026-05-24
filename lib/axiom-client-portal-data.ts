@@ -93,6 +93,7 @@ export type ClientPortalDeliverable = {
   file_size_bytes: number | null;
   approved_at: string | null;
   delivered_at: string | null;
+  metadata: Record<string, unknown>;
   created_at: string;
 };
 
@@ -237,7 +238,7 @@ async function getWorkspaceDocuments(workspaceId: string) {
 async function getWorkspaceDeliverables(workspaceId: string) {
   return (
     (await supabaseServiceFetch<ClientPortalDeliverable[]>(
-      `axiom_workspace_deliverables?select=id,workspace_id,customer_id,deliverable_type,title,description,status,version,approval_required,original_filename,storage_bucket,storage_path,mime_type,file_size_bytes,approved_at,delivered_at,created_at&workspace_id=eq.${encodeURIComponent(workspaceId)}&order=created_at.desc&limit=12`,
+      `axiom_workspace_deliverables?select=id,workspace_id,customer_id,deliverable_type,title,description,status,version,approval_required,original_filename,storage_bucket,storage_path,mime_type,file_size_bytes,approved_at,delivered_at,metadata,created_at&workspace_id=eq.${encodeURIComponent(workspaceId)}&order=created_at.desc&limit=12`,
     )) || []
   );
 }
