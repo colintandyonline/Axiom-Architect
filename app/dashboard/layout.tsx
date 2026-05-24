@@ -7,6 +7,22 @@ import { getAxiomAuthContext, getAxiomClientWorkspaceByCustomerId } from "../../
 
 export const dynamic = "force-dynamic";
 
+function shouldRouteWorkspaceToClientPortal(workspace: Awaited<ReturnType<typeof getAxiomClientWorkspaceByCustomerId>>) {
+  if (!workspace) {
+    return false;
+  }
+
+  if (workspace.order_id) {
+    return false;
+  }
+
+  if (workspace.workspace_type === "package_client_portal" || workspace.workspace_type === "report_delivery_workspace") {
+    return false;
+  }
+
+  return Boolean(workspace.service_request_id);
+}
+
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const authContext = await getAxiomAuthContext();
   const isAdmin =
@@ -16,7 +32,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   if (authContext.user && authContext.customer && !isAdmin) {
     const serviceWorkspace = await getAxiomClientWorkspaceByCustomerId(authContext.customer.id);
 
-    if (serviceWorkspace) {
+    if (shouldRouteWorkspaceToClientPortal(serviceWorkspace)) {
       redirect("/client");
     }
   }
