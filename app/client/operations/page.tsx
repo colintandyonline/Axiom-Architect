@@ -26,9 +26,9 @@ export default async function ClientPortalOperationsPage() {
   const messages = data.messages.slice(0, 4);
 
   const stats = [
-    ["Stage", workspace ? label(workspace.current_phase) : "Not started", workspace?.current_priority || "Current focus will appear here."],
-    ["Action", workspace?.next_client_action ? "Set" : "None", workspace?.next_client_action || "No action is needed from you right now."],
-    ["Approvals", String(approvals.length), approvals.length ? "Waiting for review." : "Nothing waiting."],
+    ["Status", workspace ? label(workspace.status) : "Not started", workspace?.current_priority || "Current priority will appear here."],
+    ["Phase", workspace ? label(workspace.current_phase) : "Not started", workspace?.current_priority || "Current focus will appear here."],
+    ["Next action", workspace?.next_client_action ? "Assigned" : "None", workspace?.next_client_action || "No action is needed from you right now."],
     ["Latest", latest ? label(latest.activity_type) : "Waiting", latest?.title || "No update yet."],
   ];
 
@@ -44,10 +44,24 @@ export default async function ClientPortalOperationsPage() {
           </div>
           <aside className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5">
             <div className="mb-5 flex h-10 w-10 items-center justify-center border border-[#9ed39f] text-[#9ed39f]">⌁</div>
-            <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Focus</p>
-            <p className="mt-3 text-2xl font-black uppercase leading-tight tracking-[-0.04em] text-white">{workspace?.current_priority || "Proposal review"}</p>
+            <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Current phase</p>
+            <p className="mt-3 text-2xl font-black uppercase leading-tight tracking-[-0.04em] text-white">{workspace ? label(workspace.current_phase) : "Not started"}</p>
             <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/72">{workspace?.next_client_action || "No action is needed from you right now."}</p>
           </aside>
+        </div>
+      </section>
+
+      <section className="bg-[#9ed39f] px-4 py-10 text-black sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-[1440px] gap-6 lg:grid-cols-[0.42fr_1fr] lg:items-center">
+          <div>
+            <p className="inline-flex border border-black bg-black px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]">Client action</p>
+            <h2 className="mt-5 text-[clamp(2rem,4vw,4rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-black">
+              {workspace?.next_client_action ? "Action assigned." : "No action needed."}
+            </h2>
+          </div>
+          <p className="max-w-4xl text-base leading-8 text-black/76 sm:text-lg">
+            {workspace?.next_client_action || "Axiom has not assigned a client action right now. Check back here when the workspace state changes."}
+          </p>
         </div>
       </section>
 
@@ -72,9 +86,11 @@ export default async function ClientPortalOperationsPage() {
           </div>
           <div className="grid gap-3">
             <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.28fr_1fr] md:items-center"><p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Workspace</p><p className="text-sm font-semibold leading-7 text-white md:text-base">{workspace?.workspace_name || "No workspace yet"}</p></div>
-            <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.28fr_1fr] md:items-center"><p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Stage</p><p className="text-sm font-semibold leading-7 text-white md:text-base">{workspace ? label(workspace.current_phase) : "Not started"}</p></div>
-            <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.28fr_1fr] md:items-center"><p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Next action</p><p className="text-sm font-semibold leading-7 text-white md:text-base">{workspace?.next_client_action || "No action is needed from you right now."}</p></div>
-            <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.28fr_1fr] md:items-center"><p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Updated</p><p className="text-sm font-semibold leading-7 text-white md:text-base">{date(latest?.created_at)}</p></div>
+            <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.28fr_1fr] md:items-center"><p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Status</p><p className="text-sm font-semibold leading-7 text-white md:text-base">{workspace ? label(workspace.status) : "Not started"}</p></div>
+            <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.28fr_1fr] md:items-center"><p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Phase</p><p className="text-sm font-semibold leading-7 text-white md:text-base">{workspace ? label(workspace.current_phase) : "Not started"}</p></div>
+            <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.28fr_1fr] md:items-center"><p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Priority</p><p className="text-sm font-semibold leading-7 text-white md:text-base">{workspace?.current_priority || "No current priority set."}</p></div>
+            <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.28fr_1fr] md:items-start"><p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Next action</p><p className="text-sm font-semibold leading-7 text-white md:text-base">{workspace?.next_client_action || "No action is needed from you right now."}</p></div>
+            <div className="grid gap-2 border border-[#9ed39f]/20 bg-[#030804] p-4 md:grid-cols-[0.28fr_1fr] md:items-center"><p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Updated</p><p className="text-sm font-semibold leading-7 text-white md:text-base">{date(latest?.created_at || workspace?.updated_at)}</p></div>
           </div>
         </div>
       </section>
