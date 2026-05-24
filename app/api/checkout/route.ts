@@ -1,66 +1,49 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getAxiomAuthContext } from "../../../lib/axiom-auth";
+import {
+  axiomCheckoutProductSlugs,
+  getAxiomPackageByCheckoutSlug,
+  type AxiomCheckoutProductSlug,
+} from "../../../lib/axiom-package-model";
 
 export const runtime = "nodejs";
 
-type ProductSlug =
-  | "workflow-audit"
-  | "workflow-blueprint"
-  | "custom-operating-pack"
-  | "workflow-stewardship"
-  | "departmental-ecosystem"
-  | "architect-residency";
-
-const productConfig: Record<
-  ProductSlug,
+const checkoutConfig: Record<
+  AxiomCheckoutProductSlug,
   {
-    name: string;
     priceEnv: string;
     mode: "payment" | "subscription";
   }
 > = {
   "workflow-audit": {
-    name: "Workflow Audit",
     priceEnv: "STRIPE_PRICE_WORKFLOW_AUDIT",
     mode: "payment",
   },
   "workflow-blueprint": {
-    name: "Workflow Blueprint",
     priceEnv: "STRIPE_PRICE_WORKFLOW_BLUEPRINT",
     mode: "payment",
   },
   "custom-operating-pack": {
-    name: "Custom Operating Pack",
     priceEnv: "STRIPE_PRICE_CUSTOM_OPERATING_PACK",
     mode: "payment",
   },
   "workflow-stewardship": {
-    name: "Workflow Stewardship",
     priceEnv: "STRIPE_PRICE_WORKFLOW_STEWARDSHIP",
     mode: "subscription",
   },
   "departmental-ecosystem": {
-    name: "Departmental Ecosystem",
     priceEnv: "STRIPE_PRICE_DEPARTMENTAL_ECOSYSTEM",
     mode: "payment",
   },
   "architect-residency": {
-    name: "Axiom Enterprise Architecture System",
     priceEnv: "STRIPE_PRICE_ENTERPRISE_ARCHITECTURE_SYSTEM",
     mode: "payment",
   },
 };
 
-function isProductSlug(value: FormDataEntryValue | string | null): value is ProductSlug {
-  return (
-    value === "workflow-audit" ||
-    value === "workflow-blueprint" ||
-    value === "custom-operating-pack" ||
-    value === "workflow-stewardship" ||
-    value === "departmental-ecosystem" ||
-    value === "architect-residency"
-  );
+function isCheckoutProductSlug(value: FormDataEntryValue | string | null): value is AxiomCheckoutProductSlug {
+  return typeof value === "string" && (axiomCheckoutProductSlugs as readonly string[]).includes(value);
 }
 
 function getAppUrl(request: Request) {
@@ -81,8 +64,8 @@ function getStripeClient() {
   return new Stripe(secretKey);
 }
 
-function getPriceId(product: ProductSlug) {
-  const envName = productConfig[product].priceEnv;
+function getPriceId(product: AxiomCheckoutProductSlug) {
+  const envName = checkoutConfig[product].priceEnv;
   const priceId = process.env[envName];
 
   if (!priceId) {
@@ -92,7 +75,7 @@ function getPriceId(product: ProductSlug) {
   return priceId;
 }
 
-function redirectToSignup(request: Request, product: ProductSlug, reason: string) {
+function redirectToSignup(request: Request, product: AxiomCheckoutProductSlug, reason: string) {
   const appUrl = getAppUrl(request);
   return NextResponse.redirect(`${appUrl}/signup?tier=${product}&account=${reason}`, 303);
 }
@@ -100,10 +83,15 @@ function redirectToSignup(request: Request, product: ProductSlug, reason: string
 export async function POST(request: Request) {
   const formData = await request.formData();
   const tierValue = formData.get("tier");
-  const product: ProductSlug = isProductSlug(tierValue) ? tierValue : "workflow-blueprint";
-  const selectedProduct = productConfig[product];
+  const product: AxiomCheckoutProductSlug = isCheckoutProductSlug(tierValue) ? tierValue : "workflow-blueprint";
+  const selectedCheckout = checkoutConfig[product];
+  const selectedPackage = getAxiomPackageByCheckoutSlug(product);
   const appUrl = getAppUrl(request);
   const { user, customer } = await getAxiomAuthContext();
+
+  if (!selectedPackage) {
+    return NextResponse.redirect(`${appUrl}/pricing?tier=${product}&error=unknown-package`, 303);
+  }
 
   if (!user) {
     return redirectToSignup(request, product, "required");
@@ -124,7 +112,11 @@ export async function POST(request: Request) {
     const metadata = {
       tier: product,
       product_slug: product,
-      service_name: selectedProduct.name,
+      package_key: selectedPackage.key,
+      public_slug: selectedPackage.publicSlug,
+      report_type: selectedPackage.reportType,
+      service_route: selectedPackage.serviceRoute,
+      service_name: selectedPackage.name,
       auth_user_id: user.id,
       axiom_customer_id: customer.id,
       customer_name: customer.full_name || user.email || "",
@@ -133,7 +125,7 @@ export async function POST(request: Request) {
     };
 
     const baseSessionConfig = {
-      mode: selectedProduct.mode,
+      mode: selectedCheckout.mode,
       customer_email: customer.email,
       line_items: [
         {
@@ -153,7 +145,7 @@ export async function POST(request: Request) {
     } satisfies Stripe.Checkout.SessionCreateParams;
 
     const session = await stripe.checkout.sessions.create(
-      selectedProduct.mode === "subscription"
+      selectedCheckout.mode === "subscription"
         ? {
             ...baseSessionConfig,
             mode: "subscription",
