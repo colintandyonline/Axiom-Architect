@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { loadClientPortalData } from "../../../lib/axiom-client-portal-data";
 
@@ -43,7 +43,7 @@ export default async function ClientPortalOperationsPage() {
             <p className="mt-5 max-w-3xl text-base leading-8 text-[#e6f6e7]/74 sm:text-lg">Status, actions, approvals, and messages for this workspace.</p>
           </div>
           <aside className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5">
-            <div className="mb-5 flex h-10 w-10 items-center justify-center border border-[#9ed39f] text-[#9ed39f]">⌁</div>
+            <div className="mb-5 flex h-10 w-10 items-center justify-center border border-[#9ed39f] text-[#9ed39f]">âŒ</div>
             <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Current phase</p>
             <p className="mt-3 text-2xl font-black uppercase leading-tight tracking-[-0.04em] text-white">{workspace ? label(workspace.current_phase) : "Not started"}</p>
             <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/72">{workspace?.next_client_action || "No action is needed from you right now."}</p>
@@ -69,7 +69,7 @@ export default async function ClientPortalOperationsPage() {
         <div className="mx-auto grid max-w-[1440px] gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {stats.map(([name, value, text]) => (
             <article key={name} className="border border-[#9ed39f]/30 bg-black p-5">
-              <span className="mb-5 flex h-9 w-9 items-center justify-center border border-[#9ed39f]/60 text-[#9ed39f]">▣</span>
+              <span className="mb-5 flex h-9 w-9 items-center justify-center border border-[#9ed39f]/60 text-[#9ed39f]">â–£</span>
               <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{name}</p>
               <h2 className="mt-3 text-3xl font-black uppercase tracking-[-0.05em] text-white">{value}</h2>
               <p className="mt-4 text-sm leading-6 text-[#e6f6e7]/72">{text}</p>
@@ -119,3 +119,4 @@ export default async function ClientPortalOperationsPage() {
     </main>
   );
 }
+
