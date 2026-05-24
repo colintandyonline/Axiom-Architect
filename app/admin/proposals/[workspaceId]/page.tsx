@@ -6,8 +6,8 @@ import { formatDate, label } from "../../../../lib/axiom-admin-dashboard";
 import { AdminSection, AdminShell, StatCard, buttonClass, primaryButtonClass, statusPill } from "../../../../components/admin/AdminShell";
 
 export const metadata: Metadata = {
-  title: "Proposal Workspace | Axiom Architect Admin",
-  description: "Internal Axiom Architect workspace command centre for a single proposal client.",
+  title: "Client Workspace | Axiom Architect Admin",
+  description: "Internal Axiom Architect workspace command centre for a single client.",
 };
 
 export const dynamic = "force-dynamic";
@@ -19,6 +19,7 @@ type WorkspaceRecord = {
   id: string;
   customer_id: string;
   service_request_id: string | null;
+  order_id: string | null;
   workspace_name: string;
   status: string | null;
   current_phase: string | null;
@@ -50,6 +51,18 @@ type ProposalRecord = {
   request_payload: JsonRecord | null;
   created_at: string | null;
   updated_at: string | null;
+};
+
+type OrderRecord = {
+  id: string;
+  customer_id: string | null;
+  tier_slug: string | null;
+  service_name: string | null;
+  status: string | null;
+  payment_status: string | null;
+  amount_total: number | null;
+  currency: string | null;
+  created_at: string | null;
 };
 
 type CustomerRecord = {
@@ -113,6 +126,7 @@ type ActivityRecord = {
 type WorkspacePageData = {
   workspace: WorkspaceRecord | null;
   proposal: ProposalRecord | null;
+  order: OrderRecord | null;
   customer: CustomerRecord | null;
   documents: DocumentRecord[];
   deliverables: DeliverableRecord[];
@@ -151,18 +165,23 @@ async function supabaseFetch<T>(path: string): Promise<T | null> {
 
 async function getWorkspacePageData(workspaceId: string): Promise<WorkspacePageData> {
   const workspaceRecords = await supabaseFetch<WorkspaceRecord[]>(
-    `axiom_client_workspaces?select=id,customer_id,service_request_id,workspace_name,status,current_phase,current_priority,next_client_action,axiom_review_focus,last_activity_at,created_at,updated_at&id=eq.${encodeURIComponent(workspaceId)}&limit=1`,
+    `axiom_client_workspaces?select=id,customer_id,service_request_id,order_id,workspace_name,status,current_phase,current_priority,next_client_action,axiom_review_focus,last_activity_at,created_at,updated_at&id=eq.${encodeURIComponent(workspaceId)}&limit=1`,
   );
   const workspace = workspaceRecords?.[0] || null;
 
-  if (!workspace) return { workspace: null, proposal: null, customer: null, documents: [], deliverables: [], activities: [] };
+  if (!workspace) return { workspace: null, proposal: null, order: null, customer: null, documents: [], deliverables: [], activities: [] };
 
-  const [proposalRecords, customerRecords, documents, deliverables, activities] = await Promise.all([
+  const [proposalRecords, orderRecords, customerRecords, documents, deliverables, activities] = await Promise.all([
     workspace.service_request_id
       ? supabaseFetch<ProposalRecord[]>(
           `axiom_service_requests?select=id,customer_id,request_type,status,proposal_status,contact_name,email,business_name,role,website,scope_type,support_type,budget_range,timeline,sensitive_data,summary_message,request_payload,created_at,updated_at&id=eq.${encodeURIComponent(workspace.service_request_id)}&limit=1`,
         )
       : Promise.resolve([] as ProposalRecord[]),
+    workspace.order_id
+      ? supabaseFetch<OrderRecord[]>(
+          `axiom_orders?select=id,customer_id,tier_slug,service_name,status,payment_status,amount_total,currency,created_at&id=eq.${encodeURIComponent(workspace.order_id)}&limit=1`,
+        )
+      : Promise.resolve([] as OrderRecord[]),
     supabaseFetch<CustomerRecord[]>(
       `axiom_customers?select=id,email,full_name,business_name,account_status,last_login_at,created_at&id=eq.${encodeURIComponent(workspace.customer_id)}&limit=1`,
     ),
@@ -177,7 +196,15 @@ async function getWorkspacePageData(workspaceId: string): Promise<WorkspacePageD
     ),
   ]);
 
-  return { workspace, proposal: proposalRecords?.[0] || null, customer: customerRecords?.[0] || null, documents: documents || [], deliverables: deliverables || [], activities: activities || [] };
+  return {
+    workspace,
+    proposal: proposalRecords?.[0] || null,
+    order: orderRecords?.[0] || null,
+    customer: customerRecords?.[0] || null,
+    documents: documents || [],
+    deliverables: deliverables || [],
+    activities: activities || [],
+  };
 }
 
 function firstParam(value: string | string[] | undefined) {
@@ -217,13 +244,26 @@ function valueFromPayload(payload: JsonRecord | null, key: string) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function proposalSummary(proposal: ProposalRecord | null) {
-  if (!proposal) return "No proposal request is linked to this workspace.";
-  return valueFromPayload(proposal.request_payload, "workflow_summary") || valueFromPayload(proposal.request_payload, "current_problem") || proposal.summary_message || "No workflow summary supplied.";
+function workspaceRouteLabel(proposal: ProposalRecord | null, order: OrderRecord | null) {
+  if (proposal) return "Proposal workspace";
+  if (order) return "Package workspace";
+  return "Client workspace";
+}
+
+function workspaceSummary(proposal: ProposalRecord | null, order: OrderRecord | null) {
+  if (proposal) {
+    return valueFromPayload(proposal.request_payload, "workflow_summary") || valueFromPayload(proposal.request_payload, "current_problem") || proposal.summary_message || "No workflow summary supplied.";
+  }
+
+  if (order) {
+    return `${order.service_name || label(order.tier_slug)} was purchased through checkout. Use this workspace to manage intake, updates, deliverables, and client-visible handoff files.`;
+  }
+
+  return "No proposal request or package order is linked to this workspace.";
 }
 
 function clientName(customer: CustomerRecord | null, proposal: ProposalRecord | null) {
-  return proposal?.business_name || customer?.business_name || proposal?.contact_name || customer?.full_name || proposal?.email || customer?.email || "Unknown proposal client";
+  return proposal?.business_name || customer?.business_name || proposal?.contact_name || customer?.full_name || proposal?.email || customer?.email || "Unknown client";
 }
 
 function clientEmail(customer: CustomerRecord | null, proposal: ProposalRecord | null) {
@@ -235,6 +275,15 @@ function formatSize(bytes: number | null) {
   return bytes < 1024 * 1024 ? `${Math.round(bytes / 1024)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function formatMoney(amount: number | null, currency: string | null) {
+  if (amount === null || amount === undefined) return "Not recorded";
+
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: currency || "gbp",
+  }).format(amount / 100);
+}
+
 function visibilityLabel(status: string | null) {
   return status && clientVisibleDeliverableStatuses.has(status) ? "client visible" : "internal only";
 }
@@ -242,6 +291,7 @@ function visibilityLabel(status: string | null) {
 function activityTypeLabel(type: string | null | undefined) {
   switch (type) {
     case "proposal_submitted": return "Proposal submitted";
+    case "package_workspace_created": return "Package workspace opened";
     case "document_uploaded": return "Document uploaded";
     case "document_status_updated": return "Document review update";
     case "deliverable_released": return "Deliverable released";
@@ -269,6 +319,7 @@ function activityVisibilityLabel(activity: ActivityRecord) {
 function activityGroupLabel(activity: ActivityRecord) {
   switch (activity.activity_type) {
     case "proposal_submitted": return "Intake";
+    case "package_workspace_created": return "Checkout";
     case "document_uploaded":
     case "document_status_updated": return "Evidence";
     case "deliverable_released":
@@ -378,9 +429,10 @@ export default async function AdminProposalWorkspacePage({ params, searchParams 
   const latestActivity = data.activities[0] || null;
   const clientVisibleActivityCount = data.activities.filter((activity) => activity.is_client_visible).length;
   const internalActivityCount = data.activities.length - clientVisibleActivityCount;
+  const routeLabel = workspaceRouteLabel(data.proposal, data.order);
 
   return (
-    <AdminShell adminEmail={adminEmail} eyebrow="Client workspace" title={clientName(data.customer, data.proposal)} intro="Single-client proposal command centre for proposal context, files received, files sent, client updates, notes, and activity state." activePath="/admin/proposals">
+    <AdminShell adminEmail={adminEmail} eyebrow="Client workspace" title={clientName(data.customer, data.proposal)} intro="Single-client command centre for intake context, files received, files sent, client updates, notes, and activity state." activePath="/admin/proposals">
       {notice ? <section className="bg-[#9ed39f] px-4 py-5 text-black sm:px-6 lg:px-8"><div className="mx-auto flex max-w-[1440px] flex-col gap-3 md:flex-row md:items-center md:justify-between"><div><p className="text-[0.66rem] font-black uppercase tracking-[0.2em]">{notice.eyebrow}</p><h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">{notice.title}</h2><p className="mt-1 text-sm font-semibold leading-6 text-black/72">{notice.text}</p></div><Link href={`/admin/proposals/${data.workspace.id}`} className="inline-flex min-h-11 items-center justify-center border border-black px-4 text-[0.7rem] font-black uppercase tracking-[0.16em] text-black hover:bg-black hover:text-[#9ed39f]">Clear</Link></div></section> : null}
 
       <section className="bg-[#9ed39f] px-4 py-14 text-white sm:px-6 lg:px-8"><div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-5"><StatCard title="Documents" value={String(data.documents.length)} helper="Client-uploaded files" /><StatCard title="Review docs" value={String(underReviewDocuments)} helper="Uploaded or under review" /><StatCard title="Deliverables" value={String(data.deliverables.length)} helper="Axiom-created records" /><StatCard title="Visible" value={String(visibleDeliverables.length)} helper="Released to client" /><StatCard title="Internal" value={String(internalDeliverables)} helper="Hidden from client" /></div></section>
@@ -388,7 +440,7 @@ export default async function AdminProposalWorkspacePage({ params, searchParams 
       <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24"><div className="mx-auto grid max-w-[1440px] gap-8">
         <div className="flex flex-wrap gap-3"><Link href="/admin/proposals" className={buttonClass}>Proposal clients</Link><Link href="/admin/proposals/documents" className={buttonClass}>Files received</Link><Link href="/admin/proposals/deliverables" className={buttonClass}>Sent deliverables</Link></div>
 
-        <section className="grid gap-8 xl:grid-cols-[1.05fr_0.95fr]"><AdminSection eyebrow="Proposal brief" title="Workflow context"><div className="grid gap-5"><div className="border border-[#9ed39f]/18 bg-black/34 p-5"><p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">Submitted summary</p><p className="mt-3 text-sm leading-8 text-white/74">{proposalSummary(data.proposal)}</p></div><div className="grid gap-3 md:grid-cols-2"><DetailLine labelText="Contact" value={data.proposal?.contact_name || data.customer?.full_name} /><DetailLine labelText="Email" value={clientEmail(data.customer, data.proposal)} /><DetailLine labelText="Role" value={data.proposal?.role} /><DetailLine labelText="Website" value={data.proposal?.website} /><DetailLine labelText="Scope" value={label(data.proposal?.scope_type)} /><DetailLine labelText="Support" value={label(data.proposal?.support_type)} /><DetailLine labelText="Timeline" value={label(data.proposal?.timeline)} /><DetailLine labelText="Budget" value={label(data.proposal?.budget_range)} /><DetailLine labelText="Sensitive data" value={label(data.proposal?.sensitive_data)} /><DetailLine labelText="Submitted" value={formatDate(data.proposal?.created_at)} /></div></div></AdminSection><AdminSection eyebrow="Workspace state" title="Control summary"><div className="grid gap-3"><div className="flex flex-wrap gap-3">{statusPill(data.workspace.status)}{statusPill(data.workspace.current_phase)}{statusPill(data.proposal?.proposal_status)}</div><DetailLine labelText="Workspace" value={data.workspace.workspace_name} /><DetailLine labelText="Priority" value={data.workspace.current_priority} /><DetailLine labelText="Next client action" value={data.workspace.next_client_action} /><DetailLine labelText="Axiom review focus" value={data.workspace.axiom_review_focus} /><DetailLine labelText="Last activity" value={formatDate(data.workspace.last_activity_at || data.workspace.updated_at)} /><DetailLine labelText="Customer account" value={label(data.customer?.account_status)} /><DetailLine labelText="Last login" value={formatDate(data.customer?.last_login_at)} /></div></AdminSection></section>
+        <section className="grid gap-8 xl:grid-cols-[1.05fr_0.95fr]"><AdminSection eyebrow={routeLabel} title="Workspace context"><div className="grid gap-5"><div className="border border-[#9ed39f]/18 bg-black/34 p-5"><p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">Current brief</p><p className="mt-3 text-sm leading-8 text-white/74">{workspaceSummary(data.proposal, data.order)}</p></div><div className="grid gap-3 md:grid-cols-2"><DetailLine labelText="Contact" value={data.proposal?.contact_name || data.customer?.full_name} /><DetailLine labelText="Email" value={clientEmail(data.customer, data.proposal)} /><DetailLine labelText="Route" value={routeLabel} /><DetailLine labelText="Service" value={data.order?.service_name || label(data.proposal?.scope_type)} /><DetailLine labelText="Scope" value={label(data.proposal?.scope_type || data.order?.tier_slug)} /><DetailLine labelText="Support" value={label(data.proposal?.support_type)} /><DetailLine labelText="Timeline" value={label(data.proposal?.timeline)} /><DetailLine labelText="Budget" value={label(data.proposal?.budget_range)} /><DetailLine labelText="Payment" value={data.order ? `${label(data.order.payment_status)} · ${formatMoney(data.order.amount_total, data.order.currency)}` : "—"} /><DetailLine labelText="Sensitive data" value={label(data.proposal?.sensitive_data)} /><DetailLine labelText="Created" value={formatDate(data.proposal?.created_at || data.order?.created_at || data.workspace.created_at)} /></div></div></AdminSection><AdminSection eyebrow="Workspace state" title="Control summary"><div className="grid gap-3"><div className="flex flex-wrap gap-3">{statusPill(data.workspace.status)}{statusPill(data.workspace.current_phase)}{statusPill(data.proposal?.proposal_status || data.order?.status || data.order?.payment_status)}{statusPill(routeLabel)}</div><DetailLine labelText="Workspace" value={data.workspace.workspace_name} /><DetailLine labelText="Priority" value={data.workspace.current_priority} /><DetailLine labelText="Next client action" value={data.workspace.next_client_action} /><DetailLine labelText="Axiom review focus" value={data.workspace.axiom_review_focus} /><DetailLine labelText="Last activity" value={formatDate(data.workspace.last_activity_at || data.workspace.updated_at)} /><DetailLine labelText="Customer account" value={label(data.customer?.account_status)} /><DetailLine labelText="Last login" value={formatDate(data.customer?.last_login_at)} /></div></AdminSection></section>
 
         <AdminSection eyebrow="Workspace controls" title="Update workspace state"><WorkspaceStatusForm workspace={data.workspace} /></AdminSection>
         <AdminSection eyebrow="Client updates" title="Send client-visible update"><ClientUpdateForm workspaceId={data.workspace.id} /></AdminSection>
