@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const clientVisibleStatuses = new Set(["ready_for_review", "approved", "delivered"]);
-const internalStatuses = new Set(["preparing", "pending"]);
+const internalStatuses = new Set(["preparing"]);
 
 type SearchParamValue = string | string[] | undefined;
 
@@ -324,7 +324,6 @@ function UploaderForm({ view }: { view: DeliverableWorkspaceView }) {
           Status
           <select name="status" defaultValue="preparing" className="min-h-11 border border-[#9ed39f]/30 bg-black px-3 text-sm font-semibold normal-case tracking-normal text-white outline-none focus:border-[#9ed39f]">
             <option value="preparing">Preparing — internal only</option>
-            <option value="pending">Pending — internal only</option>
             <option value="ready_for_review">Ready for review — client visible</option>
             <option value="approved">Approved — client visible</option>
             <option value="delivered">Delivered — client visible</option>
