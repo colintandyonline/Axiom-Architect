@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
 import { ProductSystemVisual } from "../../components/ProductSystemVisual";
+import {
+  axiomDirectPurchasePackages,
+  axiomPackageModels,
+  getAxiomPackageDeliverables,
+  type AxiomPackageKey,
+  type AxiomPackageModel,
+} from "../../lib/axiom-package-model";
 
 export const metadata: Metadata = {
   title: "Workflow Architecture Packages | AI Workflow Audit & Blueprints",
@@ -44,105 +51,50 @@ export const metadata: Metadata = {
   },
 };
 
-const packages = [
-  {
-    name: "Workflow Audit",
-    slug: "workflow-audit",
+type ProductVisualKind = Parameters<typeof ProductSystemVisual>[0]["kind"];
+
+type AuditDisplay = {
+  price: string;
+  label: string;
+  visualKind: ProductVisualKind;
+  recommended?: boolean;
+};
+
+const auditDisplay: Partial<Record<AxiomPackageKey, AuditDisplay>> = {
+  workflow_audit: {
     price: "$49",
-    label: "Focused diagnostic",
-    summary:
-      "Diagnose one workflow and identify bottlenecks, AI opportunities, risk points, review gates, and practical next steps.",
-    includes: [
-      "One workflow submission",
-      "Current workflow diagnosis",
-      "Bottleneck and friction map",
-      "Automation suitability notes",
-      "Assistant opportunity map",
-      "Recommended next steps",
-    ],
+    label: "Entry diagnostic",
+    visualKind: "workflow-audit",
+    recommended: true,
   },
-  {
-    name: "Workflow Blueprint",
-    slug: "workflow-blueprint",
+  workflow_blueprint: {
     price: "$149",
-    label: "Recommended plan",
-    summary:
-      "Turn the diagnostic into a future-state workflow plan with review gates, assistant roles, tool guidance, and a 30-day sequence.",
-    includes: [
-      "Everything in Workflow Audit",
-      "Future-state workflow design",
-      "Assistant role recommendations",
-      "Human review gate structure",
-      "Tool stack guidance",
-      "30-day operating plan",
-    ],
+    label: "Implementation plan",
+    visualKind: "workflow-blueprint",
   },
-  {
-    name: "Custom Operating Pack",
-    slug: "custom-operating-pack",
+  custom_operating_pack: {
     price: "$399",
-    label: "Complete workflow asset",
-    summary:
-      "Create a reusable operating pack for one important workflow, including protocol, instruction guidance, handoff notes, and quality checks.",
-    includes: [
-      "Everything in Workflow Blueprint",
-      "Custom operating protocol",
-      "Reusable instruction blocks",
-      "Assistant guidance",
-      "Implementation workbook assets",
-      "Quality-control checkpoints",
-    ],
+    label: "Operating pack",
+    visualKind: "custom-operating-pack",
   },
-  {
-    name: "Workflow Stewardship",
-    slug: "workflow-stewardship",
+  workflow_stewardship: {
     price: "$299/mo",
-    label: "Ongoing optimisation",
-    summary:
-      "A monthly review rhythm for AI-supported workflows that need regular updates, recalibration, risk checks, and clearer next actions.",
-    includes: [
-      "Monthly stewardship intake",
-      "Review of changes and bottlenecks",
-      "AI/tool update scan",
-      "Updated priority list",
-      "Risk-control check",
-      "Monthly dashboard brief",
-    ],
+    label: "Ongoing review",
+    visualKind: "workflow-stewardship",
   },
-  {
-    name: "Departmental Ecosystem",
-    slug: "departmental-ecosystem",
+  departmental_ecosystem: {
     price: "$999",
-    label: "Multi-workflow system",
-    summary:
-      "Map and connect up to five core workflows into one shared operating model for a team, department, or scaling business unit.",
-    includes: [
-      "Up to five workflow maps",
-      "Cross-workflow handoff logic",
-      "Shared data-source strategy",
-      "Interdependency mapping",
-      "Documentation guide",
-      "Quarter roadmap",
-    ],
+    label: "Team architecture",
+    visualKind: "departmental-ecosystem",
   },
-  {
-    name: "Axiom Enterprise Architecture System",
-    slug: "architect-residency",
-    publicSlug: "enterprise-architecture-system",
+  enterprise_architecture_system: {
     price: "$2,499",
-    label: "Flagship enterprise product",
-    summary:
-      "A fixed-price flagship architecture package for complex workflow systems that need enterprise-level structure, dependency mapping, automation boundaries, risk controls, tool-stack guidance, and an operating roadmap.",
-    includes: [
-      "Expanded enterprise intake",
-      "Complex workflow review",
-      "Dependency architecture map",
-      "AI and automation suitability model",
-      "Risk and review gate design",
-      "Enterprise implementation roadmap",
-    ],
+    label: "Flagship architecture",
+    visualKind: "architect-residency",
   },
-] as const;
+};
+
+const directPackages = axiomDirectPurchasePackages.map((packageKey) => axiomPackageModels[packageKey]);
 
 const flowSteps = [
   "Choose package",
@@ -150,49 +102,73 @@ const flowSteps = [
   "Complete checkout",
   "Submit intake",
   "Axiom prepares report",
-  "Review next steps",
+  "Review deliverables",
 ];
 
-function PackageCard({ item }: { item: (typeof packages)[number] }) {
-  const publicSlug = "publicSlug" in item ? item.publicSlug : item.slug;
+function packageCheckoutHref(packageModel: AxiomPackageModel) {
+  if (!packageModel.checkoutSlug) {
+    return "/bespoke/apply";
+  }
+
+  return `/signup?tier=${packageModel.checkoutSlug}&account=required`;
+}
+
+function PackageCard({ item }: { item: AxiomPackageModel }) {
+  const display = auditDisplay[item.key] || {
+    price: "Scoped",
+    label: item.status,
+    visualKind: "workflow-audit" as ProductVisualKind,
+  };
+  const deliverables = getAxiomPackageDeliverables(item.key).slice(0, 5);
 
   return (
     <article className="group rounded-[2rem] border border-[#9ed39f]/35 bg-[#030804] p-5 text-white shadow-[0_24px_70px_rgba(0,0,0,0.28)] transition duration-200 hover:border-black hover:bg-[#9ed39f] hover:text-black sm:p-6">
-      <ProductSystemVisual kind={item.slug} />
+      <ProductSystemVisual kind={display.visualKind} />
 
-      <p className="mt-6 inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-black transition duration-200 group-hover:border-black group-hover:bg-black group-hover:text-[#9ed39f]">
-        {item.label}
-      </p>
+      <div className="mt-6 flex flex-wrap gap-2">
+        <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-black transition duration-200 group-hover:border-black group-hover:bg-black group-hover:text-[#9ed39f]">
+          {display.label}
+        </p>
+        {display.recommended ? (
+          <p className="inline-flex border border-white/30 bg-black px-3 py-2 text-[0.62rem] font-black uppercase tracking-[0.2em] text-white transition duration-200 group-hover:border-black group-hover:bg-white group-hover:text-black">
+            Start here
+          </p>
+        ) : null}
+      </div>
 
       <div className="mt-5 flex items-start justify-between gap-5">
         <h2 className="text-2xl font-black uppercase tracking-[-0.04em] sm:text-3xl">
           {item.name}
         </h2>
-        <p className="text-4xl font-black tracking-[-0.06em]">{item.price}</p>
+        <p className="shrink-0 text-4xl font-black tracking-[-0.06em]">{display.price}</p>
       </div>
 
       <p className="mt-5 text-base leading-7 text-[#e6f6e7]/78 transition duration-200 group-hover:text-black/76">
-        {item.summary}
+        {item.shortDescription}
+      </p>
+
+      <p className="mt-4 text-sm leading-7 text-[#e6f6e7]/66 transition duration-200 group-hover:text-black/70">
+        {item.clientSummary}
       </p>
 
       <ul className="mt-6 space-y-3">
-        {item.includes.map((include) => (
-          <li key={include} className="flex gap-3 text-sm leading-6">
+        {deliverables.map((deliverable) => (
+          <li key={deliverable.type} className="flex gap-3 text-sm leading-6">
             <span className="mt-1.5 h-2 w-2 shrink-0 bg-[#9ed39f] transition duration-200 group-hover:bg-black" />
-            <span>{include}</span>
+            <span>{deliverable.title}</span>
           </li>
         ))}
       </ul>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
         <a
-          href={`/products/${publicSlug}`}
+          href={`/products/${item.publicSlug}`}
           className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f]/45 bg-black px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition duration-200 hover:border-black hover:bg-white hover:text-black group-hover:!border-black group-hover:!bg-white group-hover:!text-black"
         >
           Learn more
         </a>
         <a
-          href={`/signup?tier=${item.slug}&account=required`}
+          href={packageCheckoutHref(item)}
           className="inline-flex min-h-14 w-full items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-6 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-black transition duration-200 hover:bg-black hover:text-white group-hover:!border-black group-hover:!bg-black group-hover:!text-white"
         >
           Start package
@@ -256,20 +232,20 @@ export default function AuditPage() {
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
             <div>
               <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">
-                Product ladder
+                Package ladder
               </p>
               <h2 className="mt-5 max-w-4xl text-[clamp(2.15rem,4vw,3.9rem)] font-black uppercase leading-[0.92] tracking-[-0.06em] text-white">
                 Start with diagnosis. Scale into architecture.
               </h2>
             </div>
             <p className="border border-[#9ed39f]/35 bg-[#9ed39f]/10 p-5 text-base leading-8 text-[#e6f6e7]/78 sm:text-lg">
-              Choose the right scope: one workflow, a full operating pack, ongoing stewardship, a departmental system, or the fixed-price flagship enterprise architecture package.
+              These cards now render from the canonical package model used by pricing, checkout, report generation, and delivery. Display labels and prices are local; names, slugs, summaries, and deliverables come from the shared source of truth.
             </p>
           </div>
 
           <div className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
-            {packages.map((item) => (
-              <PackageCard key={item.slug} item={item} />
+            {directPackages.map((item) => (
+              <PackageCard key={item.key} item={item} />
             ))}
           </div>
         </div>
@@ -282,14 +258,14 @@ export default function AuditPage() {
               Recommended path
             </p>
             <h2 className="mt-5 max-w-4xl text-[clamp(2.2rem,4vw,4rem)] font-black uppercase leading-[0.92] tracking-[-0.06em]">
-              Start with Workflow Blueprint.
+              Start with Workflow Audit.
             </h2>
             <p className="mt-5 max-w-3xl text-base leading-8 text-black/74 sm:text-lg">
-              It gives you the diagnostic plus the implementation structure needed to turn findings into a usable operating plan.
+              It gives you the diagnostic foundation before you move into blueprints, operating packs, stewardship, or larger architecture work.
             </p>
           </div>
-          <a href="/signup?tier=workflow-blueprint&account=required" className="inline-flex min-h-14 items-center justify-center border border-black bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black sm:min-w-72">
-            Start package
+          <a href="/signup?tier=workflow-audit&account=required" className="inline-flex min-h-14 items-center justify-center border border-black bg-black px-7 text-center text-[0.72rem] font-black uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black sm:min-w-72">
+            Start Workflow Audit
           </a>
         </div>
       </section>
