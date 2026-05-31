@@ -88,12 +88,23 @@ function brandLogoPath() {
 }
 
 export async function generateAxiomReportPdf(source: ReportPdfSource) {
+  const metadataTitle = `${safeText(
+    source.customerBusiness ||
+      source.customerName ||
+      source.reportJson.client?.business_name ||
+      source.reportJson.client?.name,
+    "Axiom Client",
+  )} - ${safeText(
+    source.workflowTitle || source.reportJson.submission?.workflow_title,
+    "Workflow",
+  )} - Axiom Architect Report`;
+
   const doc = new PDFDocument({
     size: "A4",
     margin: pageMargin,
     bufferPages: true,
     info: {
-      Title: `${safeText(source.workflowTitle || source.reportJson.submission?.workflow_title, "Axiom Architect Report")}`,
+      Title: metadataTitle,
       Author: "Axiom Architect",
       Subject: "Workflow architecture diagnostic report",
       Creator: "Axiom Architect",
@@ -381,6 +392,43 @@ export async function generateAxiomReportPdf(source: ReportPdfSource) {
     }
   }
 
+  function coverLineSize(value: string, baseSize: number) {
+    const length = value.length;
+
+    if (length > 42) {
+      return baseSize - 10;
+    }
+
+    if (length > 32) {
+      return baseSize - 7;
+    }
+
+    if (length > 24) {
+      return baseSize - 4;
+    }
+
+    return baseSize;
+  }
+
+  function addCoverTitleLine(value: string, y: number, baseSize: number, colour = colours.white) {
+    const text = safeText(value, "").toUpperCase();
+
+    if (!text) {
+      return y;
+    }
+
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(coverLineSize(text, baseSize))
+      .fillColor(colour)
+      .text(text, pageMargin, y, {
+        width: contentWidth,
+        lineGap: -2,
+      });
+
+    return doc.y + 2;
+  }
+
   const report = source.reportJson;
   const clientName = safeText(source.customerName || report.client?.name, "Axiom client");
   const businessName = safeText(source.customerBusiness || report.client?.business_name, "Client organisation");
@@ -388,6 +436,7 @@ export async function generateAxiomReportPdf(source: ReportPdfSource) {
   const workflowTitle = safeText(source.workflowTitle || report.submission?.workflow_title, "Workflow Audit Report");
   const serviceName = safeText(source.serviceName || titleCase(report.product_slug), "Axiom Workflow Audit");
   const generatedAt = formatDate(source.generatedAt || report.generated_at);
+  const coverBusinessTitle = businessName === "Client organisation" ? clientName : businessName;
 
   doc.rect(0, 0, pageWidth, pageHeight).fill(colours.charcoal);
   drawGrid(true);
@@ -410,40 +459,60 @@ export async function generateAxiomReportPdf(source: ReportPdfSource) {
   doc.rect(pageMargin, 164, contentWidth, 2).fill(colours.mint);
   doc
     .font("Helvetica-Bold")
-    .fontSize(46)
-    .fillColor(colours.white)
-    .text("WORKFLOW ARCHITECTURE REPORT", pageMargin, 190, {
+    .fontSize(8)
+    .fillColor(colours.mint)
+    .text(`PREPARED FOR ${clientName.toUpperCase()}`, pageMargin, 188, {
       width: contentWidth,
-      lineGap: -2,
-    });
-  doc
-    .font("Helvetica")
-    .fontSize(15)
-    .fillColor("#DCEADC")
-    .text(workflowTitle, pageMargin, 326, {
-      width: contentWidth - 70,
-      lineGap: 4,
+      characterSpacing: 1.4,
     });
 
-  doc.rect(pageMargin, 456, contentWidth, 124).fill(colours.panel);
-  doc.rect(pageMargin, 456, contentWidth, 124).lineWidth(1).strokeColor("#2D432F").stroke();
+  let titleY = 214;
+  titleY = addCoverTitleLine(coverBusinessTitle, titleY, 39);
+  titleY = addCoverTitleLine(workflowTitle, titleY, 35, "#DCEADC");
+  titleY = addCoverTitleLine("Workflow Architecture Report", titleY, 31);
+
+  doc.rect(pageMargin, titleY + 12, 92, 2).fill(colours.mint);
+  doc
+    .font("Helvetica")
+    .fontSize(10)
+    .fillColor("#CFE0CF")
+    .text(`${serviceName} | Client-ready diagnostic report`, pageMargin, titleY + 28, {
+      width: contentWidth,
+      lineGap: 3,
+    });
+
+  const coverPanelY = 438;
+  const coverPanelHeight = 156;
+  doc.rect(pageMargin, coverPanelY, contentWidth, coverPanelHeight).fill(colours.panel);
+  doc.rect(pageMargin, coverPanelY, contentWidth, coverPanelHeight).lineWidth(1).strokeColor("#2D432F").stroke();
+  doc.rect(pageMargin, coverPanelY, 5, coverPanelHeight).fill(colours.mint);
+
   [
-    ["CLIENT", clientName],
-    ["ORGANISATION", businessName],
+    ["PREPARED FOR", clientName],
+    ["BUSINESS", businessName],
+    ["REPORT WORKSPACE", workflowTitle],
     ["SERVICE", serviceName],
     ["PREPARED", generatedAt],
+    ["REPORT REFERENCE", source.reportId],
   ].forEach(([key, value], index) => {
-    const x = pageMargin + 20 + (index % 2) * ((contentWidth - 40) / 2);
-    const y = 480 + Math.floor(index / 2) * 46;
-    doc.font("Helvetica-Bold").fontSize(7).fillColor(colours.mint).text(key, x, y, { characterSpacing: 1.4 });
-    doc.font("Helvetica").fontSize(10).fillColor(colours.ink).text(value, x, y + 15, { width: (contentWidth - 70) / 2 });
+    const columnWidth = (contentWidth - 58) / 2;
+    const x = pageMargin + 22 + (index % 2) * (columnWidth + 22);
+    const y = coverPanelY + 24 + Math.floor(index / 2) * 43;
+    doc.font("Helvetica-Bold").fontSize(7).fillColor(colours.mint).text(key, x, y, {
+      width: columnWidth,
+      characterSpacing: 1.35,
+    });
+    doc.font("Helvetica").fontSize(9.5).fillColor(colours.ink).text(value, x, y + 15, {
+      width: columnWidth,
+      lineGap: 2,
+    });
   });
 
   doc
     .font("Helvetica")
     .fontSize(8)
     .fillColor("#AEBBAE")
-    .text(`Report reference: ${source.reportId}`, pageMargin, pageHeight - 72, {
+    .text("Prepared by Axiom Architect for structured workflow review and implementation planning.", pageMargin, pageHeight - 72, {
       width: contentWidth,
     });
 
