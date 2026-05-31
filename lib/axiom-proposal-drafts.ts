@@ -1,3 +1,5 @@
+import { proposalPresetRoutes, type ProposalServiceRoute } from "./axiom-proposal-presets";
+
 export type ProposalDraftStatus = "draft" | "internal_review" | "ready_to_send";
 export type ProposalDraftType = "simple" | "standard" | "strategic";
 
@@ -63,15 +65,17 @@ export type ProposalPaymentTermsJson = {
 export const proposalTypeOptions: ProposalDraftType[] = ["simple", "standard", "strategic"];
 export const proposalStatusOptions: ProposalDraftStatus[] = ["draft", "internal_review", "ready_to_send"];
 
-export const serviceRouteOptions = [
+const legacyServiceRouteOptions = [
   "workflow-audit",
-  "workflow-blueprint",
-  "custom-operating-pack",
   "workflow-stewardship",
   "departmental-ecosystem",
   "architect-residency",
   "bespoke-implementation",
 ] as const;
+
+export const serviceRouteOptions = Array.from(
+  new Set<ProposalServiceRoute>([...proposalPresetRoutes, ...legacyServiceRouteOptions]),
+);
 
 export function getProposalPricing(value: unknown): ProposalPricingJson {
   const record = value && typeof value === "object" && !Array.isArray(value)

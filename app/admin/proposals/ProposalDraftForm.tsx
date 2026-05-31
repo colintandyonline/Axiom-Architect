@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useRef, useState } from "react";
 import {
   getProposalPaymentTerms,
   getProposalPricing,
@@ -7,7 +10,7 @@ import {
   serviceRouteOptions,
   type ProposalDraftRecord,
 } from "../../../lib/axiom-proposal-drafts";
-import { buttonClass, primaryButtonClass } from "../../../components/admin/AdminShell";
+import { getProposalPreset, proposalPresets, type ProposalPreset } from "../../../lib/axiom-proposal-presets";
 
 type CustomerOption = {
   id: string;
@@ -25,6 +28,8 @@ type ProposalDraftFormProps = {
 const inputClass = "min-h-11 border border-[#9ed39f]/30 bg-black px-3 text-sm font-semibold text-white outline-none placeholder:text-white/30 focus:border-[#9ed39f]";
 const textareaClass = "min-h-28 border border-[#9ed39f]/30 bg-black px-3 py-3 text-sm font-semibold leading-7 text-white outline-none placeholder:text-white/30 focus:border-[#9ed39f]";
 const labelClass = "grid gap-2 text-[0.66rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]";
+const buttonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f]/35 bg-black px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black";
+const primaryButtonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-black transition hover:bg-white";
 
 function customerLabel(customer: CustomerOption) {
   const name = customer.business_name || customer.full_name || customer.email || "Unnamed customer";
@@ -33,6 +38,18 @@ function customerLabel(customer: CustomerOption) {
 
 function inputDate(value?: string | null) {
   return value ? value.slice(0, 10) : "";
+}
+
+function serviceRouteLabel(value: string) {
+  return proposalPresets.find((preset) => preset.service_route === value)?.label || value.replace(/-/g, " ");
+}
+
+function listText(items: string[]) {
+  return items.join("\n");
+}
+
+function suggestedDeposit(preset: ProposalPreset) {
+  return Math.round(preset.suggested_base_price * 0.5);
 }
 
 function FieldLabel({
@@ -99,12 +116,96 @@ function ListField({
 }
 
 export function ProposalDraftForm({ proposal, customers, mode }: ProposalDraftFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
   const pricing = getProposalPricing(proposal?.pricing_json);
   const paymentTerms = getProposalPaymentTerms(proposal?.payment_terms_json);
   const actionLabel = mode === "create" ? "Create proposal draft" : "Save proposal draft";
+  const initialRoute = proposal?.recommended_service_route || "workflow-blueprint";
+  const [selectedRoute, setSelectedRoute] = useState(initialRoute);
+  const selectedPreset = useMemo(() => getProposalPreset(selectedRoute), [selectedRoute]);
+
+  function setFieldValue(name: string, value: string | number) {
+    const field = formRef.current?.elements.namedItem(name);
+
+    if (
+      field instanceof HTMLInputElement ||
+      field instanceof HTMLTextAreaElement ||
+      field instanceof HTMLSelectElement
+    ) {
+      field.value = String(value);
+    }
+  }
+
+  function fieldHasValue(name: string) {
+    const field = formRef.current?.elements.namedItem(name);
+
+    if (
+      field instanceof HTMLInputElement ||
+      field instanceof HTMLTextAreaElement ||
+      field instanceof HTMLSelectElement
+    ) {
+      return field.value.trim().length > 0 && field.value.trim() !== "0";
+    }
+
+    return false;
+  }
+
+  function applyPreset() {
+    if (!selectedPreset) {
+      return;
+    }
+
+    const fieldsToOverwrite = [
+      "scope_summary",
+      "included_work",
+      "deliverables",
+      "timeline",
+      "exclusions",
+      "client_responsibilities",
+      "assumptions",
+      "base_service_price",
+      "complexity_level",
+      "complexity_multiplier",
+      "risk_level",
+      "delivery_depth",
+      "discount_amount",
+      "deposit_required",
+      "final_total",
+      "add_ons_text",
+      "payment_schedule",
+      "client_price_explanation",
+    ];
+    const hasExistingContent = fieldsToOverwrite.some(fieldHasValue);
+
+    if (
+      hasExistingContent &&
+      !window.confirm("Apply the selected preset? This will overwrite existing scope and pricing fields, but not internal notes.")
+    ) {
+      return;
+    }
+
+    setFieldValue("base_service_price", selectedPreset.suggested_base_price);
+    setFieldValue("complexity_level", selectedPreset.default_complexity_level);
+    setFieldValue("complexity_multiplier", selectedPreset.default_complexity_multiplier);
+    setFieldValue("risk_level", selectedPreset.default_risk_level);
+    setFieldValue("delivery_depth", selectedPreset.default_delivery_depth);
+    setFieldValue("discount_amount", 0);
+    setFieldValue("deposit_required", suggestedDeposit(selectedPreset));
+    setFieldValue("final_total", selectedPreset.suggested_base_price);
+    setFieldValue("scope_summary", selectedPreset.scope_summary);
+    setFieldValue("included_work", listText(selectedPreset.included_work));
+    setFieldValue("deliverables", listText(selectedPreset.deliverables));
+    setFieldValue("timeline", listText(selectedPreset.timeline));
+    setFieldValue("exclusions", listText(selectedPreset.exclusions));
+    setFieldValue("client_responsibilities", listText(selectedPreset.client_responsibilities));
+    setFieldValue("assumptions", listText(selectedPreset.assumptions));
+    setFieldValue("payment_schedule", selectedPreset.payment_terms);
+    setFieldValue("client_price_explanation", selectedPreset.client_price_explanation);
+    setFieldValue("add_ons_text", listText(selectedPreset.optional_add_ons));
+  }
 
   return (
-    <form action="/api/admin/proposals/draft" method="post" className="grid gap-8">
+    <form ref={formRef} action="/api/admin/proposals/draft" method="post" className="grid gap-8">
       <input type="hidden" name="action" value={mode} />
       <input type="hidden" name="return_to" value={proposal ? `/admin/proposals/${proposal.id}` : "/admin/proposals/new"} />
       {proposal ? <input type="hidden" name="proposal_id" value={proposal.id} /> : null}
@@ -153,9 +254,14 @@ export function ProposalDraftForm({ proposal, customers, mode }: ProposalDraftFo
             </select>
           </FieldLabel>
           <FieldLabel label="Recommended service route">
-            <select name="recommended_service_route" defaultValue={proposal?.recommended_service_route || "workflow-blueprint"} className={inputClass}>
+            <select
+              name="recommended_service_route"
+              defaultValue={initialRoute}
+              className={inputClass}
+              onChange={(event) => setSelectedRoute(event.currentTarget.value)}
+            >
               {serviceRouteOptions.map((option) => (
-                <option key={option} value={option}>{option.replace(/-/g, " ")}</option>
+                <option key={option} value={option}>{serviceRouteLabel(option)}</option>
               ))}
             </select>
           </FieldLabel>
@@ -163,7 +269,7 @@ export function ProposalDraftForm({ proposal, customers, mode }: ProposalDraftFo
             <select name="alternative_service_route" defaultValue={proposal?.alternative_service_route || ""} className={inputClass}>
               <option value="">No alternative route</option>
               {serviceRouteOptions.map((option) => (
-                <option key={option} value={option}>{option.replace(/-/g, " ")}</option>
+                <option key={option} value={option}>{serviceRouteLabel(option)}</option>
               ))}
             </select>
           </FieldLabel>
@@ -171,6 +277,23 @@ export function ProposalDraftForm({ proposal, customers, mode }: ProposalDraftFo
             <input name="valid_until" type="date" defaultValue={inputDate(proposal?.valid_until)} className={inputClass} />
           </FieldLabel>
         </div>
+        {selectedPreset ? (
+          <div className="border border-[#9ed39f]/22 bg-[#9ed39f]/10 p-4">
+            <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Suggested preset</p>
+            <h3 className="mt-2 text-xl font-black uppercase tracking-[-0.04em] text-white">{selectedPreset.label}</h3>
+            <p className="mt-2 text-sm leading-7 text-white/68">
+              Suggested range: {new Intl.NumberFormat("en-GB", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_min_price)} - {new Intl.NumberFormat("en-GB", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_max_price)}.
+              Suggested base: {new Intl.NumberFormat("en-GB", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_base_price)}.
+            </p>
+            <button type="button" onClick={applyPreset} className={`${primaryButtonClass} mt-4`}>
+              Apply suggested scope and pricing
+            </button>
+          </div>
+        ) : (
+          <div className="border border-[#9ed39f]/18 bg-black/30 p-4 text-sm leading-7 text-white/62">
+            No preset is available for this route yet. Admin can still complete the proposal manually.
+          </div>
+        )}
       </section>
 
       <section className="grid gap-4 border border-[#9ed39f]/18 bg-black/34 p-5">
@@ -196,6 +319,13 @@ export function ProposalDraftForm({ proposal, customers, mode }: ProposalDraftFo
         <div>
           <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">Pricing</p>
           <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.05em] text-white">Manual pricing controls</h2>
+        </div>
+        <div className="border border-[#9ed39f]/20 bg-black/30 p-4 text-sm leading-7 text-white/68">
+          <strong className="text-[#9ed39f]">Guidance only.</strong>{" "}
+          {selectedPreset
+            ? `Suggested range ${new Intl.NumberFormat("en-GB", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_min_price)} - ${new Intl.NumberFormat("en-GB", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_max_price)}; suggested base ${new Intl.NumberFormat("en-GB", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_base_price)}.`
+            : "No preset guidance available for this route."}{" "}
+          Final proposal price is admin controlled.
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <FieldLabel label="Base service price">
