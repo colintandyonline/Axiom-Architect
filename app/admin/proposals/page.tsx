@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAxiomAdmin } from "../../../lib/axiom-admin";
 import { formatDate, label } from "../../../lib/axiom-admin-dashboard";
-import { AdminSection, AdminShell, StatCard, buttonClass, statusPill } from "../../../components/admin/AdminShell";
+import { AdminSection, AdminShell, StatCard, buttonClass, primaryButtonClass, statusPill } from "../../../components/admin/AdminShell";
+import {
+  formatProposalMoney,
+  getProposalPricing,
+  type ProposalDraftRecord,
+} from "../../../lib/axiom-proposal-drafts";
 
 export const metadata: Metadata = {
   title: "Proposal Clients | Axiom Architect Admin",
@@ -84,6 +89,7 @@ type DeliverableRecord = {
 
 type ProposalAdminData = {
   proposals: ProposalRequestRecord[];
+  proposalDrafts: ProposalDraftRecord[];
   customers: CustomerRecord[];
   workspaces: WorkspaceRecord[];
   documents: DocumentRecord[];
@@ -160,8 +166,13 @@ async function getProposalAdminData(): Promise<ProposalAdminData> {
     ),
   ]);
 
+  const proposalDrafts = await supabaseFetch<ProposalDraftRecord[]>(
+    "axiom_proposals?select=id,customer_id,proposal_reference,proposal_type,status,client_name,business_name,client_email,workspace_name,recommended_service_route,alternative_service_route,pricing_json,updated_at,created_at&order=updated_at.desc&limit=100",
+  );
+
   return {
     proposals: proposals || [],
+    proposalDrafts: proposalDrafts || [],
     customers: customers || [],
     workspaces: workspaces || [],
     documents: documents || [],
@@ -280,6 +291,64 @@ function CommandArea({ href, eyebrow, title, text, count }: { href: string; eyeb
   );
 }
 
+function draftClientName(draft: ProposalDraftRecord, customer: CustomerRecord | null) {
+  return draft.business_name || customer?.business_name || draft.client_name || customer?.full_name || draft.client_email || customer?.email || "Unnamed proposal draft";
+}
+
+function DraftProposalTable({
+  drafts,
+  customersById,
+}: {
+  drafts: ProposalDraftRecord[];
+  customersById: Map<string, CustomerRecord>;
+}) {
+  if (drafts.length === 0) {
+    return (
+      <article className="border border-[#9ed39f]/20 bg-black/36 p-6">
+        <h3 className="text-2xl font-black uppercase tracking-[-0.05em] text-white">No proposal drafts yet.</h3>
+        <p className="mt-3 text-sm leading-7 text-white/68">
+          Create the first draft once a bespoke client route needs structured scope and pricing.
+        </p>
+        <div className="mt-5">
+          <Link href="/admin/proposals/new" className={primaryButtonClass}>Create proposal draft</Link>
+        </div>
+      </article>
+    );
+  }
+
+  return (
+    <div className="grid gap-4">
+      {drafts.map((draft) => {
+        const customer = draft.customer_id ? customersById.get(draft.customer_id) || null : null;
+        const pricing = getProposalPricing(draft.pricing_json);
+
+        return (
+          <article key={draft.id} className="grid gap-5 border border-[#9ed39f]/20 bg-black/36 p-5 xl:grid-cols-[1fr_auto] xl:items-center">
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                {statusPill(draft.status)}
+                {statusPill(draft.proposal_type)}
+                {statusPill(draft.recommended_service_route)}
+              </div>
+              <h3 className="mt-4 text-2xl font-black uppercase leading-tight tracking-[-0.05em] text-white">
+                {draftClientName(draft, customer)}
+              </h3>
+              <div className="mt-3 grid gap-3 text-sm leading-7 text-white/68 md:grid-cols-2 xl:grid-cols-5">
+                <p><strong className="text-[#9ed39f]">Reference:</strong> {draft.proposal_reference || "—"}</p>
+                <p><strong className="text-[#9ed39f]">Workspace:</strong> {draft.workspace_name || "—"}</p>
+                <p><strong className="text-[#9ed39f]">Alternative:</strong> {label(draft.alternative_service_route)}</p>
+                <p><strong className="text-[#9ed39f]">Final total:</strong> {formatProposalMoney(pricing.final_total)}</p>
+                <p><strong className="text-[#9ed39f]">Updated:</strong> {formatDate(draft.updated_at || draft.created_at)}</p>
+              </div>
+            </div>
+            <Link href={`/admin/proposals/${draft.id}`} className={buttonClass}>Edit draft</Link>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
 export default async function AdminProposalClientsPage() {
   const { adminEmail } = await requireAxiomAdmin();
   const data = await getProposalAdminData();
@@ -380,6 +449,14 @@ export default async function AdminProposalClientsPage() {
                 count="read"
               />
             </div>
+          </AdminSection>
+
+          <AdminSection eyebrow="Proposal preparation" title="Draft pricing and scope proposals">
+            <div className="mb-6 flex flex-wrap gap-3">
+              <Link href="/admin/proposals/new" className={primaryButtonClass}>Create proposal draft</Link>
+              <Link href="/admin/proposals" className={buttonClass}>Refresh list</Link>
+            </div>
+            <DraftProposalTable drafts={data.proposalDrafts} customersById={customersById} />
           </AdminSection>
 
           <AdminSection eyebrow="Business pipeline" title="Proposal-client segmentation">

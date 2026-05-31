@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { requireAxiomAdmin } from "../../../../lib/axiom-admin";
 import { formatDate, label } from "../../../../lib/axiom-admin-dashboard";
 import { AdminSection, AdminShell, StatCard, buttonClass, primaryButtonClass, statusPill } from "../../../../components/admin/AdminShell";
+import { ProposalDraftForm } from "../ProposalDraftForm";
+import type { ProposalDraftRecord } from "../../../../lib/axiom-proposal-drafts";
 
 export const metadata: Metadata = {
   title: "Client Workspace | Axiom Architect Admin",
@@ -12,7 +14,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-type PageProps = { params: Promise<{ workspaceId: string }>; searchParams?: Promise<{ note?: string | string[]; workspace?: string | string[]; clientUpdate?: string | string[] }> };
+type PageProps = { params: Promise<{ workspaceId: string }>; searchParams?: Promise<{ note?: string | string[]; workspace?: string | string[]; clientUpdate?: string | string[]; proposal?: string | string[] }> };
 type JsonRecord = Record<string, unknown>;
 
 type WorkspaceRecord = {
@@ -73,6 +75,13 @@ type CustomerRecord = {
   account_status: string | null;
   last_login_at: string | null;
   created_at: string | null;
+};
+
+type CustomerOption = {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  business_name: string | null;
 };
 
 type DocumentRecord = {
@@ -205,6 +214,22 @@ async function getWorkspacePageData(workspaceId: string): Promise<WorkspacePageD
     deliverables: deliverables || [],
     activities: activities || [],
   };
+}
+
+async function getProposalDraft(proposalId: string) {
+  const records = await supabaseFetch<ProposalDraftRecord[]>(
+    `axiom_proposals?select=*&id=eq.${encodeURIComponent(proposalId)}&limit=1`,
+  );
+
+  return records?.[0] || null;
+}
+
+async function getCustomerOptions() {
+  const customers = await supabaseFetch<CustomerOption[]>(
+    "axiom_customers?select=id,email,full_name,business_name&order=created_at.desc&limit=200",
+  );
+
+  return customers || [];
 }
 
 function firstParam(value: string | string[] | undefined) {
@@ -421,6 +446,45 @@ export default async function AdminProposalWorkspacePage({ params, searchParams 
   const notice = noteMessage(firstParam(query.note)) || workspaceMessage(firstParam(query.workspace)) || clientUpdateMessage(firstParam(query.clientUpdate));
   const data = await getWorkspacePageData(workspaceId);
 
+  if (!data.workspace) {
+    const proposalDraft = await getProposalDraft(workspaceId);
+
+    if (!proposalDraft) {
+      notFound();
+    }
+
+    const customers = await getCustomerOptions();
+    const proposalStatus = firstParam(query.proposal);
+
+    return (
+      <AdminShell
+        adminEmail={adminEmail}
+        eyebrow="Proposal draft"
+        title={proposalDraft.workspace_name || proposalDraft.proposal_reference || "Proposal draft"}
+        intro="Edit the internal proposal preparation record. Client acceptance, PDF generation, Stripe conversion, and email delivery are intentionally outside this workflow."
+        activePath="/admin/proposals"
+      >
+        {proposalStatus ? (
+          <section className="bg-[#9ed39f] px-4 py-5 text-black sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-[1440px]">
+              <p className="text-[0.66rem] font-black uppercase tracking-[0.2em]">Proposal draft</p>
+              <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">
+                {proposalStatus === "created" ? "Draft created." : proposalStatus === "saved" ? "Draft saved." : "Draft action complete."}
+              </h2>
+            </div>
+          </section>
+        ) : null}
+        <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <div className="mx-auto max-w-[1440px]">
+            <AdminSection eyebrow="Preparation" title="Edit proposal draft">
+              <ProposalDraftForm mode="update" proposal={proposalDraft} customers={customers} />
+            </AdminSection>
+          </div>
+        </section>
+      </AdminShell>
+    );
+  }
+
   if (!data.workspace) notFound();
 
   const visibleDeliverables = data.deliverables.filter((deliverable) => clientVisibleDeliverableStatuses.has(deliverable.status || ""));
@@ -446,7 +510,7 @@ export default async function AdminProposalWorkspacePage({ params, searchParams 
         <AdminSection eyebrow="Client updates" title="Send client-visible update"><ClientUpdateForm workspaceId={data.workspace.id} /></AdminSection>
         <AdminSection eyebrow="Internal notes" title="Add admin-only note"><InternalNoteForm workspaceId={data.workspace.id} /></AdminSection>
 
-        <AdminSection eyebrow="Files received" title="Client-uploaded documents">{data.documents.length > 0 ? <div className="grid gap-4">{data.documents.map((document) => <article key={document.id} className="grid gap-5 border border-[#9ed39f]/18 bg-black/34 p-5 lg:grid-cols-[1fr_auto] lg:items-center"><div><div className="flex flex-wrap gap-2">{statusPill(document.review_status)}{statusPill(document.document_category)}</div><h3 className="mt-3 break-words text-xl font-black uppercase tracking-[-0.04em] text-white">{document.title || document.original_filename}</h3><p className="mt-2 break-words text-xs font-bold uppercase tracking-[0.12em] text-white/44">{document.original_filename}</p><p className="mt-2 text-sm leading-7 text-white/62">{document.description || "No client description recorded."}</p><p className="mt-2 text-xs leading-5 text-white/46">{formatDate(document.uploaded_at)} · {formatSize(document.file_size_bytes)} · {document.mime_type || "MIME not recorded"}</p><DocumentReviewControls document={document} workspaceId={data.workspace.id} /></div>{document.storage_bucket && document.storage_path ? <a href={`/api/admin/proposals/documents/${document.id}/download`} target="_blank" rel="noopener noreferrer" className={primaryButtonClass}>Open file</a> : null}</article>)}</div> : <article className="border border-[#9ed39f]/20 bg-black/36 p-6"><h3 className="text-2xl font-black uppercase tracking-[-0.05em] text-white">No files received yet.</h3><p className="mt-3 text-sm leading-7 text-white/68">Client-uploaded evidence will appear here.</p></article>}</AdminSection>
+        <AdminSection eyebrow="Files received" title="Client-uploaded documents">{data.documents.length > 0 ? <div className="grid gap-4">{data.documents.map((document) => <article key={document.id} className="grid gap-5 border border-[#9ed39f]/18 bg-black/34 p-5 lg:grid-cols-[1fr_auto] lg:items-center"><div><div className="flex flex-wrap gap-2">{statusPill(document.review_status)}{statusPill(document.document_category)}</div><h3 className="mt-3 break-words text-xl font-black uppercase tracking-[-0.04em] text-white">{document.title || document.original_filename}</h3><p className="mt-2 break-words text-xs font-bold uppercase tracking-[0.12em] text-white/44">{document.original_filename}</p><p className="mt-2 text-sm leading-7 text-white/62">{document.description || "No client description recorded."}</p><p className="mt-2 text-xs leading-5 text-white/46">{formatDate(document.uploaded_at)} · {formatSize(document.file_size_bytes)} · {document.mime_type || "MIME not recorded"}</p><DocumentReviewControls document={document} workspaceId={data.workspace!.id} /></div>{document.storage_bucket && document.storage_path ? <a href={`/api/admin/proposals/documents/${document.id}/download`} target="_blank" rel="noopener noreferrer" className={primaryButtonClass}>Open file</a> : null}</article>)}</div> : <article className="border border-[#9ed39f]/20 bg-black/36 p-6"><h3 className="text-2xl font-black uppercase tracking-[-0.05em] text-white">No files received yet.</h3><p className="mt-3 text-sm leading-7 text-white/68">Client-uploaded evidence will appear here.</p></article>}</AdminSection>
 
         <AdminSection eyebrow="Files sent" title="Axiom deliverables">{data.deliverables.length > 0 ? <div className="grid gap-4">{data.deliverables.map((deliverable) => <article key={deliverable.id} className="grid gap-5 border border-[#9ed39f]/18 bg-black/34 p-5 lg:grid-cols-[1fr_auto] lg:items-center"><div><div className="flex flex-wrap gap-2">{statusPill(deliverable.status)}{statusPill(visibilityLabel(deliverable.status))}{statusPill(deliverable.deliverable_type)}</div><h3 className="mt-3 break-words text-xl font-black uppercase tracking-[-0.04em] text-white">{deliverable.title}</h3><p className="mt-2 text-sm leading-7 text-white/62">{deliverable.description || "No description recorded."}</p><p className="mt-2 break-words text-xs font-bold uppercase tracking-[0.12em] text-white/44">{deliverable.original_filename || `Version ${deliverable.version || "v1"}`}</p><p className="mt-2 text-xs leading-5 text-white/46">{formatDate(deliverable.delivered_at || deliverable.created_at)} · {formatSize(deliverable.file_size_bytes)} · {deliverable.mime_type || "MIME not recorded"}</p></div><Link href="/admin/proposals/deliverables" className={buttonClass}>Manage</Link></article>)}</div> : <article className="border border-[#9ed39f]/20 bg-black/36 p-6"><h3 className="text-2xl font-black uppercase tracking-[-0.05em] text-white">No deliverables sent yet.</h3><p className="mt-3 text-sm leading-7 text-white/68">Use Sent deliverables to upload or release files for this workspace.</p></article>}</AdminSection>
 
