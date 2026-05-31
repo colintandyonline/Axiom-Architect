@@ -7,6 +7,7 @@ import {
   getProposalPricing,
   type ProposalDraftRecord,
 } from "./axiom-proposal-drafts";
+import { getProposalPreset } from "./axiom-proposal-presets";
 
 const colours = {
   ink: "#F4F7F2",
@@ -23,7 +24,8 @@ const colours = {
 };
 
 const pageMargin = 44;
-const bottomMargin = 58;
+const footerY = 780;
+const pageTotal = 3;
 
 function collectPdfBuffer(doc: PDFKit.PDFDocument) {
   return new Promise<Buffer>((resolve, reject) => {
@@ -40,43 +42,244 @@ function brandLogoPath() {
   return fs.existsSync(logoPath) ? logoPath : null;
 }
 
-function safeText(value: unknown, fallback = "Not specified") {
-  if (typeof value !== "string") {
+export function sanitizeProposalText(value: unknown, fallback = "") {
+  if (value === null || value === undefined) {
     return fallback;
   }
 
-  const trimmed = value.trim();
-  return trimmed || fallback;
+  return String(value)
+    .normalize("NFKC")
+    .replace(/[Ð�]/g, "")
+    .replace(/[\uFFFD]/g, "")
+    .replace(/[“”]/g, "\"")
+    .replace(/[‘’]/g, "'")
+    .replace(/[–—]/g, "-")
+    .replace(/\u00a0/g, " ")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim() || fallback;
 }
 
-function listFromJson(value: unknown) {
-  if (!Array.isArray(value)) {
-    return [];
+function truncateText(value: unknown, maxLength: number, fallback = "To be confirmed.") {
+  const text = sanitizeProposalText(value, fallback);
+
+  if (text.length <= maxLength) {
+    return text;
   }
 
-  return value
-    .map((item) => {
-      if (typeof item === "string") {
-        return item.trim();
-      }
+  const shortened = text.slice(0, maxLength - 1);
+  const cleanBreak = Math.max(shortened.lastIndexOf("."), shortened.lastIndexOf(" "), shortened.lastIndexOf("\n"));
+  const safe = cleanBreak > maxLength * 0.65 ? shortened.slice(0, cleanBreak) : shortened;
+  return `${safe.trim().replace(/[.,;:]+$/, "")}...`;
+}
 
-      return JSON.stringify(item);
-    })
-    .filter(Boolean);
+function safeText(value: unknown, fallback = "To be confirmed.") {
+  return sanitizeProposalText(value, fallback);
+}
+
+function listFromJson(value: unknown, limit = 6) {
+  const items = Array.isArray(value) ? value : [];
+
+  return items
+    .map((item) => truncateText(typeof item === "string" ? item : JSON.stringify(item), 180, ""))
+    .filter(Boolean)
+    .slice(0, limit);
 }
 
 function formatDate(value?: string | null) {
   if (!value) {
-    return "Not set";
+    return "To be confirmed";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "To be confirmed";
   }
 
   return new Intl.DateTimeFormat("en-GB", {
     dateStyle: "medium",
-  }).format(new Date(value));
+  }).format(date);
 }
 
 function routeLabel(value?: string | null) {
-  return safeText(value, "Not selected").replace(/[-_]+/g, " ");
+  const preset = getProposalPreset(value);
+  return preset?.label || safeText(value, "Recommended service").replace(/[-_]+/g, " ");
+}
+
+function drawGrid(doc: PDFKit.PDFDocument, dark = false) {
+  const pageWidth = doc.page.width;
+  const pageHeight = doc.page.height;
+  const stroke = dark ? colours.grid : "#DCEADC";
+
+  doc.save();
+  doc.lineWidth(0.35).strokeColor(stroke).opacity(dark ? 0.38 : 0.62);
+
+  for (let x = 0; x <= pageWidth; x += 34) {
+    doc.moveTo(x, 0).lineTo(x, pageHeight).stroke();
+  }
+
+  for (let y = 0; y <= pageHeight; y += 34) {
+    doc.moveTo(0, y).lineTo(pageWidth, y).stroke();
+  }
+
+  doc.restore();
+}
+
+function drawFooter(doc: PDFKit.PDFDocument, pageNumber: number) {
+  const pageWidth = doc.page.width;
+
+  doc.save();
+  doc
+    .moveTo(pageMargin, footerY - 10)
+    .lineTo(pageWidth - pageMargin, footerY - 10)
+    .lineWidth(0.5)
+    .strokeColor("#CFE0CF")
+    .stroke();
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(7)
+    .fillColor(colours.muted)
+    .text("Axiom Architect | Proposal", pageMargin, footerY, { width: 260 });
+  doc
+    .font("Helvetica")
+    .fontSize(7)
+    .fillColor(colours.muted)
+    .text(`${pageNumber} / ${pageTotal}`, pageWidth - 120, footerY, {
+      width: 76,
+      align: "right",
+    });
+  doc.restore();
+}
+
+function startLightPage(doc: PDFKit.PDFDocument, pageNumber: number, kicker: string, heading: string) {
+  const pageWidth = doc.page.width;
+  const contentWidth = pageWidth - pageMargin * 2;
+
+  doc.rect(0, 0, pageWidth, doc.page.height).fill(colours.pale);
+  drawGrid(doc, false);
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(8)
+    .fillColor(colours.mintDark)
+    .text(kicker.toUpperCase(), pageMargin, 46, { characterSpacing: 1.5 });
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(23)
+    .fillColor(colours.text)
+    .text(heading.toUpperCase(), pageMargin, 63, {
+      width: contentWidth,
+      lineGap: 1,
+    });
+  doc
+    .moveTo(pageMargin, 106)
+    .lineTo(pageWidth - pageMargin, 106)
+    .lineWidth(1)
+    .strokeColor(colours.mint)
+    .stroke();
+  drawFooter(doc, pageNumber);
+}
+
+function box(
+  doc: PDFKit.PDFDocument,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  label: string,
+  body: string,
+  options: { dark?: boolean; bodySize?: number; labelColour?: string } = {},
+) {
+  const dark = options.dark === true;
+
+  doc.save();
+  doc.rect(x, y, width, height).fill(dark ? colours.panel : "#F8FCF7");
+  doc.rect(x, y, width, height).lineWidth(0.8).strokeColor(dark ? "#2D432F" : colours.line).stroke();
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(7)
+    .fillColor(options.labelColour || (dark ? colours.mint : colours.mintDark))
+    .text(label.toUpperCase(), x + 13, y + 12, {
+      width: width - 26,
+      characterSpacing: 1.1,
+    });
+  doc
+    .font("Helvetica")
+    .fontSize(options.bodySize || 9.2)
+    .fillColor(dark ? colours.ink : colours.text)
+    .text(body, x + 13, y + 30, {
+      width: width - 26,
+      height: height - 40,
+      lineGap: 2,
+      ellipsis: true,
+    });
+  doc.restore();
+}
+
+function keyValue(
+  doc: PDFKit.PDFDocument,
+  x: number,
+  y: number,
+  width: number,
+  label: string,
+  value: string,
+  dark = false,
+) {
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(6.7)
+    .fillColor(dark ? colours.mint : colours.mintDark)
+    .text(label.toUpperCase(), x, y, {
+      width,
+      characterSpacing: 1.05,
+    });
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(9.5)
+    .fillColor(dark ? colours.ink : colours.text)
+    .text(truncateText(value, 96, "To be confirmed."), x, y + 14, {
+      width,
+      height: 28,
+      lineGap: 1,
+      ellipsis: true,
+    });
+}
+
+function bullets(
+  doc: PDFKit.PDFDocument,
+  items: string[],
+  x: number,
+  y: number,
+  width: number,
+  label: string,
+  maxItems: number,
+) {
+  const cleanItems = items.length > 0 ? items.slice(0, maxItems) : ["To be confirmed."];
+
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(8)
+    .fillColor(colours.mintDark)
+    .text(label.toUpperCase(), x, y, { width, characterSpacing: 1.1 });
+
+  let cursorY = y + 20;
+
+  cleanItems.forEach((item) => {
+    doc.rect(x, cursorY + 4, 5, 5).fill(colours.mintDark);
+    doc
+      .font("Helvetica")
+      .fontSize(8.6)
+      .fillColor(colours.text)
+      .text(truncateText(item, 180, ""), x + 16, cursorY, {
+        width: width - 16,
+        height: 30,
+        lineGap: 2,
+        ellipsis: true,
+      });
+    cursorY += 34;
+  });
 }
 
 export async function generateAxiomProposalPdf(proposal: ProposalDraftRecord) {
@@ -86,13 +289,15 @@ export async function generateAxiomProposalPdf(proposal: ProposalDraftRecord) {
   const businessName = safeText(proposal.business_name, "Client organisation");
   const workspaceName = safeText(proposal.workspace_name, "Proposal workspace");
   const recommendedRoute = routeLabel(proposal.recommended_service_route);
-  const preparedDate = formatDate(new Date().toISOString());
   const validUntil = formatDate(proposal.valid_until);
   const reference = safeText(proposal.proposal_reference, proposal.id);
-  const title = `${businessName} - ${workspaceName} - ${recommendedRoute} Proposal`;
+  const finalTotal = pricing.final_total ? formatProposalMoney(pricing.final_total) : "To be confirmed";
+  const depositRequired = pricing.deposit_required ? formatProposalMoney(pricing.deposit_required) : "To be confirmed";
+  const title = `${businessName} - ${recommendedRoute} Proposal`;
   const doc = new PDFDocument({
     size: "A4",
     margin: pageMargin,
+    autoFirstPage: true,
     bufferPages: true,
     info: {
       Title: title,
@@ -106,346 +311,103 @@ export async function generateAxiomProposalPdf(proposal: ProposalDraftRecord) {
   const pageWidth = doc.page.width;
   const pageHeight = doc.page.height;
   const contentWidth = pageWidth - pageMargin * 2;
-
-  function drawGrid(dark = false) {
-    const stroke = dark ? colours.grid : "#DCEADC";
-    doc.save();
-    doc.lineWidth(0.35).strokeColor(stroke).opacity(dark ? 0.38 : 0.62);
-
-    for (let x = 0; x <= pageWidth; x += 34) {
-      doc.moveTo(x, 0).lineTo(x, pageHeight).stroke();
-    }
-
-    for (let y = 0; y <= pageHeight; y += 34) {
-      doc.moveTo(0, y).lineTo(pageWidth, y).stroke();
-    }
-
-    doc.restore();
-  }
-
-  function drawFooter(pageNumber?: number, pageTotal?: number) {
-    doc.save();
-    doc
-      .moveTo(pageMargin, pageHeight - 42)
-      .lineTo(pageWidth - pageMargin, pageHeight - 42)
-      .lineWidth(0.5)
-      .strokeColor("#CFE0CF")
-      .stroke();
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(7)
-      .fillColor(colours.muted)
-      .text("AXIOM ARCHITECT", pageMargin, pageHeight - 30, { continued: true });
-    doc
-      .font("Helvetica")
-      .fillColor(colours.muted)
-      .text("  |  PROPOSAL PREPARATION", { continued: false });
-    doc
-      .font("Helvetica")
-      .fontSize(7)
-      .fillColor(colours.muted)
-      .text(`PAGE ${pageNumber || 1} / ${pageTotal || 1}`, pageWidth - 120, pageHeight - 30, {
-        width: 76,
-        align: "right",
-      });
-    doc.restore();
-  }
-
-  function addLightPage(kicker: string, heading: string) {
-    doc.addPage();
-    doc.rect(0, 0, pageWidth, pageHeight).fill(colours.pale);
-    drawGrid(false);
-    doc.y = pageMargin;
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(8)
-      .fillColor(colours.mintDark)
-      .text(kicker.toUpperCase(), pageMargin, doc.y, { characterSpacing: 1.6 });
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(24)
-      .fillColor(colours.text)
-      .text(heading.toUpperCase(), pageMargin, doc.y + 12, {
-        width: contentWidth,
-        lineGap: 1,
-      });
-    doc
-      .moveTo(pageMargin, doc.y + 8)
-      .lineTo(pageWidth - pageMargin, doc.y + 8)
-      .lineWidth(1)
-      .strokeColor(colours.mint)
-      .stroke();
-    doc.moveDown(1.25);
-  }
-
-  function ensureSpace(height: number) {
-    if (doc.y + height > pageHeight - bottomMargin) {
-      addLightPage("continued", "Proposal detail");
-    }
-  }
-
-  function addParagraph(value?: string | null) {
-    const text = safeText(value, "");
-
-    if (!text) {
-      return;
-    }
-
-    ensureSpace(doc.heightOfString(text, { width: contentWidth, lineGap: 4 }) + 18);
-    doc
-      .font("Helvetica")
-      .fontSize(10.5)
-      .fillColor(colours.text)
-      .text(text, pageMargin, doc.y, {
-        width: contentWidth,
-        lineGap: 4,
-      });
-    doc.moveDown(0.8);
-  }
-
-  function addSubheading(value: string) {
-    ensureSpace(40);
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(13)
-      .fillColor(colours.text)
-      .text(value.toUpperCase(), pageMargin, doc.y, { width: contentWidth });
-    doc.moveDown(0.4);
-  }
-
-  function addList(items: string[]) {
-    if (items.length === 0) {
-      addParagraph("No items recorded.");
-      return;
-    }
-
-    items.forEach((item) => {
-      const height = Math.max(32, doc.heightOfString(item, { width: contentWidth - 26, lineGap: 3 }) + 12);
-      ensureSpace(height);
-      const startY = doc.y;
-      doc.rect(pageMargin, startY + 4, 6, 6).fill(colours.mintDark);
-      doc
-        .font("Helvetica")
-        .fontSize(9.5)
-        .fillColor(colours.text)
-        .text(item, pageMargin + 22, startY, {
-          width: contentWidth - 22,
-          lineGap: 3,
-        });
-      doc.moveDown(0.45);
-    });
-  }
-
-  function addCallout(label: string, value?: string | null, dark = false) {
-    const body = safeText(value);
-    const bodyHeight = doc.heightOfString(body, { width: contentWidth - 28, lineGap: 3 });
-    const height = Math.max(72, bodyHeight + 46);
-    ensureSpace(height + 12);
-    const y = doc.y;
-    doc.rect(pageMargin, y, contentWidth, height).fill(dark ? colours.panel : "#F8FCF7");
-    doc.rect(pageMargin, y, contentWidth, height).lineWidth(0.8).strokeColor(colours.line).stroke();
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(7)
-      .fillColor(dark ? colours.mint : colours.mintDark)
-      .text(label.toUpperCase(), pageMargin + 14, y + 14, {
-        width: contentWidth - 28,
-        characterSpacing: 1.2,
-      });
-    doc
-      .font("Helvetica")
-      .fontSize(9.5)
-      .fillColor(dark ? colours.ink : colours.text)
-      .text(body, pageMargin + 14, y + 33, {
-        width: contentWidth - 28,
-        lineGap: 3,
-      });
-    doc.y = y + height + 12;
-  }
-
-  function addKeyValueGrid(items: Array<[string, string | number | null | undefined]>) {
-    const gap = 10;
-    const columnWidth = (contentWidth - gap) / 2;
-    let x = pageMargin;
-    let y = doc.y;
-
-    items.forEach(([key, value], index) => {
-      if (index % 2 === 0) {
-        ensureSpace(70);
-        x = pageMargin;
-        y = doc.y;
-      }
-
-      doc.rect(x, y, columnWidth, 62).fill("#F8FCF7");
-      doc.rect(x, y, columnWidth, 62).lineWidth(0.7).strokeColor(colours.line).stroke();
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(7)
-        .fillColor(colours.mintDark)
-        .text(key.toUpperCase(), x + 12, y + 12, {
-          width: columnWidth - 24,
-          characterSpacing: 1.1,
-        });
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(10.5)
-        .fillColor(colours.text)
-        .text(String(value || "Not specified"), x + 12, y + 30, {
-          width: columnWidth - 24,
-          lineGap: 2,
-        });
-
-      if (index % 2 === 0) {
-        x += columnWidth + gap;
-      } else {
-        doc.y = y + 74;
-      }
-    });
-
-    if (items.length % 2 === 1) {
-      doc.y = y + 74;
-    }
-  }
+  const columnGap = 16;
+  const columnWidth = (contentWidth - columnGap) / 2;
 
   doc.rect(0, 0, pageWidth, pageHeight).fill(colours.charcoal);
-  drawGrid(true);
+  drawGrid(doc, true);
 
   if (logo) {
-    doc.image(logo, pageMargin, 48, { width: 44 });
+    doc.image(logo, pageMargin, 42, { width: 42 });
   }
 
   doc
     .font("Helvetica-Bold")
     .fontSize(9)
     .fillColor(colours.mint)
-    .text("AXIOM ARCHITECT", pageMargin, 108, { characterSpacing: 2.1 });
+    .text("AXIOM ARCHITECT", pageMargin, 102, { characterSpacing: 2.1 });
   doc
     .font("Helvetica")
     .fontSize(8)
     .fillColor("#CFE0CF")
-    .text("THE ARCHITECTURE BEHIND INTELLIGENT WORK", pageMargin, 126, { characterSpacing: 1.2 });
-  doc.rect(pageMargin, 164, contentWidth, 2).fill(colours.mint);
-  doc.font("Helvetica-Bold").fontSize(8).fillColor(colours.mint).text(`PREPARED FOR ${clientName.toUpperCase()}`, pageMargin, 188, {
-    width: contentWidth,
-    characterSpacing: 1.4,
-  });
-  doc.font("Helvetica-Bold").fontSize(39).fillColor(colours.white).text(businessName.toUpperCase(), pageMargin, 218, {
-    width: contentWidth,
-    lineGap: -2,
-  });
-  doc.font("Helvetica-Bold").fontSize(31).fillColor("#DCEADC").text(workspaceName.toUpperCase(), pageMargin, doc.y + 4, {
-    width: contentWidth,
-    lineGap: -2,
-  });
-  doc.font("Helvetica-Bold").fontSize(25).fillColor(colours.white).text(`${recommendedRoute} Proposal`.toUpperCase(), pageMargin, doc.y + 5, {
-    width: contentWidth,
-    lineGap: -2,
-  });
-
-  const coverPanelY = 454;
-  const coverPanelHeight = 150;
-  doc.rect(pageMargin, coverPanelY, contentWidth, coverPanelHeight).fill(colours.panel);
-  doc.rect(pageMargin, coverPanelY, contentWidth, coverPanelHeight).lineWidth(1).strokeColor("#2D432F").stroke();
-  doc.rect(pageMargin, coverPanelY, 5, coverPanelHeight).fill(colours.mint);
-
-  [
-    ["CLIENT", clientName],
-    ["BUSINESS", businessName],
-    ["WORKSPACE", workspaceName],
-    ["ROUTE", recommendedRoute],
-    ["REFERENCE", reference],
-    ["VALID UNTIL", validUntil],
-  ].forEach(([key, value], index) => {
-    const columnWidth = (contentWidth - 58) / 2;
-    const x = pageMargin + 22 + (index % 2) * (columnWidth + 22);
-    const y = coverPanelY + 23 + Math.floor(index / 2) * 42;
-    doc.font("Helvetica-Bold").fontSize(7).fillColor(colours.mint).text(key, x, y, {
-      width: columnWidth,
-      characterSpacing: 1.35,
+    .text("THE ARCHITECTURE BEHIND INTELLIGENT WORK", pageMargin, 120, { characterSpacing: 1.2 });
+  doc.rect(pageMargin, 152, contentWidth, 2).fill(colours.mint);
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(8)
+    .fillColor(colours.mint)
+    .text(`PREPARED FOR ${clientName.toUpperCase()}`, pageMargin, 176, {
+      width: contentWidth,
+      characterSpacing: 1.3,
     });
-    doc.font("Helvetica").fontSize(9.5).fillColor(colours.ink).text(value, x, y + 15, {
-      width: columnWidth,
-      lineGap: 2,
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(34)
+    .fillColor(colours.white)
+    .text("PROPOSAL SUMMARY", pageMargin, 205, {
+      width: contentWidth,
+      lineGap: -2,
     });
-  });
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(22)
+    .fillColor("#DCEADC")
+    .text(businessName.toUpperCase(), pageMargin, 251, {
+      width: contentWidth,
+      height: 58,
+      lineGap: -1,
+      ellipsis: true,
+    });
 
-  doc.font("Helvetica").fontSize(8).fillColor("#AEBBAE").text("Admin-review proposal PDF. Not sent to client until proposal release is completed.", pageMargin, pageHeight - 72, {
-    width: contentWidth,
-  });
+  const metaY = 334;
+  doc.rect(pageMargin, metaY, contentWidth, 118).fill(colours.panel);
+  doc.rect(pageMargin, metaY, contentWidth, 118).lineWidth(1).strokeColor("#2D432F").stroke();
+  doc.rect(pageMargin, metaY, 5, 118).fill(colours.mint);
+  keyValue(doc, pageMargin + 22, metaY + 22, columnWidth - 16, "Workspace", workspaceName, true);
+  keyValue(doc, pageMargin + columnWidth + columnGap, metaY + 22, columnWidth - 16, "Recommended route", recommendedRoute, true);
+  keyValue(doc, pageMargin + 22, metaY + 68, columnWidth - 16, "Reference", reference, true);
+  keyValue(doc, pageMargin + columnWidth + columnGap, metaY + 68, columnWidth - 16, "Valid until", validUntil, true);
 
-  addLightPage("control page", "Proposal control summary");
-  addKeyValueGrid([
-    ["Client", clientName],
-    ["Business", businessName],
-    ["Email", proposal.client_email],
-    ["Proposal type", routeLabel(proposal.proposal_type)],
-    ["Status", routeLabel(proposal.status)],
-    ["Recommended route", recommendedRoute],
-    ["Valid until", validUntil],
-    ["Reference", reference],
-  ]);
+  box(doc, pageMargin, 474, columnWidth, 104, "Client situation", truncateText(proposal.client_summary, 650), { dark: true });
+  box(doc, pageMargin + columnWidth + columnGap, 474, columnWidth, 104, "Recommended route", truncateText(proposal.client_price_explanation || proposal.scope_summary, 520), { dark: true });
+  box(doc, pageMargin, 598, columnWidth, 86, "Desired outcome", truncateText(proposal.desired_outcome, 650), { dark: true });
+  box(doc, pageMargin + columnWidth + columnGap, 598, columnWidth, 86, "Investment", finalTotal, { dark: true, bodySize: 20 });
+  drawFooter(doc, 1);
 
-  addLightPage("client situation", "Client situation summary");
-  addCallout("What we understand", proposal.client_summary || proposal.current_problem_summary);
-  addCallout("Current problem summary", proposal.current_problem_summary);
-  addCallout("Desired outcome", proposal.desired_outcome, true);
+  doc.addPage();
+  startLightPage(doc, 2, "scope and deliverables", "What is included");
+  box(doc, pageMargin, 126, contentWidth, 88, "Scope summary", truncateText(proposal.scope_summary, 500), { bodySize: 9.4 });
+  bullets(doc, listFromJson(proposal.included_work_json, 6), pageMargin, 242, columnWidth, "Included work", 6);
+  bullets(doc, listFromJson(proposal.deliverables_json, 6), pageMargin + columnWidth + columnGap, 242, columnWidth, "Deliverables", 6);
+  bullets(doc, listFromJson(proposal.timeline_json, 5), pageMargin, 514, columnWidth, "Timeline", 5);
+  bullets(doc, listFromJson(proposal.client_responsibilities_json, 5), pageMargin + columnWidth + columnGap, 514, columnWidth, "Client responsibilities", 5);
 
-  addLightPage("recommended route", "Service route and commercial explanation");
-  addKeyValueGrid([
-    ["Recommended route", recommendedRoute],
-    ["Alternative route", proposal.alternative_service_route ? routeLabel(proposal.alternative_service_route) : "Not proposed"],
-  ]);
-  addCallout("Client-facing price explanation", proposal.client_price_explanation);
-
-  addLightPage("scope of work", "Included work and deliverables");
-  addCallout("Scope summary", proposal.scope_summary);
-  addSubheading("Included work");
-  addList(listFromJson(proposal.included_work_json));
-  addSubheading("Deliverables");
-  addList(listFromJson(proposal.deliverables_json));
-  addSubheading("Timeline");
-  addList(listFromJson(proposal.timeline_json));
-  addSubheading("Client responsibilities");
-  addList(listFromJson(proposal.client_responsibilities_json));
-  addSubheading("Assumptions");
-  addList(listFromJson(proposal.assumptions_json));
-
-  addLightPage("investment", "Investment and payment terms");
-  addKeyValueGrid([
-    ["Final total", formatProposalMoney(pricing.final_total)],
-    ["Currency", "GBP"],
-    ["Deposit required", formatProposalMoney(pricing.deposit_required)],
-    ["Discount", pricing.discount_amount ? formatProposalMoney(pricing.discount_amount) : "No discount recorded"],
-  ]);
-  addCallout("Payment schedule", paymentTerms.payment_schedule || "Payment schedule to be confirmed before client release.");
-  addCallout("Add-ons", pricing.add_ons_text || "No optional add-ons recorded.");
-
-  addLightPage("scope boundary", "Exclusions and boundary notes");
-  addSubheading("Exclusions");
-  addList(listFromJson(proposal.exclusions_json));
-  addCallout(
-    "Important scope boundary",
-    "This proposal covers only the work listed in the included scope and deliverables. Live automation deployment, third-party subscriptions, legal compliance review, custom software engineering, or ongoing monitoring are excluded unless specifically listed.",
-    true,
+  doc.addPage();
+  startLightPage(doc, 3, "terms and next step", "Commercial terms");
+  box(doc, pageMargin, 126, contentWidth, 86, "Payment terms", truncateText(paymentTerms.payment_schedule, 500), { bodySize: 9.4 });
+  box(doc, pageMargin, 232, columnWidth, 86, "Deposit required", depositRequired, { bodySize: 18 });
+  box(doc, pageMargin + columnWidth + columnGap, 232, columnWidth, 86, "Proposal validity", `This proposal is valid until ${validUntil}.`, { bodySize: 10 });
+  bullets(doc, listFromJson(proposal.exclusions_json, 6), pageMargin, 350, contentWidth, "Exclusions", 6);
+  box(
+    doc,
+    pageMargin,
+    608,
+    contentWidth,
+    74,
+    "Next step",
+    "To proceed, reply to this proposal or confirm acceptance through the Axiom Architect client workspace when enabled.",
+    { dark: true, bodySize: 10.2 },
   );
-
-  addLightPage("next steps", "Review and next steps");
-  addCallout("Proposal validity", `This proposal is valid until ${validUntil}.`);
-  addCallout(
-    "Admin-approved next step",
-    "Once Axiom Architect marks this proposal ready to send, the client can be invited to review the proposal through the controlled client proposal flow.",
+  box(
+    doc,
+    pageMargin,
+    704,
+    contentWidth,
+    54,
+    "Closing note",
+    "Axiom Architect will keep the engagement focused on the agreed scope, clear review points, and practical outputs that support safer intelligent work.",
+    { bodySize: 9 },
   );
-  addCallout(
-    "Acceptance placeholder",
-    "Client acceptance, request-changes, email delivery, and Stripe conversion are intentionally not enabled in this PDF generation step.",
-    true,
-  );
-
-  const range = doc.bufferedPageRange();
-  for (let index = range.start; index < range.start + range.count; index += 1) {
-    doc.switchToPage(index);
-    drawFooter(index + 1, range.count);
-  }
 
   doc.end();
   return pdfPromise;
