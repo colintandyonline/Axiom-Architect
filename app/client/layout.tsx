@@ -2,6 +2,16 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import { clientPortalNav } from "../../lib/axiom-client-portal";
 
+const clientWorkspaceNav = [
+  ...clientPortalNav.slice(0, 1),
+  {
+    href: "/client/proposals",
+    label: "Proposals",
+    description: "Review proposals, PDFs, and proposal payment status.",
+  },
+  ...clientPortalNav.slice(1),
+];
+
 export default function ClientPortalLayout({ children }: { children: ReactNode }) {
   return (
     <div className="client-portal-shell min-h-screen overflow-x-hidden bg-black text-white selection:bg-[#9ed39f] selection:text-black">
@@ -123,7 +133,7 @@ export default function ClientPortalLayout({ children }: { children: ReactNode }
           </a>
 
           <nav aria-label="Client portal navigation" className="flex flex-wrap gap-2">
-            {clientPortalNav.map((item) => (
+            {clientWorkspaceNav.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
