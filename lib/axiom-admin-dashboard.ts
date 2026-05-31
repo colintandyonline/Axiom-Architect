@@ -1,3 +1,5 @@
+import { isAxiomAdminEmail } from "./axiom-admin";
+
 export type CustomerRecord = {
   id: string;
   email: string | null;
@@ -57,6 +59,10 @@ function getSupabaseConfig() {
   return { url: url.replace(/\/$/, ""), serviceRoleKey };
 }
 
+function excludeAdminCustomers(customers?: CustomerRecord[] | null) {
+  return (customers || []).filter((customer) => !isAxiomAdminEmail(customer.email));
+}
+
 export async function supabaseAdminFetch<T>(path: string): Promise<T | null> {
   const config = getSupabaseConfig();
 
@@ -98,7 +104,7 @@ export async function getAdminData(): Promise<AdminData> {
   ]);
 
   return {
-    customers: customers || [],
+    customers: excludeAdminCustomers(customers),
     orders: orders || [],
     workflows: workflows || [],
     reports: reports || [],
