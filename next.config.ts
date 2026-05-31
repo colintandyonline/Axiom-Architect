@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: process.cwd(),
+  serverExternalPackages: ["pdfkit"],
+  outputFileTracingIncludes: {
+    "/api/admin/reports/action": ["./node_modules/pdfkit/js/data/**/*"],
+    "/api/client/reports/[reportId]/pdf": ["./node_modules/pdfkit/js/data/**/*"],
+  },
   async redirects() {
     return [
       {
