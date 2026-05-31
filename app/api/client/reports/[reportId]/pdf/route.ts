@@ -10,6 +10,7 @@ type ReportRecord = {
   id: string;
   customer_id: string | null;
   submission_id: string | null;
+  status: string | null;
   report_json: Partial<AxiomReportJson> | null;
 };
 
@@ -82,7 +83,7 @@ async function supabaseServiceFetch<T>(path: string, options: RequestInit = {}) 
 
 async function getReport(reportId: string) {
   const records = await supabaseServiceFetch<ReportRecord[]>(
-    `axiom_audit_reports?select=id,customer_id,submission_id,report_json&id=eq.${encodeURIComponent(reportId)}&limit=1`,
+    `axiom_audit_reports?select=id,customer_id,submission_id,status,report_json&id=eq.${encodeURIComponent(reportId)}&limit=1`,
   );
 
   return records?.[0] ?? null;
@@ -137,9 +138,11 @@ export async function GET(
   }
 
   const userEmail = authContext.user.email || authContext.customer?.email || "";
+  const isAdmin = isAxiomAdminEmail(userEmail);
+  const isDelivered = report.status === "delivered";
   const canAccess =
-    isAxiomAdminEmail(userEmail) ||
-    Boolean(authContext.customer?.id && report.customer_id === authContext.customer.id);
+    isAdmin ||
+    Boolean(isDelivered && authContext.customer?.id && report.customer_id === authContext.customer.id);
 
   if (!canAccess) {
     return new NextResponse("Report PDF not found", { status: 404 });
