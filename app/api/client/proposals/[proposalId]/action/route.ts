@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   patchClientProposal,
-  validateProposalClientAccess,
+  validateProposalClientOrAuthenticatedAccess,
 } from "../../../../../../lib/axiom-proposal-client.server";
 
 export const runtime = "nodejs";
@@ -13,7 +13,11 @@ function cleanInput(value: FormDataEntryValue | null) {
 
 function redirectToProposal(request: Request, proposalId: string, token: string, status: string) {
   const url = new URL(`/client/proposals/${encodeURIComponent(proposalId)}`, request.url);
-  url.searchParams.set("token", token);
+
+  if (token) {
+    url.searchParams.set("token", token);
+  }
+
   url.searchParams.set("proposal", status);
   return NextResponse.redirect(url, 303);
 }
@@ -26,7 +30,7 @@ export async function POST(
   const formData = await request.formData();
   const token = cleanInput(formData.get("token"));
   const action = cleanInput(formData.get("action"));
-  const access = await validateProposalClientAccess(proposalId, token);
+  const access = await validateProposalClientOrAuthenticatedAccess(proposalId, token);
 
   if (access.ok === false) {
     return new NextResponse(access.message, { status: access.status });
