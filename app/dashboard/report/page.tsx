@@ -207,12 +207,10 @@ function getClientReportState({
     return {
       label: "Revision in progress",
       reviewLabel: "Being refined",
-      heroTitle: canRenderReport ? "Your workflow report is being refined." : "Your workflow report is being refined.",
-      heroCopy: canRenderReport
-        ? "Your report is visible below and may receive final updates after internal review."
-        : "Your intake has been received. A revision has been requested and this page will update when the report is ready.",
+      heroTitle: "Your workflow report is being refined.",
+      heroCopy: "Your intake has been received. This page will update when the report is ready.",
       waitingTitle: "Your report is being refined.",
-      waitingCopy: "The submitted intake is in review. Any required changes will be handled before the report is marked ready.",
+      waitingCopy: "The submitted intake is in review. Any required changes will be handled before the report is released.",
       stepOneState: "complete",
       stepTwoTitle: "Revision in progress",
       stepTwoState: "active",
@@ -220,7 +218,7 @@ function getClientReportState({
     };
   }
 
-  if (status === "delivered") {
+  if (status === "delivered" && canRenderReport) {
     return {
       label: "Delivered",
       reviewLabel: "Delivered",
@@ -235,16 +233,16 @@ function getClientReportState({
     };
   }
 
-  if (canRenderReport || status === "approved") {
+  if (status === "approved") {
     return {
-      label: "Report ready",
-      reviewLabel: status === "approved" ? "Approved" : "Ready",
-      heroTitle: "Your workflow report is ready.",
-      heroCopy: summary,
-      waitingTitle: "Your report is ready.",
-      waitingCopy: "Your workflow report is available from this dashboard.",
+      label: "Approved for delivery",
+      reviewLabel: "Approved",
+      heroTitle: "Your workflow report is being prepared for delivery.",
+      heroCopy: "Your report has passed internal review and will be released once delivery is complete.",
+      waitingTitle: "Your report is being prepared for delivery.",
+      waitingCopy: "Internal approval is complete. The final report package will appear here after delivery.",
       stepOneState: "complete",
-      stepTwoTitle: "Report ready",
+      stepTwoTitle: "Internal review complete",
       stepTwoState: "complete",
       stepThreeState: "active",
     };
@@ -256,7 +254,7 @@ function getClientReportState({
     heroTitle: "Your workflow report is being prepared.",
     heroCopy: "Your intake has been received. This page will update when the workflow report is ready.",
     waitingTitle: "Your workflow report is being prepared.",
-    waitingCopy: "Once ready, this page will show your workflow diagnosis, automation suitability, human review gates, and recommended implementation sequence.",
+    waitingCopy: "Once released, this page will show your workflow diagnosis, automation suitability, human review gates, and recommended implementation sequence.",
     stepOneState: "complete",
     stepTwoTitle: "Report being prepared",
     stepTwoState: "active",
@@ -366,8 +364,8 @@ function WaitingReportState({
     },
     {
       label: "03",
-      title: "Report ready",
-      text: "The finished report will organise findings, automation suitability, review gates, and implementation guidance.",
+      title: "Report released",
+      text: "The finished report appears here only after internal review and delivery are complete.",
       state: clientState.stepThreeState,
     },
   ];
@@ -446,7 +444,7 @@ function RenderGeneratedReport({
   const upgrade = report.upgrade_recommendation;
   const delivery = report.delivery;
   const pdfDownloadUrl =
-    delivery?.pdf_ready && reportId
+    clientState.label === "Delivered" && delivery?.pdf_ready && reportId
       ? delivery.pdf_download_url || `/api/client/reports/${reportId}/pdf`
       : null;
 
@@ -760,7 +758,7 @@ export default async function ReportStatusPage({
 
   const context = await getReportContext(customer.id, params.submission_id);
   const reportJson = context.report?.report_json;
-  const canRenderReport = hasGeneratedReport(reportJson);
+  const canRenderReport = context.report?.status === "delivered" && hasGeneratedReport(reportJson);
   const hasWorkflow = Boolean(context.workflow);
   const workflowTitle = context.workflow?.workflow_title || reportJson?.submission?.workflow_title || "Workflow intake not started";
   const serviceName = context.order?.service_name || context.workflow?.tier_slug || reportJson?.product_slug || "Workflow audit";
