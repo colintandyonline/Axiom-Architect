@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getProposalPaymentTerms,
   getProposalPricing,
@@ -45,6 +45,15 @@ function sourceKey(source: ProposalSourceOption) {
 function sourceLabel(source: ProposalSourceOption) {
   const date = inputDate(source.updated_at || source.created_at);
   return `${source.type_label} - ${source.title}${source.status ? ` - ${source.status.replace(/_/g, " ")}` : ""}${date ? ` - ${date}` : ""}`;
+}
+
+function sourcePreview(source: ProposalSourceOption) {
+  const preview = source.client_summary || source.current_problem_summary || source.desired_outcome || source.source_context;
+  return preview.length > 260 ? `${preview.slice(0, 257).trim()}...` : preview;
+}
+
+function normalizedEmail(value?: string | null) {
+  return value?.trim().toLowerCase() || "";
 }
 
 function inputDate(value?: string | null) {
@@ -147,13 +156,35 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
   const [selectedCustomerId, setSelectedCustomerId] = useState(initialCustomerId);
   const [selectedSourceKey, setSelectedSourceKey] = useState(initialSourceKey);
   const selectedPreset = useMemo(() => getProposalPreset(selectedRoute), [selectedRoute]);
+  const selectedCustomer = useMemo(
+    () => customers.find((item) => item.id === selectedCustomerId) || null,
+    [customers, selectedCustomerId],
+  );
   const filteredSourceOptions = useMemo(
-    () => sourceOptions.filter((source) => !selectedCustomerId || source.customer_id === selectedCustomerId),
-    [selectedCustomerId, sourceOptions],
+    () => {
+      if (!selectedCustomerId || !selectedCustomer) {
+        return [];
+      }
+
+      const customerEmail = normalizedEmail(selectedCustomer.email);
+
+      return sourceOptions.filter((source) => {
+        if (source.customer_id && source.customer_id === selectedCustomerId) {
+          return true;
+        }
+
+        if (customerEmail && normalizedEmail(source.client_email) === customerEmail) {
+          return true;
+        }
+
+        return false;
+      });
+    },
+    [selectedCustomer, selectedCustomerId, sourceOptions],
   );
   const selectedSource = useMemo(
-    () => sourceOptions.find((source) => sourceKey(source) === selectedSourceKey) || null,
-    [selectedSourceKey, sourceOptions],
+    () => filteredSourceOptions.find((source) => sourceKey(source) === selectedSourceKey) || null,
+    [filteredSourceOptions, selectedSourceKey],
   );
 
   function setFieldValue(name: string, value: string | number) {
@@ -218,21 +249,18 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
       ["business_name", customer.business_name || ""],
       ["client_email", customer.email || ""],
     ].filter(([, value]) => value);
-    const wouldOverwrite = targetFields.some(([name, value]) => fieldHasValue(name) && fieldValue(name) !== value);
+    const emptyTargets = targetFields.filter(([name]) => !fieldHasValue(name));
+    const overwriteTargets = targetFields.filter(([name, value]) => fieldHasValue(name) && fieldValue(name) !== value);
 
     if (
-      wouldOverwrite &&
+      overwriteTargets.length > 0 &&
       !window.confirm("Prefill this customer's identity details? This will overwrite the current name, business, or email fields.")
     ) {
+      emptyTargets.forEach(([name, value]) => setFieldValue(name, value));
       return;
     }
 
-    targetFields.forEach(([name, value]) => setFieldValue(name, value));
-
-    if (selectedSource && selectedSource.customer_id !== customerId) {
-      setSelectedSourceKey("");
-      setSourceFields(null);
-    }
+    [...emptyTargets, ...overwriteTargets].forEach(([name, value]) => setFieldValue(name, value));
   }
 
   function importSourceDetails() {
@@ -320,6 +348,20 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
     setFieldValue("add_ons_text", listText(selectedPreset.optional_add_ons));
   }
 
+  useEffect(() => {
+    if (!selectedCustomerId || filteredSourceOptions.length === 0) {
+      setSelectedSourceKey("");
+      setSourceFields(null);
+      return;
+    }
+
+    if (!filteredSourceOptions.some((source) => sourceKey(source) === selectedSourceKey)) {
+      const latestSource = filteredSourceOptions[0];
+      setSelectedSourceKey(sourceKey(latestSource));
+      setSourceFields(latestSource);
+    }
+  }, [filteredSourceOptions, selectedCustomerId, selectedSourceKey]);
+
   return (
     <form ref={formRef} action="/api/admin/proposals/draft" method="post" className="grid gap-8">
       <input type="hidden" name="action" value={mode} />
@@ -402,49 +444,6 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
             <input name="valid_until" type="date" defaultValue={inputDate(proposal?.valid_until)} className={inputClass} />
           </FieldLabel>
         </div>
-        {selectedCustomerId ? (
-          <div className="grid gap-4 border border-[#9ed39f]/20 bg-black/30 p-4">
-            <div className="grid gap-2">
-              <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Client source data</p>
-              <p className="text-sm leading-7 text-white/62">
-                Choose a proposal request or workflow intake from this customer, then import the client-submitted details before applying an Axiom pricing preset.
-              </p>
-            </div>
-            {filteredSourceOptions.length > 0 ? (
-              <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
-                <FieldLabel label="Available request / intake">
-                  <select
-                    value={selectedSourceKey}
-                    className={inputClass}
-                    onChange={(event) => setSelectedSourceKey(event.currentTarget.value)}
-                  >
-                    <option value="">Select source record</option>
-                    {filteredSourceOptions.map((source) => (
-                      <option key={sourceKey(source)} value={sourceKey(source)}>
-                        {sourceLabel(source)}
-                      </option>
-                    ))}
-                  </select>
-                </FieldLabel>
-                <button type="button" onClick={importSourceDetails} disabled={!selectedSource} className={`${primaryButtonClass} disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-black disabled:text-white/30`}>
-                  Import client request details
-                </button>
-              </div>
-            ) : (
-              <p className="border border-[#9ed39f]/16 bg-black/36 p-4 text-sm leading-7 text-white/58">
-                No proposal requests or workflow intakes were found for this customer.
-              </p>
-            )}
-            {selectedSource ? (
-              <div className="border border-[#9ed39f]/16 bg-[#030804] p-4 text-sm leading-7 text-white/66">
-                <p><strong className="text-[#9ed39f]">Selected:</strong> {selectedSource.title}</p>
-                <p><strong className="text-[#9ed39f]">Type:</strong> {selectedSource.type_label}</p>
-                <p><strong className="text-[#9ed39f]">Status:</strong> {selectedSource.status || "Not set"}</p>
-                {selectedSource.source_context ? <p className="mt-2 whitespace-pre-wrap">{selectedSource.source_context}</p> : null}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
         {selectedPreset ? (
           <div className="border border-[#9ed39f]/22 bg-[#9ed39f]/10 p-4">
             <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Suggested preset</p>
@@ -469,6 +468,57 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
           <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">Scope</p>
           <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.05em] text-white">Client-facing proposal content</h2>
         </div>
+        {selectedCustomerId ? (
+          <div className="grid gap-4 border border-[#9ed39f]/24 bg-[#9ed39f]/10 p-4">
+            <div className="grid gap-2">
+              <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Client submitted context</p>
+              <p className="text-sm leading-7 text-white/68">
+                Loaded {filteredSourceOptions.length} source records for this client. Import the client-submitted context first, then apply pricing and scope presets below.
+              </p>
+            </div>
+            {filteredSourceOptions.length > 0 ? (
+              <div className="grid gap-4">
+                <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+                  <FieldLabel label="Available request / intake">
+                    <select
+                      value={selectedSourceKey}
+                      className={inputClass}
+                      onChange={(event) => {
+                        const nextKey = event.currentTarget.value;
+                        const nextSource = filteredSourceOptions.find((source) => sourceKey(source) === nextKey) || null;
+                        setSelectedSourceKey(nextKey);
+                        setSourceFields(nextSource);
+                      }}
+                    >
+                      {filteredSourceOptions.map((source) => (
+                        <option key={sourceKey(source)} value={sourceKey(source)}>
+                          {sourceLabel(source)}
+                        </option>
+                      ))}
+                    </select>
+                  </FieldLabel>
+                  <button type="button" onClick={importSourceDetails} disabled={!selectedSource} className={`${primaryButtonClass} disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-black disabled:text-white/30`}>
+                    Import selected client context
+                  </button>
+                </div>
+                {selectedSource ? (
+                  <div className="grid gap-3 border border-[#9ed39f]/18 bg-[#030804] p-4 text-sm leading-7 text-white/66 md:grid-cols-[0.26fr_0.74fr]">
+                    <div>
+                      <p><strong className="text-[#9ed39f]">Type:</strong> {selectedSource.type_label}</p>
+                      <p><strong className="text-[#9ed39f]">Title:</strong> {selectedSource.title}</p>
+                      <p><strong className="text-[#9ed39f]">Created:</strong> {inputDate(selectedSource.created_at) || "Not set"}</p>
+                    </div>
+                    <p className="whitespace-pre-wrap">{sourcePreview(selectedSource) || "No preview text was found on this source record."}</p>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <p className="border border-[#9ed39f]/16 bg-black/36 p-4 text-sm leading-7 text-white/58">
+                No submitted request or workflow intake was found for this client. You can still complete the proposal manually.
+              </p>
+            )}
+          </div>
+        ) : null}
         <TextAreaField name="client_summary" label="Client summary" value={proposal?.client_summary} />
         <TextAreaField name="current_problem_summary" label="Current problem summary" value={proposal?.current_problem_summary} />
         <TextAreaField name="desired_outcome" label="Desired outcome" value={proposal?.desired_outcome} />

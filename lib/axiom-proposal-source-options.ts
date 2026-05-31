@@ -2,6 +2,7 @@ type JsonRecord = Record<string, unknown>;
 
 export type ProposalSourceOption = {
   customer_id: string | null;
+  client_email: string | null;
   source_record_id: string;
   source_record_type: "service_request" | "workflow_submission";
   title: string;
@@ -59,6 +60,17 @@ function cleanText(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
+function firstFieldText(fields: JsonRecord, keys: string[]) {
+  for (const key of keys) {
+    const value = cleanText(fields[key]);
+    if (value) {
+      return value;
+    }
+  }
+
+  return "";
+}
+
 function payloadText(payload: JsonRecord | null | undefined, key: string) {
   return cleanText(payload?.[key]);
 }
@@ -75,6 +87,43 @@ function firstText(payload: JsonRecord | null | undefined, keys: string[]) {
     const value = payloadText(payload, key);
     if (value) {
       return value;
+    }
+  }
+
+  return "";
+}
+
+function stageText(payload: JsonRecord | null | undefined, patterns: string[]) {
+  const stages = payload?.stages;
+
+  if (!Array.isArray(stages)) {
+    return "";
+  }
+
+  for (const stage of stages) {
+    if (!stage || typeof stage !== "object" || Array.isArray(stage)) {
+      continue;
+    }
+
+    const fields = (stage as JsonRecord).fields;
+
+    if (!Array.isArray(fields)) {
+      continue;
+    }
+
+    for (const field of fields) {
+      if (!field || typeof field !== "object" || Array.isArray(field)) {
+        continue;
+      }
+
+      const record = field as JsonRecord;
+      const key = cleanText(record.key).toLowerCase();
+      const label = cleanText(record.label).toLowerCase();
+      const value = cleanText(record.value);
+
+      if (value && patterns.some((pattern) => key.includes(pattern) || label.includes(pattern))) {
+        return value;
+      }
     }
   }
 
@@ -107,6 +156,7 @@ function serviceRequestToSourceOption(record: ServiceRequestSourceRecord): Propo
 
   return {
     customer_id: record.customer_id,
+    client_email: record.email,
     source_record_id: record.id,
     source_record_type: "service_request",
     title,
@@ -157,6 +207,13 @@ function serviceRequestToSourceOption(record: ServiceRequestSourceRecord): Propo
 
 function workflowSubmissionToSourceOption(record: WorkflowSubmissionSourceRecord): ProposalSourceOption {
   const fields = intakeFields(record.intake_payload);
+  const clientEmail = firstFieldText(fields, [
+    "email",
+    "client_email",
+    "customer_email",
+    "business_email",
+    "contact_email",
+  ]);
   const title = record.workflow_title || payloadText(fields, "workflow_title") || "Workflow intake";
   const workflowSummary = firstText(fields, [
     "workflow_summary",
@@ -164,7 +221,7 @@ function workflowSubmissionToSourceOption(record: WorkflowSubmissionSourceRecord
     "workflow_description",
     "current_workflow",
     "business_context",
-  ]);
+  ]) || stageText(record.intake_payload, ["summary", "context", "description", "current workflow", "business context"]);
   const currentProblem = firstText(fields, [
     "current_problem",
     "friction_points",
@@ -172,20 +229,21 @@ function workflowSubmissionToSourceOption(record: WorkflowSubmissionSourceRecord
     "main_challenge",
     "risk_points",
     "pain_points",
-  ]);
+  ]) || stageText(record.intake_payload, ["problem", "friction", "challenge", "risk", "pain"]);
   const desiredOutcome = firstText(fields, [
     "desired_outcome",
     "target_outcome",
     "future_state",
     "success_definition",
     "ideal_outcome",
-  ]);
+  ]) || stageText(record.intake_payload, ["desired", "outcome", "future", "success", "ideal"]);
   const tools = firstText(fields, ["tools_used", "systems_used", "tools", "platforms", "software_used"]);
   const people = firstText(fields, ["people_involved", "users", "reviewers", "stakeholders"]);
   const constraints = firstText(fields, ["constraints", "guardrails", "risk_controls", "approval_gates"]);
 
   return {
     customer_id: record.customer_id,
+    client_email: clientEmail || null,
     source_record_id: record.id,
     source_record_type: "workflow_submission",
     title,
