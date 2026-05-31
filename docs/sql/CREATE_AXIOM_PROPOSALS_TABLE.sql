@@ -45,6 +45,11 @@ create table if not exists public.axiom_proposals (
   accepted_at timestamptz null,
   changes_requested_at timestamptz null,
   change_request_message text null,
+  deposit_paid_at timestamptz null,
+  final_balance_requested_at timestamptz null,
+  final_balance_paid_at timestamptz null,
+  payment_status text null,
+  payment_status_note text null,
   converted_order_id uuid null references public.axiom_orders(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -73,6 +78,19 @@ begin
       add constraint axiom_proposals_status_check
       check (status in ('draft', 'internal_review', 'ready_to_send', 'sent', 'viewed', 'accepted', 'changes_requested', 'expired'));
   end if;
+
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'axiom_proposals_payment_status_check'
+  ) then
+    alter table public.axiom_proposals
+      add constraint axiom_proposals_payment_status_check
+      check (
+        payment_status is null
+        or payment_status in ('unpaid', 'deposit_pending', 'deposit_paid', 'final_balance_due', 'paid_complete', 'refunded', 'cancelled')
+      );
+  end if;
 end $$;
 
 create index if not exists axiom_proposals_customer_id_idx
@@ -92,6 +110,15 @@ create index if not exists axiom_proposals_sent_at_idx
 
 create index if not exists axiom_proposals_accepted_at_idx
   on public.axiom_proposals(accepted_at desc);
+
+create index if not exists axiom_proposals_payment_status_idx
+  on public.axiom_proposals(payment_status);
+
+create index if not exists axiom_proposals_deposit_paid_at_idx
+  on public.axiom_proposals(deposit_paid_at desc);
+
+create index if not exists axiom_proposals_final_balance_paid_at_idx
+  on public.axiom_proposals(final_balance_paid_at desc);
 
 create index if not exists axiom_proposals_updated_at_idx
   on public.axiom_proposals(updated_at desc);

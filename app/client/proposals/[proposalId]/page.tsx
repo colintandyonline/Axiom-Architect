@@ -159,6 +159,11 @@ export default async function ClientProposalPage({ params, searchParams }: PageP
   const pricing = getProposalPricing(proposal.pricing_json);
   const paymentTerms = getProposalPaymentTerms(proposal.payment_terms_json);
   const accepted = proposal.status === "accepted" || Boolean(proposal.accepted_at);
+  const paymentStatus = proposal.payment_status || "unpaid";
+  const depositReceived = ["deposit_paid", "final_balance_due", "paid_complete"].includes(paymentStatus);
+  const finalBalanceDue = paymentStatus === "final_balance_due";
+  const paymentComplete = paymentStatus === "paid_complete";
+  const paymentCancelled = paymentStatus === "cancelled";
   const deliverables = listItems(proposal.deliverables_json, 5);
   const notice = noticeMessage(firstParam(query.proposal));
   const pdfUrl = `/api/client/proposals/${encodeURIComponent(proposal.id)}/pdf?token=${encodeURIComponent(token)}`;
@@ -258,12 +263,27 @@ export default async function ClientProposalPage({ params, searchParams }: PageP
                   {paymentTerms.payment_instructions}
                 </p>
               ) : null}
-              {accepted && paymentTerms.deposit_payment_url ? (
+              {accepted && paymentTerms.deposit_payment_url && !depositReceived && !paymentComplete && !paymentCancelled ? (
                 <a href={paymentTerms.deposit_payment_url} className={`${primaryButtonClass} mt-5 w-full`} rel="noopener noreferrer">
                   Pay deposit
                 </a>
               ) : null}
-              {accepted && paymentTerms.final_payment_url ? (
+              {depositReceived && !paymentComplete && !paymentCancelled ? (
+                <p className="mt-4 border border-[#9ed39f]/22 bg-[#9ed39f]/10 p-4 text-sm font-bold leading-7 text-white/78">
+                  Deposit received.
+                </p>
+              ) : null}
+              {paymentComplete ? (
+                <p className="mt-4 border border-[#9ed39f]/22 bg-[#9ed39f]/10 p-4 text-sm font-bold leading-7 text-white/78">
+                  Payment complete.
+                </p>
+              ) : null}
+              {paymentCancelled ? (
+                <p className="mt-4 border border-white/15 bg-black/30 p-4 text-sm leading-7 text-white/60">
+                  Payment is currently marked as cancelled. Contact Axiom Architect if this looks incorrect.
+                </p>
+              ) : null}
+              {accepted && finalBalanceDue && paymentTerms.final_payment_url ? (
                 <a href={paymentTerms.final_payment_url} className={`${buttonClass} mt-3 w-full`} rel="noopener noreferrer">
                   Pay final balance
                 </a>

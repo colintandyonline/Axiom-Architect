@@ -167,7 +167,7 @@ async function getProposalAdminData(): Promise<ProposalAdminData> {
   ]);
 
   const proposalDrafts = await supabaseFetch<ProposalDraftRecord[]>(
-    "axiom_proposals?select=id,customer_id,proposal_reference,proposal_type,status,client_name,business_name,client_email,workspace_name,recommended_service_route,alternative_service_route,pricing_json,pdf_ready,pdf_generated_at,sent_at,viewed_at,accepted_at,changes_requested_at,change_request_message,updated_at,created_at&order=updated_at.desc&limit=100",
+    "axiom_proposals?select=id,customer_id,proposal_reference,proposal_type,status,client_name,business_name,client_email,workspace_name,recommended_service_route,alternative_service_route,pricing_json,pdf_ready,pdf_generated_at,sent_at,viewed_at,accepted_at,changes_requested_at,change_request_message,deposit_paid_at,final_balance_requested_at,final_balance_paid_at,payment_status,payment_status_note,updated_at,created_at&order=updated_at.desc&limit=100",
   );
 
   return {
@@ -321,6 +321,7 @@ function DraftProposalTable({
       {drafts.map((draft) => {
         const customer = draft.customer_id ? customersById.get(draft.customer_id) || null : null;
         const pricing = getProposalPricing(draft.pricing_json);
+        const paymentStatus = draft.payment_status || "unpaid";
 
         return (
           <article key={draft.id} className="grid gap-5 border border-[#9ed39f]/20 bg-black/36 p-5 xl:grid-cols-[1fr_auto] xl:items-center">
@@ -335,6 +336,7 @@ function DraftProposalTable({
                 {draft.viewed_at ? statusPill("Viewed") : null}
                 {draft.accepted_at ? statusPill("Accepted") : null}
                 {draft.changes_requested_at ? statusPill("Changes requested") : null}
+                {statusPill(label(paymentStatus))}
               </div>
               <h3 className="mt-4 text-2xl font-black uppercase leading-tight tracking-[-0.05em] text-white">
                 {draftClientName(draft, customer)}
@@ -348,6 +350,7 @@ function DraftProposalTable({
                 <p><strong className="text-[#9ed39f]">Sent:</strong> {draft.sent_at ? formatDate(draft.sent_at) : "Not sent"}</p>
                 <p><strong className="text-[#9ed39f]">Viewed:</strong> {draft.viewed_at ? formatDate(draft.viewed_at) : "Not viewed"}</p>
                 <p><strong className="text-[#9ed39f]">Accepted:</strong> {draft.accepted_at ? formatDate(draft.accepted_at) : "Not accepted"}</p>
+                <p><strong className="text-[#9ed39f]">Payment:</strong> {label(paymentStatus)}</p>
                 <p><strong className="text-[#9ed39f]">Updated:</strong> {formatDate(draft.updated_at || draft.created_at)}</p>
               </div>
             </div>

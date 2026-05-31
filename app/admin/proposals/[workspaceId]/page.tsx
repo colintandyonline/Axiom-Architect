@@ -5,7 +5,12 @@ import { requireAxiomAdmin } from "../../../../lib/axiom-admin";
 import { formatDate, label } from "../../../../lib/axiom-admin-dashboard";
 import { AdminSection, AdminShell, StatCard, buttonClass, primaryButtonClass, statusPill } from "../../../../components/admin/AdminShell";
 import { ProposalDraftForm } from "../ProposalDraftForm";
-import type { ProposalDraftRecord } from "../../../../lib/axiom-proposal-drafts";
+import {
+  formatProposalMoney,
+  getProposalPaymentTerms,
+  getProposalPricing,
+  type ProposalDraftRecord,
+} from "../../../../lib/axiom-proposal-drafts";
 import {
   buildProposalSourceOptions,
   type ServiceRequestSourceRecord,
@@ -503,6 +508,66 @@ function ProposalPdfActions({ proposal }: { proposal: ProposalDraftRecord }) {
   );
 }
 
+function ProposalPaymentActions({ proposal }: { proposal: ProposalDraftRecord }) {
+  const pricing = getProposalPricing(proposal.pricing_json);
+  const paymentTerms = getProposalPaymentTerms(proposal.payment_terms_json);
+  const paymentStatus = proposal.payment_status || "unpaid";
+  const paymentNote = proposal.payment_status_note || paymentTerms.payment_status_note;
+  const canMarkDepositPaid = !["deposit_paid", "final_balance_due", "paid_complete", "cancelled", "refunded"].includes(paymentStatus);
+  const canMarkFinalDue = ["deposit_paid"].includes(paymentStatus);
+  const canMarkFinalPaid = ["deposit_paid", "final_balance_due"].includes(paymentStatus);
+  const canCancel = !["paid_complete", "cancelled", "refunded"].includes(paymentStatus);
+
+  return (
+    <AdminSection eyebrow="Payment status" title="Manual payment tracking">
+      <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-start">
+        <div className="grid gap-4 text-sm leading-7 text-white/68 sm:grid-cols-2 xl:grid-cols-4">
+          <DetailLine labelText="Final total" value={formatProposalMoney(pricing.final_total)} />
+          <DetailLine labelText="Deposit amount" value={formatProposalMoney(pricing.deposit_required)} />
+          <DetailLine labelText="Balance amount" value={formatProposalMoney(pricing.balance_amount)} />
+          <DetailLine labelText="Current status" value={label(paymentStatus)} />
+          <DetailLine labelText="Deposit paid" value={formatDate(proposal.deposit_paid_at)} />
+          <DetailLine labelText="Final balance requested" value={formatDate(proposal.final_balance_requested_at)} />
+          <DetailLine labelText="Final balance paid" value={formatDate(proposal.final_balance_paid_at)} />
+          <DetailLine labelText="Payment note" value={paymentNote || "No note"} />
+        </div>
+        <div className="flex flex-wrap gap-3 lg:max-w-[34rem] lg:justify-end">
+          <ProposalActionForm
+            proposalId={proposal.id}
+            action="mark_deposit_paid"
+            labelText="Mark deposit paid"
+            primary={canMarkDepositPaid}
+            disabled={!canMarkDepositPaid}
+          />
+          <ProposalActionForm
+            proposalId={proposal.id}
+            action="mark_final_balance_due"
+            labelText="Mark final balance due"
+            primary={canMarkFinalDue}
+            disabled={!canMarkFinalDue}
+          />
+          <ProposalActionForm
+            proposalId={proposal.id}
+            action="mark_final_balance_paid"
+            labelText="Mark final balance paid"
+            primary={canMarkFinalPaid}
+            disabled={!canMarkFinalPaid}
+          />
+          <ProposalActionForm
+            proposalId={proposal.id}
+            action="mark_payment_cancelled"
+            labelText="Mark cancelled"
+            disabled={!canCancel}
+          />
+        </div>
+      </div>
+      <p className="mt-5 border border-[#9ed39f]/18 bg-black/34 p-4 text-sm leading-7 text-white/66">
+        These controls are manual payment tracking only. They do not create Stripe sessions, read invoices, or listen to payment webhooks.
+      </p>
+    </AdminSection>
+  );
+}
+
 function DocumentStatusForm({ documentId, workspaceId, reviewStatus, labelText, primary = false }: { documentId: string; workspaceId: string; reviewStatus: string; labelText: string; primary?: boolean }) {
   return (
     <form action="/api/admin/proposals/documents/status" method="post">
@@ -620,6 +685,7 @@ export default async function AdminProposalWorkspacePage({ params, searchParams 
           <div className="mx-auto grid max-w-[1440px] gap-8">
             <ProposalActionBanner result={actionResult} action={actionName} message={actionMessage} />
             <ProposalPdfActions proposal={proposalDraft} />
+            <ProposalPaymentActions proposal={proposalDraft} />
             <AdminSection eyebrow="Preparation" title="Edit proposal draft">
               <ProposalDraftForm mode="update" proposal={proposalDraft} customers={customers} sourceOptions={sourceOptions} />
             </AdminSection>

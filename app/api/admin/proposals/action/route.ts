@@ -16,7 +16,11 @@ type ProposalAction =
   | "regenerate_pdf"
   | "mark_ready_to_send"
   | "mark_internal_review"
-  | "send_to_client";
+  | "send_to_client"
+  | "mark_deposit_paid"
+  | "mark_final_balance_due"
+  | "mark_final_balance_paid"
+  | "mark_payment_cancelled";
 
 const allowedActions = new Set<ProposalAction>([
   "generate_pdf",
@@ -24,6 +28,10 @@ const allowedActions = new Set<ProposalAction>([
   "mark_ready_to_send",
   "mark_internal_review",
   "send_to_client",
+  "mark_deposit_paid",
+  "mark_final_balance_due",
+  "mark_final_balance_paid",
+  "mark_payment_cancelled",
 ]);
 const proposalPdfStorageBucket = "axiom-client-deliverables";
 
@@ -389,6 +397,41 @@ export async function POST(request: Request) {
     if (action === "send_to_client") {
       await sendProposalToClient(request, proposalId);
       return redirectBack(request, returnPath, action, "success", "Proposal sent to the client.");
+    }
+
+    if (action === "mark_deposit_paid") {
+      await patchProposal(proposalId, {
+        deposit_paid_at: now,
+        payment_status: "deposit_paid",
+        updated_at: now,
+      });
+      return redirectBack(request, returnPath, action, "success", "Deposit marked as paid.");
+    }
+
+    if (action === "mark_final_balance_due") {
+      await patchProposal(proposalId, {
+        final_balance_requested_at: now,
+        payment_status: "final_balance_due",
+        updated_at: now,
+      });
+      return redirectBack(request, returnPath, action, "success", "Final balance marked as due.");
+    }
+
+    if (action === "mark_final_balance_paid") {
+      await patchProposal(proposalId, {
+        final_balance_paid_at: now,
+        payment_status: "paid_complete",
+        updated_at: now,
+      });
+      return redirectBack(request, returnPath, action, "success", "Final balance marked as paid.");
+    }
+
+    if (action === "mark_payment_cancelled") {
+      await patchProposal(proposalId, {
+        payment_status: "cancelled",
+        updated_at: now,
+      });
+      return redirectBack(request, returnPath, action, "success", "Payment marked as cancelled.");
     }
 
     return redirectBack(request, returnPath, action, "error", "Unsupported proposal action.");

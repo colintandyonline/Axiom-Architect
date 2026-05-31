@@ -169,6 +169,7 @@ function proposalPayload(formData: FormData, existingReference?: string | null) 
       payment_instructions: paymentInstructions,
       payment_status_note: paymentStatusNote,
     },
+    payment_status_note: nullableText(paymentStatusNote),
     valid_until: cleanDate(cleanInput(formData.get("valid_until"))),
     proposal_json: {
       prepared_by: "Axiom Architect admin",

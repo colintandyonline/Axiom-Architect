@@ -10,6 +10,14 @@ export type ProposalDraftStatus =
   | "changes_requested"
   | "expired";
 export type ProposalDraftType = "simple" | "standard" | "strategic";
+export type ProposalPaymentStatus =
+  | "unpaid"
+  | "deposit_pending"
+  | "deposit_paid"
+  | "final_balance_due"
+  | "paid_complete"
+  | "refunded"
+  | "cancelled";
 
 export type ProposalDraftRecord = {
   id: string;
@@ -55,6 +63,11 @@ export type ProposalDraftRecord = {
   accepted_at: string | null;
   changes_requested_at: string | null;
   change_request_message: string | null;
+  deposit_paid_at: string | null;
+  final_balance_requested_at: string | null;
+  final_balance_paid_at: string | null;
+  payment_status: ProposalPaymentStatus | string | null;
+  payment_status_note: string | null;
   converted_order_id: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -84,6 +97,15 @@ export type ProposalPaymentTermsJson = {
 };
 
 export const proposalTypeOptions: ProposalDraftType[] = ["simple", "standard", "strategic"];
+export const proposalPaymentStatusOptions: ProposalPaymentStatus[] = [
+  "unpaid",
+  "deposit_pending",
+  "deposit_paid",
+  "final_balance_due",
+  "paid_complete",
+  "refunded",
+  "cancelled",
+];
 export const proposalStatusOptions: ProposalDraftStatus[] = [
   "draft",
   "internal_review",
