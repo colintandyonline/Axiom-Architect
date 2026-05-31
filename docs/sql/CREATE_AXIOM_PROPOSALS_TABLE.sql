@@ -4,6 +4,8 @@
 create table if not exists public.axiom_proposals (
   id uuid primary key default gen_random_uuid(),
   customer_id uuid null references public.axiom_customers(id) on delete set null,
+  source_record_id text null,
+  source_record_type text null,
   proposal_reference text not null unique,
   proposal_type text not null default 'standard',
   status text not null default 'draft',
@@ -70,6 +72,9 @@ end $$;
 
 create index if not exists axiom_proposals_customer_id_idx
   on public.axiom_proposals(customer_id);
+
+create index if not exists axiom_proposals_source_record_idx
+  on public.axiom_proposals(source_record_type, source_record_id);
 
 create index if not exists axiom_proposals_status_idx
   on public.axiom_proposals(status);

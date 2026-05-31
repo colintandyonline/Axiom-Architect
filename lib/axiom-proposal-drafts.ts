@@ -6,6 +6,8 @@ export type ProposalDraftType = "simple" | "standard" | "strategic";
 export type ProposalDraftRecord = {
   id: string;
   customer_id: string | null;
+  source_record_id: string | null;
+  source_record_type: string | null;
   proposal_reference: string | null;
   proposal_type: ProposalDraftType | string | null;
   status: ProposalDraftStatus | string | null;

@@ -111,9 +111,15 @@ function proposalPayload(formData: FormData, existingReference?: string | null) 
   const depositRequired = cleanNumber(cleanInput(formData.get("deposit_required")));
   const finalTotal = cleanNumber(cleanInput(formData.get("final_total")));
   const paymentSchedule = cleanInput(formData.get("payment_schedule"));
+  const sourceRecordId = cleanInput(formData.get("source_record_id"));
+  const sourceRecordType = cleanInput(formData.get("source_record_type"));
+  const sourceRecordTitle = cleanInput(formData.get("source_record_title"));
+  const sourceRecordSummary = cleanInput(formData.get("source_record_summary"));
 
   return {
     customer_id: nullableText(cleanInput(formData.get("customer_id"))),
+    source_record_id: nullableText(sourceRecordId),
+    source_record_type: nullableText(sourceRecordType),
     proposal_reference: existingReference || cleanInput(formData.get("proposal_reference")) || proposalReference(),
     proposal_type: validProposalTypes.has(proposalType) ? proposalType : "standard",
     status: validProposalStatuses.has(status) ? status : "draft",
@@ -159,6 +165,14 @@ function proposalPayload(formData: FormData, existingReference?: string | null) 
       prepared_by: "Axiom Architect admin",
       preparation_state: status,
       updated_from: "admin_proposal_draft_form",
+      source_record: sourceRecordId
+        ? {
+            id: sourceRecordId,
+            type: sourceRecordType || null,
+            title: sourceRecordTitle || null,
+            summary: sourceRecordSummary || null,
+          }
+        : null,
     },
     updated_at: new Date().toISOString(),
   };

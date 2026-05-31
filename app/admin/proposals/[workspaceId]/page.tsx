@@ -6,6 +6,11 @@ import { formatDate, label } from "../../../../lib/axiom-admin-dashboard";
 import { AdminSection, AdminShell, StatCard, buttonClass, primaryButtonClass, statusPill } from "../../../../components/admin/AdminShell";
 import { ProposalDraftForm } from "../ProposalDraftForm";
 import type { ProposalDraftRecord } from "../../../../lib/axiom-proposal-drafts";
+import {
+  buildProposalSourceOptions,
+  type ServiceRequestSourceRecord,
+  type WorkflowSubmissionSourceRecord,
+} from "../../../../lib/axiom-proposal-source-options";
 
 export const metadata: Metadata = {
   title: "Client Workspace | Axiom Architect Admin",
@@ -230,6 +235,22 @@ async function getCustomerOptions() {
   );
 
   return customers || [];
+}
+
+async function getProposalSourceOptions() {
+  const [serviceRequests, workflowSubmissions] = await Promise.all([
+    supabaseFetch<ServiceRequestSourceRecord[]>(
+      "axiom_service_requests?select=id,customer_id,request_type,source,status,proposal_status,contact_name,email,business_name,role,website,scope_type,support_type,budget_range,timeline,sensitive_data,summary_message,request_payload,created_at,updated_at&order=updated_at.desc&limit=200",
+    ),
+    supabaseFetch<WorkflowSubmissionSourceRecord[]>(
+      "axiom_workflow_submissions?select=id,customer_id,order_id,tier_slug,workflow_title,status,intake_payload,created_at,updated_at,submitted_at&order=updated_at.desc&limit=200",
+    ),
+  ]);
+
+  return buildProposalSourceOptions({
+    serviceRequests: serviceRequests || [],
+    workflowSubmissions: workflowSubmissions || [],
+  });
 }
 
 function firstParam(value: string | string[] | undefined) {
@@ -553,7 +574,7 @@ export default async function AdminProposalWorkspacePage({ params, searchParams 
       notFound();
     }
 
-    const customers = await getCustomerOptions();
+    const [customers, sourceOptions] = await Promise.all([getCustomerOptions(), getProposalSourceOptions()]);
     const proposalStatus = firstParam(query.proposal);
     const actionResult = firstParam(query.result);
     const actionName = firstParam(query.proposal_action);
@@ -582,7 +603,7 @@ export default async function AdminProposalWorkspacePage({ params, searchParams 
             <ProposalActionBanner result={actionResult} action={actionName} message={actionMessage} />
             <ProposalPdfActions proposal={proposalDraft} />
             <AdminSection eyebrow="Preparation" title="Edit proposal draft">
-              <ProposalDraftForm mode="update" proposal={proposalDraft} customers={customers} />
+              <ProposalDraftForm mode="update" proposal={proposalDraft} customers={customers} sourceOptions={sourceOptions} />
             </AdminSection>
           </div>
         </section>

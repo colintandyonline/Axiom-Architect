@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import { requireAxiomAdmin } from "../../../../lib/axiom-admin";
 import { AdminSection, AdminShell } from "../../../../components/admin/AdminShell";
 import { ProposalDraftForm } from "../ProposalDraftForm";
+import {
+  buildProposalSourceOptions,
+  type ServiceRequestSourceRecord,
+  type WorkflowSubmissionSourceRecord,
+} from "../../../../lib/axiom-proposal-source-options";
 
 export const metadata: Metadata = {
   title: "New Proposal Draft | Axiom Architect Admin",
@@ -60,9 +65,25 @@ async function getCustomers() {
   return customers || [];
 }
 
+async function getProposalSourceOptions() {
+  const [serviceRequests, workflowSubmissions] = await Promise.all([
+    supabaseFetch<ServiceRequestSourceRecord[]>(
+      "axiom_service_requests?select=id,customer_id,request_type,source,status,proposal_status,contact_name,email,business_name,role,website,scope_type,support_type,budget_range,timeline,sensitive_data,summary_message,request_payload,created_at,updated_at&order=updated_at.desc&limit=200",
+    ),
+    supabaseFetch<WorkflowSubmissionSourceRecord[]>(
+      "axiom_workflow_submissions?select=id,customer_id,order_id,tier_slug,workflow_title,status,intake_payload,created_at,updated_at,submitted_at&order=updated_at.desc&limit=200",
+    ),
+  ]);
+
+  return buildProposalSourceOptions({
+    serviceRequests: serviceRequests || [],
+    workflowSubmissions: workflowSubmissions || [],
+  });
+}
+
 export default async function NewProposalDraftPage() {
   const { adminEmail } = await requireAxiomAdmin();
-  const customers = await getCustomers();
+  const [customers, sourceOptions] = await Promise.all([getCustomers(), getProposalSourceOptions()]);
 
   return (
     <AdminShell
@@ -75,7 +96,7 @@ export default async function NewProposalDraftPage() {
       <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mx-auto max-w-[1440px]">
           <AdminSection eyebrow="Preparation" title="New proposal draft">
-            <ProposalDraftForm mode="create" customers={customers} />
+            <ProposalDraftForm mode="create" customers={customers} sourceOptions={sourceOptions} />
           </AdminSection>
         </div>
       </section>

@@ -11,6 +11,7 @@ import {
   type ProposalDraftRecord,
 } from "../../../lib/axiom-proposal-drafts";
 import { getProposalPreset, proposalPresets, type ProposalPreset } from "../../../lib/axiom-proposal-presets";
+import type { ProposalSourceOption } from "../../../lib/axiom-proposal-source-options";
 
 type CustomerOption = {
   id: string;
@@ -22,6 +23,7 @@ type CustomerOption = {
 type ProposalDraftFormProps = {
   proposal?: ProposalDraftRecord | null;
   customers: CustomerOption[];
+  sourceOptions: ProposalSourceOption[];
   mode: "create" | "update";
 };
 
@@ -34,6 +36,15 @@ const primaryButtonClass = "inline-flex min-h-10 items-center justify-center bor
 function customerLabel(customer: CustomerOption) {
   const name = customer.business_name || customer.full_name || customer.email || "Unnamed customer";
   return `${name}${customer.email ? ` (${customer.email})` : ""}`;
+}
+
+function sourceKey(source: ProposalSourceOption) {
+  return `${source.source_record_type}:${source.source_record_id}`;
+}
+
+function sourceLabel(source: ProposalSourceOption) {
+  const date = inputDate(source.updated_at || source.created_at);
+  return `${source.type_label} - ${source.title}${source.status ? ` - ${source.status.replace(/_/g, " ")}` : ""}${date ? ` - ${date}` : ""}`;
 }
 
 function inputDate(value?: string | null) {
@@ -115,14 +126,29 @@ function ListField({
   );
 }
 
-export function ProposalDraftForm({ proposal, customers, mode }: ProposalDraftFormProps) {
+export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: ProposalDraftFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const pricing = getProposalPricing(proposal?.pricing_json);
   const paymentTerms = getProposalPaymentTerms(proposal?.payment_terms_json);
   const actionLabel = mode === "create" ? "Create proposal draft" : "Save proposal draft";
   const initialRoute = proposal?.recommended_service_route || "workflow-blueprint";
+  const initialCustomerId = proposal?.customer_id || "";
+  const initialSourceKey = proposal?.source_record_id && proposal.source_record_type
+    ? `${proposal.source_record_type}:${proposal.source_record_id}`
+    : "";
+  const initialSource = sourceOptions.find((source) => sourceKey(source) === initialSourceKey) || null;
   const [selectedRoute, setSelectedRoute] = useState(initialRoute);
+  const [selectedCustomerId, setSelectedCustomerId] = useState(initialCustomerId);
+  const [selectedSourceKey, setSelectedSourceKey] = useState(initialSourceKey);
   const selectedPreset = useMemo(() => getProposalPreset(selectedRoute), [selectedRoute]);
+  const filteredSourceOptions = useMemo(
+    () => sourceOptions.filter((source) => !selectedCustomerId || source.customer_id === selectedCustomerId),
+    [selectedCustomerId, sourceOptions],
+  );
+  const selectedSource = useMemo(
+    () => sourceOptions.find((source) => sourceKey(source) === selectedSourceKey) || null,
+    [selectedSourceKey, sourceOptions],
+  );
 
   function setFieldValue(name: string, value: string | number) {
     const field = formRef.current?.elements.namedItem(name);
@@ -148,6 +174,86 @@ export function ProposalDraftForm({ proposal, customers, mode }: ProposalDraftFo
     }
 
     return false;
+  }
+
+  function fieldValue(name: string) {
+    const field = formRef.current?.elements.namedItem(name);
+
+    if (
+      field instanceof HTMLInputElement ||
+      field instanceof HTMLTextAreaElement ||
+      field instanceof HTMLSelectElement
+    ) {
+      return field.value.trim();
+    }
+
+    return "";
+  }
+
+  function setSourceFields(source: ProposalSourceOption | null) {
+    setFieldValue("source_record_id", source?.source_record_id || "");
+    setFieldValue("source_record_type", source?.source_record_type || "");
+    setFieldValue("source_record_title", source?.title || "");
+    setFieldValue("source_record_summary", source?.source_context || "");
+  }
+
+  function handleCustomerChange(customerId: string) {
+    setSelectedCustomerId(customerId);
+    const customer = customers.find((item) => item.id === customerId);
+
+    if (!customer) {
+      setSelectedSourceKey("");
+      setSourceFields(null);
+      return;
+    }
+
+    const targetFields = [
+      ["client_name", customer.full_name || ""],
+      ["business_name", customer.business_name || ""],
+      ["client_email", customer.email || ""],
+    ].filter(([, value]) => value);
+    const wouldOverwrite = targetFields.some(([name, value]) => fieldHasValue(name) && fieldValue(name) !== value);
+
+    if (
+      wouldOverwrite &&
+      !window.confirm("Prefill this customer's identity details? This will overwrite the current name, business, or email fields.")
+    ) {
+      return;
+    }
+
+    targetFields.forEach(([name, value]) => setFieldValue(name, value));
+
+    if (selectedSource && selectedSource.customer_id !== customerId) {
+      setSelectedSourceKey("");
+      setSourceFields(null);
+    }
+  }
+
+  function importSourceDetails() {
+    if (!selectedSource) {
+      return;
+    }
+
+    const targetFields = [
+      ["workspace_name", selectedSource.workspace_name],
+      ["client_summary", selectedSource.client_summary],
+      ["current_problem_summary", selectedSource.current_problem_summary],
+      ["desired_outcome", selectedSource.desired_outcome],
+      ["scope_summary", selectedSource.scope_summary],
+      ["assumptions", listText(selectedSource.assumptions)],
+      ["client_responsibilities", listText(selectedSource.client_responsibilities)],
+    ].filter(([, value]) => String(value).trim());
+    const hasExistingContent = targetFields.some(([name]) => fieldHasValue(name));
+
+    if (
+      hasExistingContent &&
+      !window.confirm("Import this client request? This will overwrite matching client-facing proposal fields, but not pricing presets or internal notes.")
+    ) {
+      return;
+    }
+
+    targetFields.forEach(([name, value]) => setFieldValue(name, value));
+    setSourceFields(selectedSource);
   }
 
   function applyPreset() {
@@ -210,6 +316,10 @@ export function ProposalDraftForm({ proposal, customers, mode }: ProposalDraftFo
       <input type="hidden" name="return_to" value={proposal ? `/admin/proposals/${proposal.id}` : "/admin/proposals/new"} />
       {proposal ? <input type="hidden" name="proposal_id" value={proposal.id} /> : null}
       {proposal?.proposal_reference ? <input type="hidden" name="proposal_reference" value={proposal.proposal_reference} /> : null}
+      <input type="hidden" name="source_record_id" defaultValue={proposal?.source_record_id || ""} />
+      <input type="hidden" name="source_record_type" defaultValue={proposal?.source_record_type || ""} />
+      <input type="hidden" name="source_record_title" defaultValue={initialSource?.title || ""} />
+      <input type="hidden" name="source_record_summary" defaultValue={initialSource?.source_context || ""} />
 
       <section className="grid gap-4 border border-[#9ed39f]/18 bg-black/34 p-5">
         <div>
@@ -218,7 +328,12 @@ export function ProposalDraftForm({ proposal, customers, mode }: ProposalDraftFo
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <FieldLabel label="Linked customer">
-            <select name="customer_id" defaultValue={proposal?.customer_id || ""} className={inputClass}>
+            <select
+              name="customer_id"
+              defaultValue={initialCustomerId}
+              className={inputClass}
+              onChange={(event) => handleCustomerChange(event.currentTarget.value)}
+            >
               <option value="">No linked customer</option>
               {customers.map((customer) => (
                 <option key={customer.id} value={customer.id}>
@@ -277,6 +392,49 @@ export function ProposalDraftForm({ proposal, customers, mode }: ProposalDraftFo
             <input name="valid_until" type="date" defaultValue={inputDate(proposal?.valid_until)} className={inputClass} />
           </FieldLabel>
         </div>
+        {selectedCustomerId ? (
+          <div className="grid gap-4 border border-[#9ed39f]/20 bg-black/30 p-4">
+            <div className="grid gap-2">
+              <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Client source data</p>
+              <p className="text-sm leading-7 text-white/62">
+                Choose a proposal request or workflow intake from this customer, then import the client-submitted details before applying an Axiom pricing preset.
+              </p>
+            </div>
+            {filteredSourceOptions.length > 0 ? (
+              <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+                <FieldLabel label="Available request / intake">
+                  <select
+                    value={selectedSourceKey}
+                    className={inputClass}
+                    onChange={(event) => setSelectedSourceKey(event.currentTarget.value)}
+                  >
+                    <option value="">Select source record</option>
+                    {filteredSourceOptions.map((source) => (
+                      <option key={sourceKey(source)} value={sourceKey(source)}>
+                        {sourceLabel(source)}
+                      </option>
+                    ))}
+                  </select>
+                </FieldLabel>
+                <button type="button" onClick={importSourceDetails} disabled={!selectedSource} className={`${primaryButtonClass} disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-black disabled:text-white/30`}>
+                  Import client request details
+                </button>
+              </div>
+            ) : (
+              <p className="border border-[#9ed39f]/16 bg-black/36 p-4 text-sm leading-7 text-white/58">
+                No proposal requests or workflow intakes were found for this customer.
+              </p>
+            )}
+            {selectedSource ? (
+              <div className="border border-[#9ed39f]/16 bg-[#030804] p-4 text-sm leading-7 text-white/66">
+                <p><strong className="text-[#9ed39f]">Selected:</strong> {selectedSource.title}</p>
+                <p><strong className="text-[#9ed39f]">Type:</strong> {selectedSource.type_label}</p>
+                <p><strong className="text-[#9ed39f]">Status:</strong> {selectedSource.status || "Not set"}</p>
+                {selectedSource.source_context ? <p className="mt-2 whitespace-pre-wrap">{selectedSource.source_context}</p> : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         {selectedPreset ? (
           <div className="border border-[#9ed39f]/22 bg-[#9ed39f]/10 p-4">
             <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Suggested preset</p>
