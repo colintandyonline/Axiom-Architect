@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-type PageProps = { params: Promise<{ workspaceId: string }>; searchParams?: Promise<{ note?: string | string[]; workspace?: string | string[]; clientUpdate?: string | string[]; proposal?: string | string[] }> };
+type PageProps = { params: Promise<{ workspaceId: string }>; searchParams?: Promise<{ note?: string | string[]; workspace?: string | string[]; clientUpdate?: string | string[]; proposal?: string | string[]; proposal_action?: string | string[]; result?: string | string[]; message?: string | string[] }> };
 type JsonRecord = Record<string, unknown>;
 
 type WorkspaceRecord = {
@@ -364,6 +364,106 @@ function DetailLine({ labelText, value }: { labelText: string; value: string | n
   return <p className="text-sm leading-7 text-white/68"><strong className="text-[#9ed39f]">{labelText}:</strong> {value || "—"}</p>;
 }
 
+function ProposalActionForm({
+  proposalId,
+  action,
+  labelText,
+  primary = false,
+  disabled = false,
+}: {
+  proposalId: string;
+  action: string;
+  labelText: string;
+  primary?: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <form action="/api/admin/proposals/action" method="post">
+      <input type="hidden" name="proposal_id" value={proposalId} />
+      <input type="hidden" name="action" value={action} />
+      <input type="hidden" name="return_to" value={`/admin/proposals/${proposalId}`} />
+      <button
+        type="submit"
+        disabled={disabled}
+        className={`${primary ? primaryButtonClass : buttonClass} disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-black disabled:text-white/30`}
+      >
+        {labelText}
+      </button>
+    </form>
+  );
+}
+
+function ProposalActionBanner({
+  result,
+  action,
+  message,
+}: {
+  result?: string;
+  action?: string;
+  message?: string;
+}) {
+  if (!result) {
+    return null;
+  }
+
+  const isSuccess = result === "success";
+
+  return (
+    <section className={`${isSuccess ? "border-[#9ed39f]/35 bg-[#9ed39f]/12 text-[#e6f6e7]" : "border-red-400/45 bg-red-950/30 text-red-100"} border p-4 text-sm leading-7`}>
+      <strong className="uppercase tracking-[0.12em]">
+        {isSuccess ? "Action completed" : "Action failed"}
+      </strong>
+      <span className="ml-2">{label(action)}</span>
+      {message ? <span className="ml-2">- {message}</span> : null}
+    </section>
+  );
+}
+
+function ProposalPdfActions({ proposal }: { proposal: ProposalDraftRecord }) {
+  const pdfReady = proposal.pdf_ready === true;
+  const readyDisabled = !pdfReady;
+
+  return (
+    <AdminSection eyebrow="Proposal PDF" title="Admin review and release state">
+      <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-start">
+        <div className="grid gap-4 text-sm leading-7 text-white/68 sm:grid-cols-2 xl:grid-cols-4">
+          <DetailLine labelText="PDF status" value={pdfReady ? "Generated" : "Not generated"} />
+          <DetailLine labelText="PDF generated" value={formatDate(proposal.pdf_generated_at)} />
+          <DetailLine labelText="Proposal status" value={label(proposal.status)} />
+          <DetailLine labelText="Sent to client" value={proposal.sent_at ? formatDate(proposal.sent_at) : "Not sent"} />
+        </div>
+        <div className="flex flex-wrap gap-3 lg:max-w-[34rem] lg:justify-end">
+          <ProposalActionForm
+            proposalId={proposal.id}
+            action={pdfReady ? "regenerate_pdf" : "generate_pdf"}
+            labelText={pdfReady ? "Regenerate PDF" : "Generate PDF"}
+            primary={!pdfReady}
+          />
+          {pdfReady ? (
+            <a href={`/api/admin/proposals/${proposal.id}/pdf`} target="_blank" rel="noopener noreferrer" className={buttonClass}>
+              Preview PDF
+            </a>
+          ) : null}
+          <ProposalActionForm proposalId={proposal.id} action="mark_internal_review" labelText="Mark internal review" />
+          <ProposalActionForm
+            proposalId={proposal.id}
+            action="mark_ready_to_send"
+            labelText="Mark ready to send"
+            primary={pdfReady}
+            disabled={readyDisabled}
+          />
+          <button type="button" disabled className={`${buttonClass} cursor-not-allowed border-white/15 text-white/30`}>
+            Send later
+          </button>
+        </div>
+      </div>
+      <p className="mt-5 border border-[#9ed39f]/18 bg-black/34 p-4 text-sm leading-7 text-white/66">
+        PDF ready means the admin deliverable exists. Ready to send means admin has approved it for release. This screen does not send the proposal to the client.
+      </p>
+    </AdminSection>
+  );
+}
+
 function DocumentStatusForm({ documentId, workspaceId, reviewStatus, labelText, primary = false }: { documentId: string; workspaceId: string; reviewStatus: string; labelText: string; primary?: boolean }) {
   return (
     <form action="/api/admin/proposals/documents/status" method="post">
@@ -455,6 +555,9 @@ export default async function AdminProposalWorkspacePage({ params, searchParams 
 
     const customers = await getCustomerOptions();
     const proposalStatus = firstParam(query.proposal);
+    const actionResult = firstParam(query.result);
+    const actionName = firstParam(query.proposal_action);
+    const actionMessage = firstParam(query.message);
 
     return (
       <AdminShell
@@ -475,7 +578,9 @@ export default async function AdminProposalWorkspacePage({ params, searchParams 
           </section>
         ) : null}
         <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-          <div className="mx-auto max-w-[1440px]">
+          <div className="mx-auto grid max-w-[1440px] gap-8">
+            <ProposalActionBanner result={actionResult} action={actionName} message={actionMessage} />
+            <ProposalPdfActions proposal={proposalDraft} />
             <AdminSection eyebrow="Preparation" title="Edit proposal draft">
               <ProposalDraftForm mode="update" proposal={proposalDraft} customers={customers} />
             </AdminSection>

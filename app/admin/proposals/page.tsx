@@ -167,7 +167,7 @@ async function getProposalAdminData(): Promise<ProposalAdminData> {
   ]);
 
   const proposalDrafts = await supabaseFetch<ProposalDraftRecord[]>(
-    "axiom_proposals?select=id,customer_id,proposal_reference,proposal_type,status,client_name,business_name,client_email,workspace_name,recommended_service_route,alternative_service_route,pricing_json,updated_at,created_at&order=updated_at.desc&limit=100",
+    "axiom_proposals?select=id,customer_id,proposal_reference,proposal_type,status,client_name,business_name,client_email,workspace_name,recommended_service_route,alternative_service_route,pricing_json,pdf_ready,pdf_generated_at,sent_at,updated_at,created_at&order=updated_at.desc&limit=100",
   );
 
   return {
@@ -329,6 +329,8 @@ function DraftProposalTable({
                 {statusPill(draft.status)}
                 {statusPill(draft.proposal_type)}
                 {statusPill(draft.recommended_service_route)}
+                {statusPill(draft.pdf_ready ? "PDF ready" : "PDF not generated")}
+                {draft.status === "ready_to_send" ? statusPill("Ready to send") : null}
               </div>
               <h3 className="mt-4 text-2xl font-black uppercase leading-tight tracking-[-0.05em] text-white">
                 {draftClientName(draft, customer)}
@@ -338,6 +340,7 @@ function DraftProposalTable({
                 <p><strong className="text-[#9ed39f]">Workspace:</strong> {draft.workspace_name || "—"}</p>
                 <p><strong className="text-[#9ed39f]">Alternative:</strong> {label(draft.alternative_service_route)}</p>
                 <p><strong className="text-[#9ed39f]">Final total:</strong> {formatProposalMoney(pricing.final_total)}</p>
+                <p><strong className="text-[#9ed39f]">PDF:</strong> {draft.pdf_ready ? `Generated ${formatDate(draft.pdf_generated_at)}` : "Not generated"}</p>
                 <p><strong className="text-[#9ed39f]">Updated:</strong> {formatDate(draft.updated_at || draft.created_at)}</p>
               </div>
             </div>
