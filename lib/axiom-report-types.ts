@@ -199,6 +199,9 @@ export type AxiomReportJson = {
     client_expectation_note: string;
     pdf_ready: boolean;
     email_ready: boolean;
+    pdf_generated_at?: string;
+    pdf_file_path?: string;
+    pdf_download_url?: string;
   };
 };
 

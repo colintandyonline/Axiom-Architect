@@ -1,5 +1,4 @@
-import type { Metadata } from "next";
-import type { ReactNode } from "react";
+﻿import type { Metadata } from "next";
 import { requireAxiomAdmin } from "../../../lib/axiom-admin";
 import { supabaseAdminFetch } from "../../../lib/axiom-admin-dashboard";
 import { AdminSection, AdminShell } from "../../../components/admin/AdminShell";
@@ -40,6 +39,11 @@ type EnvCheck = {
   names: string[];
   required: boolean;
   helper: string;
+};
+
+type EnvState = EnvCheck & {
+  present: boolean;
+  level: ReadinessLevel;
 };
 
 const requiredProducts: RequiredProduct[] = [
@@ -95,7 +99,7 @@ const envGroups: { title: string; checks: EnvCheck[] }[] = [
         label: "Supabase public key",
         names: ["NEXT_PUBLIC_SUPABASE_ANON_KEY", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"],
         required: true,
-        helper: "Either public key name can satisfy client and auth flows.",
+        helper: "Either public key name can satisfy client/auth flows.",
       },
       {
         label: "Supabase service role",
@@ -197,7 +201,7 @@ function isEnvPresent(names: string[]) {
   return names.some((name) => Boolean(process.env[name]));
 }
 
-function getEnvState(check: EnvCheck) {
+function getEnvState(check: EnvCheck): EnvState {
   const present = isEnvPresent(check.names);
   const level: ReadinessLevel = present ? "ready" : check.required ? "critical" : "attention";
 
@@ -229,7 +233,7 @@ function getBadgeClasses(level: ReadinessLevel) {
   return "border-red-300/70 bg-red-400/12 text-red-100";
 }
 
-function StatusBadge({ level, children }: { level: ReadinessLevel; children: ReactNode }) {
+function StatusBadge({ level, children }: { level: ReadinessLevel; children: React.ReactNode }) {
   return (
     <span
       className={`inline-flex w-fit items-center justify-center border px-2.5 py-1 text-[0.58rem] font-black uppercase tracking-[0.16em] ${getBadgeClasses(
@@ -262,7 +266,7 @@ function ReadinessCard({
   );
 }
 
-function EnvGroupTable({ title, checks }: { title: string; checks: ReturnType<typeof getEnvState>[] }) {
+function EnvGroupTable({ title, checks }: { title: string; checks: EnvState[] }) {
   return (
     <div className="overflow-hidden border border-[#9ed39f]/20 bg-black/30">
       <div className="border-b border-[#9ed39f]/20 bg-[#9ed39f]/10 px-4 py-3">
@@ -383,9 +387,8 @@ export default async function AdminReadinessPage() {
 
   const productReadyCount = readiness.productChecks.filter((check) => check.level === "ready").length;
   const schemaReadyCount = readiness.schemaChecks.filter((check) => check.level === "ready").length;
-  const allEnvChecks = readiness.envChecks.flatMap((group) => group.checks);
-  const envReadyCount = allEnvChecks.filter((check) => check.present).length;
-  const envTotalCount = allEnvChecks.length;
+  const envReadyCount = readiness.envChecks.flatMap((group) => group.checks).filter((check) => check.present).length;
+  const envTotalCount = readiness.envChecks.flatMap((group) => group.checks).length;
 
   return (
     <AdminShell
@@ -425,7 +428,13 @@ export default async function AdminReadinessPage() {
             title="Environment"
             value={`${envReadyCount}/${envTotalCount}`}
             helper="Required and supporting env names only. Secret values stay hidden."
-            level={readiness.missingCriticalEnv ? "critical" : readiness.missingSupportingEnv ? "attention" : "ready"}
+            level={
+              readiness.missingCriticalEnv
+                ? "critical"
+                : readiness.missingSupportingEnv
+                  ? "attention"
+                  : "ready"
+            }
           />
         </div>
       </section>

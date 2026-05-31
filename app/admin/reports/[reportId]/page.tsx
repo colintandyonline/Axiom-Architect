@@ -233,6 +233,24 @@ function deliveryLabel(status?: string | null) {
   return status === "delivered" ? "Resend delivery email" : "Deliver report";
 }
 
+function getReportPdfStatus(report?: ReportRecord | null) {
+  const delivery = report?.report_json?.delivery;
+
+  if (delivery?.pdf_ready) {
+    return "PDF ready";
+  }
+
+  if (report?.report_json) {
+    return "PDF not generated";
+  }
+
+  return "Report JSON required";
+}
+
+function getReportPdfGeneratedAt(report?: ReportRecord | null) {
+  return report?.report_json?.delivery?.pdf_generated_at || null;
+}
+
 function workflowDisplayTitle(workflow?: WorkflowRecord | null, report?: ReportRecord | null) {
   return (
     workflow?.workflow_title ||
@@ -412,6 +430,9 @@ export default async function AdminReportReviewPage({ params, searchParams }: Pa
   const reportJsonText = report.report_json ? JSON.stringify(report.report_json, null, 2) : "No report JSON has been saved for this report yet.";
   const intakeEntries = getIntakeEntries(workflow);
   const reviewerNotes = getReviewerNotes(report);
+  const pdfReady = report.report_json?.delivery?.pdf_ready === true;
+  const pdfAction = pdfReady ? "regenerate_pdf" : "generate_pdf";
+  const pdfActionLabel = pdfReady ? "Regenerate PDF" : "Generate PDF";
   const actionResult = firstParam(query.result);
   const actionName = firstParam(query.report_action);
   const actionMessage = firstParam(query.message);
@@ -479,8 +500,16 @@ export default async function AdminReportReviewPage({ params, searchParams }: Pa
                 <DetailCard labelText="Submission ID" value={report.submission_id || "—"} />
                 <DetailCard labelText="Generated" value={formatDate(report.generated_at)} />
                 <DetailCard labelText="Last update" value={formatDate(report.updated_at)} />
+                <DetailCard labelText="PDF status" value={getReportPdfStatus(report)} />
+                <DetailCard labelText="PDF generated" value={formatDate(getReportPdfGeneratedAt(report))} />
               </div>
               <div className="flex flex-wrap gap-3 lg:max-w-[28rem] lg:justify-end">
+                <ReportActionForm reportId={report.id} action={pdfAction} labelText={pdfActionLabel} primary={!pdfReady} />
+                {pdfReady && (
+                  <a href={`/api/client/reports/${report.id}/pdf`} className={buttonClass}>
+                    Open PDF
+                  </a>
+                )}
                 {canApprove(report.status) && (
                   <ReportActionForm reportId={report.id} action="approve" labelText="Approve" primary />
                 )}

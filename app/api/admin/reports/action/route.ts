@@ -1,15 +1,21 @@
 import { NextResponse } from "next/server";
 import { requireAxiomAdmin } from "../../../../../lib/axiom-admin";
-import {
-  getAxiomPackageByCheckoutSlug,
-  type AxiomDeliverableType,
-} from "../../../../../lib/axiom-package-model";
+import { generateAxiomReportPdf } from "../../../../../lib/axiom-report-pdf.server";
+import type { AxiomReportJson } from "../../../../../lib/axiom-report-types";
 
 export const runtime = "nodejs";
 
-type AdminReportAction = "generate" | "regenerate" | "approve" | "needs_revision" | "queue" | "deliver";
+type AdminReportAction =
+  | "generate"
+  | "regenerate"
+  | "generate_pdf"
+  | "regenerate_pdf"
+  | "approve"
+  | "needs_revision"
+  | "queue"
+  | "deliver";
 
-type ReportJson = Record<string, unknown> & {
+type ReportJson = Partial<AxiomReportJson> & Record<string, unknown> & {
   delivery?: Record<string, unknown>;
   submission?: {
     workflow_title?: string;
@@ -30,8 +36,6 @@ type ReportRecord = {
 type WorkflowSubmissionRecord = {
   id: string;
   customer_id: string | null;
-  order_id: string | null;
-  tier_slug: string | null;
   workflow_title: string | null;
 };
 
@@ -41,33 +45,18 @@ type CustomerRecord = {
   business_name: string | null;
 };
 
-type WorkspaceRecord = {
-  id: string;
-  customer_id: string;
-};
-
-type DeliverableRecord = {
-  id: string;
-  metadata: Record<string, unknown> | null;
-};
-
 const allowedActions = new Set<AdminReportAction>([
   "generate",
   "regenerate",
+  "generate_pdf",
+  "regenerate_pdf",
   "approve",
   "needs_revision",
   "queue",
   "deliver",
 ]);
 
-const productReportDeliverableMap: Record<string, AxiomDeliverableType> = {
-  "workflow-audit": "workflow_diagnosis",
-  "workflow-blueprint": "implementation_sequence",
-  "custom-operating-pack": "handoff_pack",
-  "workflow-stewardship": "stewardship_review",
-  "departmental-ecosystem": "departmental_architecture_map",
-  "architect-residency": "enterprise_architecture_report",
-};
+const reportPdfStorageBucket = "axiom-client-deliverables";
 
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -158,7 +147,7 @@ async function getWorkflowSubmission(submissionId?: string | null) {
   }
 
   const submissions = await supabaseFetch<WorkflowSubmissionRecord[]>(
-    `axiom_workflow_submissions?select=id,customer_id,order_id,tier_slug,workflow_title&id=eq.${encodeURIComponent(submissionId)}&limit=1`,
+    `axiom_workflow_submissions?select=id,customer_id,workflow_title&id=eq.${encodeURIComponent(submissionId)}&limit=1`,
   );
 
   return submissions[0] ?? null;
@@ -182,6 +171,32 @@ async function patchReport(reportId: string, payload: Record<string, unknown>) {
     prefer: "return=minimal",
     body: JSON.stringify(payload),
   });
+}
+
+function storageObjectUrl(objectPath: string) {
+  const { url } = getSupabaseConfig();
+  const encodedPath = objectPath.split("/").map(encodeURIComponent).join("/");
+  return `${url}/storage/v1/object/${reportPdfStorageBucket}/${encodedPath}`;
+}
+
+async function uploadPdfToStorage(pdfBuffer: Buffer, objectPath: string) {
+  const { serviceRoleKey } = getSupabaseConfig();
+  const response = await fetch(storageObjectUrl(objectPath), {
+    method: "POST",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/pdf",
+      "x-upsert": "true",
+    },
+    body: new Uint8Array(pdfBuffer),
+  });
+
+  const responseText = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`PDF storage upload failed: ${response.status} ${responseText}`);
+  }
 }
 
 function safeReturnPath(value: FormDataEntryValue | null) {
@@ -235,7 +250,7 @@ function escapeHtml(value: string) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
 
@@ -251,162 +266,104 @@ function reportDeliveryUrl(request: Request, submissionId: string) {
   return `${appUrl(request)}/dashboard/report?submission_id=${encodeURIComponent(submissionId)}`;
 }
 
-function reportSummary(report: ReportRecord) {
-  return report.client_summary ||
-    (typeof report.report_json?.delivery?.dashboard_summary === "string"
-      ? report.report_json.delivery.dashboard_summary
-      : "Your Axiom Architect workflow report is ready to review in your dashboard.");
+function reportPdfDownloadPath(reportId: string) {
+  return `/api/client/reports/${encodeURIComponent(reportId)}/pdf`;
 }
 
-function getCanonicalReportDeliverableType(report: ReportRecord, submission: WorkflowSubmissionRecord) {
-  const productSlug = report.tier_slug || submission.tier_slug || "";
-  return productReportDeliverableMap[productSlug] || "workflow_diagnosis";
-}
-
-async function getReportWorkspace({
-  customerId,
-  orderId,
-  report,
-  submission,
-}: {
-  customerId: string;
-  orderId: string | null;
-  report: ReportRecord;
-  submission: WorkflowSubmissionRecord;
-}) {
-  if (orderId) {
-    const orderWorkspaces = await supabaseFetch<WorkspaceRecord[]>(
-      `axiom_client_workspaces?select=id,customer_id&order_id=eq.${encodeURIComponent(orderId)}&limit=1`,
-    );
-
-    if (orderWorkspaces[0]?.id) {
-      return orderWorkspaces[0];
-    }
+function absoluteUrl(request: Request, pathOrUrl: string) {
+  if (/^https?:\/\//i.test(pathOrUrl)) {
+    return pathOrUrl;
   }
 
-  const customerWorkspaces = await supabaseFetch<WorkspaceRecord[]>(
-    `axiom_client_workspaces?select=id,customer_id&customer_id=eq.${encodeURIComponent(customerId)}&order=updated_at.desc&limit=1`,
-  );
-
-  if (customerWorkspaces[0]?.id) {
-    return customerWorkspaces[0];
-  }
-
-  const productSlug = report.tier_slug || submission.tier_slug || null;
-  const packageModel = getAxiomPackageByCheckoutSlug(productSlug);
-  const now = new Date().toISOString();
-  const workspaces = await supabaseFetch<WorkspaceRecord[]>(
-    "axiom_client_workspaces?select=id,customer_id",
-    {
-      method: "POST",
-      prefer: "return=representation",
-      body: JSON.stringify({
-        customer_id: customerId,
-        order_id: orderId,
-        workspace_name: `${packageModel?.name || reportTitle(report, submission)} workspace`,
-        workspace_type: "report_delivery_workspace",
-        status: "active",
-        current_phase: "review_and_approval",
-        current_priority: "Review delivered report",
-        next_client_action: "Open and review your delivered Axiom Architect report.",
-        axiom_review_focus: packageModel?.shortDescription || reportSummary(report),
-        last_activity_at: now,
-        updated_at: now,
-      }),
-    },
-  );
-
-  return workspaces[0] ?? null;
+  const path = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
+  return `${appUrl(request)}${path}`;
 }
 
-async function getExistingReportDeliverable(workspaceId: string, reportId: string) {
-  const deliverables = await supabaseFetch<DeliverableRecord[]>(
-    `axiom_workspace_deliverables?select=id,metadata&workspace_id=eq.${encodeURIComponent(workspaceId)}&order=created_at.desc&limit=100`,
-  );
+function safeFilename(value: string) {
+  const baseName = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
 
-  return deliverables.find((deliverable) => deliverable.metadata?.report_id === reportId) ?? null;
+  return `${baseName || "axiom-workflow-report"}.pdf`;
 }
 
-async function upsertReportDeliverable({
-  request,
-  report,
-  submission,
-  customerId,
-}: {
-  request: Request;
-  report: ReportRecord;
-  submission: WorkflowSubmissionRecord;
-  customerId: string;
-}) {
-  const orderId = report.order_id || submission.order_id || null;
-  const workspace = await getReportWorkspace({ customerId, orderId, report, submission });
-
-  if (!workspace?.id) {
-    throw new Error("No client workspace was available for report delivery.");
+function titleCase(value?: string | null) {
+  if (!value) {
+    return "Workflow Audit";
   }
 
-  const now = new Date().toISOString();
+  return value
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function getPdfDownloadUrl(request: Request, report: ReportRecord) {
+  const delivery = report.report_json?.delivery;
+  const isReady = delivery?.pdf_ready === true;
+  const downloadUrl =
+    typeof delivery?.pdf_download_url === "string" ? delivery.pdf_download_url.trim() : "";
+
+  if (!isReady || !downloadUrl) {
+    return null;
+  }
+
+  return absoluteUrl(request, downloadUrl);
+}
+
+async function generateReportPdf(request: Request, reportId: string) {
+  const report = await getReport(reportId);
+
+  if (!report) {
+    throw new Error("Report not found.");
+  }
+
+  if (!report.report_json || Object.keys(report.report_json).length === 0) {
+    throw new Error("Report JSON is not ready yet.");
+  }
+
+  const submission = await getWorkflowSubmission(report.submission_id);
+  const customerId = report.customer_id || submission?.customer_id || "unlinked";
+  const customer = await getCustomer(customerId);
   const title = reportTitle(report, submission);
-  const summary = reportSummary(report);
-  const externalUrl = reportDeliveryUrl(request, submission.id);
-  const canonicalDeliverableType = getCanonicalReportDeliverableType(report, submission);
-  const metadata = {
-    source: "axiom_audit_reports",
-    report_id: report.id,
-    submission_id: submission.id,
-    order_id: orderId,
-    tier_slug: report.tier_slug || submission.tier_slug,
-    canonical_deliverable_type: canonicalDeliverableType,
-    report_delivery_url: externalUrl,
-  };
-  const existingDeliverable = await getExistingReportDeliverable(workspace.id, report.id);
-  const payload = {
-    workspace_id: workspace.id,
-    customer_id: customerId,
-    deliverable_type: canonicalDeliverableType,
-    title,
-    description: summary,
-    status: "delivered",
-    version: "v1",
-    approval_required: false,
-    external_url: externalUrl,
-    delivered_at: now,
-    metadata,
-    updated_at: now,
-  };
-
-  if (existingDeliverable?.id) {
-    await supabaseFetch(`axiom_workspace_deliverables?id=eq.${encodeURIComponent(existingDeliverable.id)}`, {
-      method: "PATCH",
-      prefer: "return=minimal",
-      body: JSON.stringify(payload),
-    });
-  } else {
-    await supabaseFetch("axiom_workspace_deliverables", {
-      method: "POST",
-      prefer: "return=minimal",
-      body: JSON.stringify({
-        ...payload,
-        created_at: now,
-      }),
-    });
-  }
-
-  await supabaseFetch("axiom_workspace_activity", {
-    method: "POST",
-    prefer: "return=minimal",
-    body: JSON.stringify({
-      workspace_id: workspace.id,
-      customer_id: customerId,
-      actor_type: "axiom",
-      actor_label: "Axiom Architect",
-      activity_type: "report_delivered",
-      title: "Report delivered",
-      body: `${title} has been released to the client portal.`,
-      metadata,
-      is_client_visible: true,
-    }),
+  const now = new Date().toISOString();
+  const pdfBuffer = await generateAxiomReportPdf({
+    reportId: report.id,
+    reportJson: report.report_json,
+    customerName: customer?.full_name,
+    customerBusiness: customer?.business_name,
+    customerEmail: customer?.email,
+    workflowTitle: title,
+    serviceName: titleCase(report.tier_slug),
+    generatedAt: now,
   });
+  const objectPath = `reports/${customerId}/${report.id}/${Date.now()}-${safeFilename(title)}`;
+  const downloadPath = reportPdfDownloadPath(report.id);
+
+  await uploadPdfToStorage(pdfBuffer, objectPath);
+
+  await patchReport(report.id, {
+    pdf_url: downloadPath,
+    report_json: {
+      ...report.report_json,
+      delivery: {
+        ...(report.report_json.delivery || {}),
+        pdf_ready: true,
+        pdf_generated_at: now,
+        pdf_file_path: objectPath,
+        pdf_download_url: downloadPath,
+      },
+    },
+    updated_at: now,
+  });
+
+  const updatedReport = await getReport(report.id);
+
+  return {
+    report: updatedReport || report,
+    pdfDownloadUrl: absoluteUrl(request, downloadPath),
+  };
 }
 
 async function sendReportDeliveryEmail({
@@ -430,12 +387,17 @@ async function sendReportDeliveryEmail({
   const title = reportTitle(report, submission);
   const clientName = customer.full_name?.trim() || customer.business_name?.trim() || "there";
   const reportUrl = reportDeliveryUrl(request, submission.id);
-  const summary = reportSummary(report);
+  const summary = report.client_summary ||
+    (typeof report.report_json?.delivery?.dashboard_summary === "string"
+      ? report.report_json.delivery.dashboard_summary
+      : "Your Axiom Architect workflow report is ready to review in your dashboard.");
 
   const escapedName = escapeHtml(clientName);
   const escapedTitle = escapeHtml(title);
   const escapedSummary = escapeHtml(summary);
   const escapedReportUrl = escapeHtml(reportUrl);
+  const pdfUrl = getPdfDownloadUrl(request, report);
+  const escapedPdfUrl = pdfUrl ? escapeHtml(pdfUrl) : "";
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -457,12 +419,13 @@ async function sendReportDeliveryEmail({
             <p style="margin:0 0 24px;color:#dfeee0;">${escapedSummary}</p>
             <p style="margin:0 0 24px;">
               <a href="${escapedReportUrl}" style="display:inline-block;background:#9ed39f;color:#000000;text-decoration:none;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;font-size:12px;padding:14px 18px;">View report</a>
+              ${escapedPdfUrl ? `<a href="${escapedPdfUrl}" style="display:inline-block;margin-left:10px;border:1px solid rgba(158,211,159,0.55);color:#9ed39f;background:#030804;text-decoration:none;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;font-size:12px;padding:13px 18px;">Download PDF</a>` : ""}
             </p>
-            <p style="margin:0;color:#aebbae;font-size:13px;">If the button does not work, copy this link into your browser:<br>${escapedReportUrl}</p>
+            <p style="margin:0;color:#aebbae;font-size:13px;">If the button does not work, copy this link into your browser:<br>${escapedReportUrl}${escapedPdfUrl ? `<br><br>PDF download:<br>${escapedPdfUrl}` : ""}</p>
           </div>
         </div>
       `,
-      text: `Hi ${clientName},\n\nYour Axiom Architect report for ${title} is ready.\n\n${summary}\n\nView it here: ${reportUrl}`,
+      text: `Hi ${clientName},\n\nYour Axiom Architect report for ${title} is ready.\n\n${summary}\n\nView it here: ${reportUrl}${pdfUrl ? `\n\nDownload the PDF report: ${pdfUrl}` : ""}`,
     }),
   });
 
@@ -474,7 +437,7 @@ async function sendReportDeliveryEmail({
 }
 
 async function deliverReport(request: Request, reportId: string) {
-  const report = await getReport(reportId);
+  let report = await getReport(reportId);
 
   if (!report) {
     throw new Error("Report not found.");
@@ -490,29 +453,25 @@ async function deliverReport(request: Request, reportId: string) {
     throw new Error("Linked workflow submission was not found.");
   }
 
-  const customerId = report.customer_id || submission.customer_id;
-  const customer = await getCustomer(customerId);
+  const customer = await getCustomer(report.customer_id || submission.customer_id);
 
   if (!customer) {
     throw new Error("Linked customer was not found.");
   }
 
-  await sendReportDeliveryEmail({ request, report, submission, customer });
+  let pdfGenerationError: string | null = null;
 
-  try {
-    await upsertReportDeliverable({
-      request,
-      report,
-      submission,
-      customerId: customerId || "",
-    });
-  } catch (error) {
-    console.warn("Report workspace deliverable bridge skipped", {
-      reportId: report.id,
-      submissionId: submission.id,
-      error,
-    });
+  if (report.report_json?.delivery?.pdf_ready !== true) {
+    try {
+      const result = await generateReportPdf(request, report.id);
+      report = result.report;
+    } catch (error) {
+      pdfGenerationError = error instanceof Error ? error.message : "PDF generation failed.";
+      console.error("Report PDF generation during delivery failed", error);
+    }
   }
+
+  await sendReportDeliveryEmail({ request, report, submission, customer });
 
   const now = new Date().toISOString();
   const updatedReportJson = report.report_json
@@ -531,6 +490,11 @@ async function deliverReport(request: Request, reportId: string) {
     ...(updatedReportJson ? { report_json: updatedReportJson } : {}),
     updated_at: now,
   });
+
+  return {
+    pdfGenerationError,
+    pdfReady: report.report_json?.delivery?.pdf_ready === true,
+  };
 }
 
 async function runReportGeneration(request: Request, reportId: string) {
@@ -570,6 +534,11 @@ export async function POST(request: Request) {
       return redirectBack(request, returnPath, "success", action);
     }
 
+    if (action === "generate_pdf" || action === "regenerate_pdf") {
+      await generateReportPdf(request, reportId);
+      return redirectBack(request, returnPath, "success", action, "PDF report generated.");
+    }
+
     if (action === "approve") {
       await patchReport(reportId, {
         status: "approved",
@@ -579,8 +548,16 @@ export async function POST(request: Request) {
     }
 
     if (action === "deliver") {
-      await deliverReport(request, reportId);
-      return redirectBack(request, returnPath, "success", action, "Report email sent and client portal deliverable updated.");
+      const deliveryResult = await deliverReport(request, reportId);
+      return redirectBack(
+        request,
+        returnPath,
+        "success",
+        action,
+        deliveryResult.pdfGenerationError
+          ? "Report email sent. PDF generation failed, so the dashboard link was delivered without a PDF."
+          : "Report email sent to the linked customer with the PDF link when available.",
+      );
     }
 
     if (action === "needs_revision") {

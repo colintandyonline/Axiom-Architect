@@ -429,9 +429,11 @@ function WaitingReportState({
 function RenderGeneratedReport({
   report,
   clientState,
+  reportId,
 }: {
   report: DashboardReportJson;
   clientState: ClientReportState;
+  reportId?: string | null;
 }) {
   const executive = report.executive_summary;
   const scorecard = report.scorecard;
@@ -443,6 +445,10 @@ function RenderGeneratedReport({
   const implementation = report.implementation_plan;
   const upgrade = report.upgrade_recommendation;
   const delivery = report.delivery;
+  const pdfDownloadUrl =
+    delivery?.pdf_ready && reportId
+      ? delivery.pdf_download_url || `/api/client/reports/${reportId}/pdf`
+      : null;
 
   return (
     <section className="bg-black px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
@@ -720,6 +726,14 @@ function RenderGeneratedReport({
             <div className="mt-6 flex flex-wrap gap-3 text-[0.68rem] font-black uppercase tracking-[0.15em]">
               <span className="border border-black/25 px-3 py-2">Dashboard report {clientState.label.toLowerCase()}</span>
               <span className="border border-black/25 px-3 py-2">PDF version {delivery.pdf_ready ? "available" : "preparing"}</span>
+              {pdfDownloadUrl ? (
+                <a
+                  href={pdfDownloadUrl}
+                  className="border border-black bg-black px-3 py-2 text-[#9ed39f] transition hover:bg-white hover:text-black"
+                >
+                  Download PDF
+                </a>
+              ) : null}
             </div>
           </section>
         )}
@@ -807,7 +821,7 @@ export default async function ReportStatusPage({
       </section>
 
       {canRenderReport && reportJson ? (
-        <RenderGeneratedReport report={reportJson} clientState={clientState} />
+        <RenderGeneratedReport report={reportJson} clientState={clientState} reportId={context.report?.id} />
       ) : (
         <WaitingReportState
           hasWorkflow={hasWorkflow}
