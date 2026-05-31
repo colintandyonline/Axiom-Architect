@@ -44,11 +44,14 @@ const intakeFormCss = `
   }
 
   main > section:first-child aside::after {
-    content: "Start with the workflow as it really happens today.\A\AInclude the people, tools, handoffs, approvals, delays, repeated checks, and places where work gets stuck.\A\AYou do not need perfect wording. Specific examples, rough timings, and messy details are more useful than polished summary copy.";
-    white-space: pre-line;
-    color: rgba(242, 255, 242, 0.88);
-    font-size: clamp(1rem, 1.45vw, 1.18rem);
-    line-height: 1.75;
+    content: "Describe the workflow as it really happens today. Include the steps, people, tools, handoffs, approvals, delays, exceptions, repeated checks, and the outcome you want. Do not include passwords, private keys, payment details, or unnecessary sensitive personal data.";
+    color: rgba(242, 255, 242, 0.9);
+    font-size: clamp(1rem, 1.35vw, 1.16rem);
+    line-height: 1.8;
+  }
+
+  main > section:nth-of-type(2) > div > section[class*="mb-8"]:has(article) {
+    display: none !important;
   }
 
   main form[action="/api/intake"] {
