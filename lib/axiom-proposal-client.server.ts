@@ -1,3 +1,5 @@
+import type { AxiomAuthUser, AxiomLinkedCustomer } from "./axiom-auth";
+import { getAxiomAuthContext } from "./axiom-auth";
 import type { ProposalDraftRecord } from "./axiom-proposal-drafts";
 import {
   proposalAccessExpired,
@@ -61,6 +63,50 @@ async function supabaseServiceFetch<T>(
   return JSON.parse(responseText) as T;
 }
 
+async function getProposalById(proposalId: string) {
+  const proposals = await supabaseServiceFetch<ProposalDraftRecord[]>(
+    `axiom_proposals?select=*&id=eq.${encodeURIComponent(proposalId)}&limit=1`,
+  );
+
+  return proposals[0] ?? null;
+}
+
+function proposalAvailableForClient(proposal: ProposalDraftRecord): ProposalAccessResult | null {
+  if (proposal.pdf_ready !== true || !proposal.pdf_file_path) {
+    return { ok: false, status: 404, message: "Proposal is not available yet." };
+  }
+
+  if (!proposalClientAccessibleStatuses.has(proposal.status || "")) {
+    return { ok: false, status: 403, message: "Proposal is not available for client review." };
+  }
+
+  return null;
+}
+
+function normalizeEmail(value?: string | null) {
+  return (value || "").trim().toLowerCase();
+}
+
+function authenticatedClientOwnsProposal(
+  proposal: ProposalDraftRecord,
+  customer: AxiomLinkedCustomer | null,
+  user: AxiomAuthUser | null,
+) {
+  if (!customer || !user) {
+    return false;
+  }
+
+  if (proposal.customer_id && proposal.customer_id === customer.id) {
+    return true;
+  }
+
+  const proposalEmail = normalizeEmail(proposal.client_email);
+  const customerEmail = normalizeEmail(customer.email);
+  const userEmail = normalizeEmail(user.email);
+
+  return Boolean(proposalEmail && (proposalEmail === customerEmail || proposalEmail === userEmail));
+}
+
 export async function patchClientProposal(proposalId: string, payload: Record<string, unknown>) {
   await supabaseServiceFetch(`axiom_proposals?id=eq.${encodeURIComponent(proposalId)}`, {
     method: "PATCH",
@@ -77,21 +123,16 @@ export async function validateProposalClientAccess(
     return { ok: false, status: 404, message: "Proposal link unavailable." };
   }
 
-  const proposals = await supabaseServiceFetch<ProposalDraftRecord[]>(
-    `axiom_proposals?select=*&id=eq.${encodeURIComponent(proposalId)}&limit=1`,
-  );
-  const proposal = proposals[0] ?? null;
+  const proposal = await getProposalById(proposalId);
 
   if (!proposal) {
     return { ok: false, status: 404, message: "Proposal link unavailable." };
   }
 
-  if (proposal.pdf_ready !== true || !proposal.pdf_file_path) {
-    return { ok: false, status: 404, message: "Proposal is not available yet." };
-  }
+  const availability = proposalAvailableForClient(proposal);
 
-  if (!proposalClientAccessibleStatuses.has(proposal.status || "")) {
-    return { ok: false, status: 403, message: "Proposal is not available for client review." };
+  if (availability) {
+    return availability;
   }
 
   if (proposalAccessExpired(proposal.client_access_expires_at)) {
@@ -103,6 +144,49 @@ export async function validateProposalClientAccess(
   }
 
   return { ok: true, proposal };
+}
+
+export async function validateProposalAuthenticatedAccess(
+  proposalId: string,
+): Promise<ProposalAccessResult> {
+  if (!proposalId) {
+    return { ok: false, status: 404, message: "Proposal unavailable." };
+  }
+
+  const authContext = await getAxiomAuthContext();
+
+  if (!authContext.user || !authContext.customer) {
+    return { ok: false, status: 401, message: "Sign in to view this proposal." };
+  }
+
+  const proposal = await getProposalById(proposalId);
+
+  if (!proposal) {
+    return { ok: false, status: 404, message: "Proposal unavailable." };
+  }
+
+  const availability = proposalAvailableForClient(proposal);
+
+  if (availability) {
+    return availability;
+  }
+
+  if (!authenticatedClientOwnsProposal(proposal, authContext.customer, authContext.user)) {
+    return { ok: false, status: 403, message: "This proposal is not attached to your account." };
+  }
+
+  return { ok: true, proposal };
+}
+
+export async function validateProposalClientOrAuthenticatedAccess(
+  proposalId: string,
+  token?: string | null,
+): Promise<ProposalAccessResult> {
+  if (token) {
+    return validateProposalClientAccess(proposalId, token);
+  }
+
+  return validateProposalAuthenticatedAccess(proposalId);
 }
 
 export async function recordProposalClientView(proposal: ProposalDraftRecord) {
