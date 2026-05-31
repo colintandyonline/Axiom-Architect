@@ -9,7 +9,7 @@ import {
 } from "../../../../lib/axiom-proposal-drafts";
 import {
   recordProposalClientView,
-  validateProposalClientAccess,
+  validateProposalClientOrAuthenticatedAccess,
 } from "../../../../lib/axiom-proposal-client.server";
 
 export const metadata: Metadata = {
@@ -87,10 +87,10 @@ function UnavailableProposal({ message }: { message: string }) {
     <main className="min-h-screen bg-[#050805] px-4 py-16 text-white sm:px-6 lg:px-8">
       <section className="mx-auto max-w-3xl border border-[#9ed39f]/24 bg-black/40 p-8">
         <p className="text-[0.68rem] font-black uppercase tracking-[0.22em] text-[#9ed39f]">Axiom Architect</p>
-        <h1 className="mt-4 text-4xl font-black uppercase leading-none tracking-[-0.06em]">Proposal link unavailable.</h1>
+        <h1 className="mt-4 text-4xl font-black uppercase leading-none tracking-[-0.06em]">Proposal unavailable.</h1>
         <p className="mt-5 text-sm leading-7 text-white/68">{message}</p>
         <p className="mt-5 text-sm leading-7 text-white/58">
-          If you expected access, reply to your Axiom Architect email thread and we will issue a fresh review link.
+          If you expected access, return to the client workspace or reply to your Axiom Architect email thread.
         </p>
       </section>
     </main>
@@ -114,7 +114,7 @@ function ProposalActionForms({
       </div>
       {accepted ? (
         <p className="border border-[#9ed39f]/22 bg-[#9ed39f]/10 p-4 text-sm leading-7 text-white/72">
-          This proposal has been accepted. Use the payment section below to complete the deposit when ready.
+          This proposal has been accepted. Use the payment section below to complete the next payment when required.
         </p>
       ) : (
         <div className="flex flex-wrap gap-3">
@@ -147,7 +147,7 @@ export default async function ClientProposalPage({ params, searchParams }: PageP
   const { proposalId } = await params;
   const query = searchParams ? await searchParams : {};
   const token = firstParam(query.token) || "";
-  const access = await validateProposalClientAccess(proposalId, token);
+  const access = await validateProposalClientOrAuthenticatedAccess(proposalId, token);
 
   if (access.ok === false) {
     return <UnavailableProposal message={access.message} />;
@@ -166,7 +166,9 @@ export default async function ClientProposalPage({ params, searchParams }: PageP
   const paymentCancelled = paymentStatus === "cancelled";
   const deliverables = listItems(proposal.deliverables_json, 5);
   const notice = noticeMessage(firstParam(query.proposal));
-  const pdfUrl = `/api/client/proposals/${encodeURIComponent(proposal.id)}/pdf?token=${encodeURIComponent(token)}`;
+  const pdfUrl = token
+    ? `/api/client/proposals/${encodeURIComponent(proposal.id)}/pdf?token=${encodeURIComponent(token)}`
+    : `/api/client/proposals/${encodeURIComponent(proposal.id)}/pdf`;
 
   return (
     <main className="min-h-screen bg-[#050805] text-white">
@@ -191,6 +193,7 @@ export default async function ClientProposalPage({ params, searchParams }: PageP
               <p><strong className="text-[#9ed39f]">Prepared for:</strong> {proposal.client_name || proposal.client_email || "Client"}</p>
               <p><strong className="text-[#9ed39f]">Valid until:</strong> {formatDate(proposal.valid_until)}</p>
             </div>
+            <Link href="/client" className={`${buttonClass} mt-5 w-full`}>Back to workspace</Link>
           </aside>
         </div>
       </section>
