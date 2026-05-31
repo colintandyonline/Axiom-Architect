@@ -57,12 +57,17 @@ export type ProposalPricingJson = {
   add_ons_text: string;
   discount_amount: number;
   deposit_required: number;
+  balance_amount: number;
   final_total: number;
 };
 
 export type ProposalPaymentTermsJson = {
   payment_schedule: string;
   deposit_required: number;
+  deposit_payment_url: string;
+  final_payment_url: string;
+  payment_instructions: string;
+  payment_status_note: string;
 };
 
 export const proposalTypeOptions: ProposalDraftType[] = ["simple", "standard", "strategic"];
@@ -84,6 +89,8 @@ export function getProposalPricing(value: unknown): ProposalPricingJson {
   const record = value && typeof value === "object" && !Array.isArray(value)
     ? (value as Partial<ProposalPricingJson>)
     : {};
+  const depositRequired = Number(record.deposit_required || 0);
+  const finalTotal = Number(record.final_total || 0);
 
   return {
     currency: "USD",
@@ -94,8 +101,9 @@ export function getProposalPricing(value: unknown): ProposalPricingJson {
     delivery_depth: String(record.delivery_depth || "standard"),
     add_ons_text: String(record.add_ons_text || ""),
     discount_amount: Number(record.discount_amount || 0),
-    deposit_required: Number(record.deposit_required || 0),
-    final_total: Number(record.final_total || 0),
+    deposit_required: depositRequired,
+    balance_amount: Number(record.balance_amount || Math.max(0, finalTotal - depositRequired)),
+    final_total: finalTotal,
   };
 }
 
@@ -107,6 +115,10 @@ export function getProposalPaymentTerms(value: unknown): ProposalPaymentTermsJso
   return {
     payment_schedule: String(record.payment_schedule || ""),
     deposit_required: Number(record.deposit_required || 0),
+    deposit_payment_url: String(record.deposit_payment_url || ""),
+    final_payment_url: String(record.final_payment_url || ""),
+    payment_instructions: String(record.payment_instructions || ""),
+    payment_status_note: String(record.payment_status_note || ""),
   };
 }
 

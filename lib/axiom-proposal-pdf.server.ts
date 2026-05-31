@@ -293,6 +293,11 @@ export async function generateAxiomProposalPdf(proposal: ProposalDraftRecord) {
   const reference = safeText(proposal.proposal_reference, proposal.id);
   const finalTotal = pricing.final_total ? formatProposalMoney(pricing.final_total) : "To be confirmed";
   const depositRequired = pricing.deposit_required ? formatProposalMoney(pricing.deposit_required) : "To be confirmed";
+  const balanceDue = pricing.balance_amount ? formatProposalMoney(pricing.balance_amount) : "To be confirmed";
+  const paymentTermsText = [paymentTerms.payment_schedule, paymentTerms.payment_instructions]
+    .map((item) => sanitizeProposalText(item, ""))
+    .filter(Boolean)
+    .join("\n\n");
   const title = `${businessName} - ${recommendedRoute} Proposal`;
   const doc = new PDFDocument({
     size: "A4",
@@ -384,9 +389,9 @@ export async function generateAxiomProposalPdf(proposal: ProposalDraftRecord) {
 
   doc.addPage();
   startLightPage(doc, 3, "terms and next step", "Commercial terms");
-  box(doc, pageMargin, 126, contentWidth, 86, "Payment terms", truncateText(paymentTerms.payment_schedule, 500), { bodySize: 9.4 });
+  box(doc, pageMargin, 126, contentWidth, 86, "Payment terms", truncateText(paymentTermsText, 500), { bodySize: 9.4 });
   box(doc, pageMargin, 232, columnWidth, 86, "Deposit required", depositRequired, { bodySize: 18 });
-  box(doc, pageMargin + columnWidth + columnGap, 232, columnWidth, 86, "Proposal validity", `This proposal is valid until ${validUntil}.`, { bodySize: 10 });
+  box(doc, pageMargin + columnWidth + columnGap, 232, columnWidth, 86, "Balance due before final delivery", balanceDue, { bodySize: 18 });
   bullets(doc, listFromJson(proposal.exclusions_json, 6), pageMargin, 350, contentWidth, "Exclusions", 6);
   box(
     doc,
@@ -405,7 +410,7 @@ export async function generateAxiomProposalPdf(proposal: ProposalDraftRecord) {
     contentWidth,
     54,
     "Closing note",
-    "Axiom Architect will keep the engagement focused on the agreed scope, clear review points, and practical outputs that support safer intelligent work.",
+    `This proposal is valid until ${validUntil}. Axiom Architect will keep the engagement focused on the agreed scope, clear review points, and practical outputs that support safer intelligent work.`,
     { bodySize: 9 },
   );
 

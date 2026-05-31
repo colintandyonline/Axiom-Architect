@@ -63,6 +63,12 @@ function suggestedDeposit(preset: ProposalPreset) {
   return Math.round(preset.suggested_base_price * 0.5);
 }
 
+function suggestedBalance(preset: ProposalPreset) {
+  return Math.max(0, preset.suggested_base_price - suggestedDeposit(preset));
+}
+
+const defaultPaymentInstructions = "A deposit is required to begin work. The remaining balance is due before final delivery unless otherwise agreed.";
+
 function FieldLabel({
   label,
   children,
@@ -276,9 +282,11 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
       "delivery_depth",
       "discount_amount",
       "deposit_required",
+      "balance_amount",
       "final_total",
       "add_ons_text",
       "payment_schedule",
+      "payment_instructions",
       "client_price_explanation",
     ];
     const hasExistingContent = fieldsToOverwrite.some(fieldHasValue);
@@ -297,6 +305,7 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
     setFieldValue("delivery_depth", selectedPreset.default_delivery_depth);
     setFieldValue("discount_amount", 0);
     setFieldValue("deposit_required", suggestedDeposit(selectedPreset));
+    setFieldValue("balance_amount", suggestedBalance(selectedPreset));
     setFieldValue("final_total", selectedPreset.suggested_base_price);
     setFieldValue("scope_summary", selectedPreset.scope_summary);
     setFieldValue("included_work", listText(selectedPreset.included_work));
@@ -306,6 +315,7 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
     setFieldValue("client_responsibilities", listText(selectedPreset.client_responsibilities));
     setFieldValue("assumptions", listText(selectedPreset.assumptions));
     setFieldValue("payment_schedule", selectedPreset.payment_terms);
+    setFieldValue("payment_instructions", defaultPaymentInstructions);
     setFieldValue("client_price_explanation", selectedPreset.client_price_explanation);
     setFieldValue("add_ons_text", listText(selectedPreset.optional_add_ons));
   }
@@ -504,9 +514,6 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
           <FieldLabel label="Discount amount (USD)">
             <input name="discount_amount" type="number" step="1" defaultValue={pricing.discount_amount} className={inputClass} />
           </FieldLabel>
-          <FieldLabel label="Deposit required (USD)">
-            <input name="deposit_required" type="number" step="1" defaultValue={pricing.deposit_required} className={inputClass} />
-          </FieldLabel>
           <FieldLabel label="Final total (USD)">
             <input name="final_total" type="number" step="1" defaultValue={pricing.final_total} className={inputClass} />
           </FieldLabel>
@@ -514,6 +521,41 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
         <TextAreaField name="add_ons_text" label="Add-ons as text / JSON for now" value={pricing.add_ons_text} />
         <TextAreaField name="payment_schedule" label="Payment schedule" value={paymentTerms.payment_schedule} />
         <TextAreaField name="client_price_explanation" label="Client-facing price explanation" value={proposal?.client_price_explanation} />
+      </section>
+
+      <section className="grid gap-4 border border-[#9ed39f]/18 bg-black/34 p-5">
+        <div>
+          <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">Proposal payment</p>
+          <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.05em] text-white">Manual payment links</h2>
+          <p className="mt-2 text-sm leading-7 text-white/62">
+            Admin-only payment preparation. These links are saved for later proposal delivery and are not exposed to clients by this screen.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <FieldLabel label="Deposit amount (USD)">
+            <input name="deposit_required" type="number" step="1" defaultValue={pricing.deposit_required} className={inputClass} />
+          </FieldLabel>
+          <FieldLabel label="Balance amount (USD)">
+            <input name="balance_amount" type="number" step="1" defaultValue={pricing.balance_amount} className={inputClass} />
+          </FieldLabel>
+          <FieldLabel label="Deposit payment URL">
+            <input name="deposit_payment_url" type="url" defaultValue={paymentTerms.deposit_payment_url} placeholder="https://buy.stripe.com/..." className={inputClass} />
+          </FieldLabel>
+          <FieldLabel label="Final payment URL">
+            <input name="final_payment_url" type="url" defaultValue={paymentTerms.final_payment_url} placeholder="https://buy.stripe.com/..." className={inputClass} />
+          </FieldLabel>
+        </div>
+        <TextAreaField
+          name="payment_instructions"
+          label="Payment instructions"
+          value={paymentTerms.payment_instructions || defaultPaymentInstructions}
+        />
+        <TextAreaField
+          name="payment_status_note"
+          label="Payment status note"
+          value={paymentTerms.payment_status_note}
+          placeholder="Internal note, e.g. deposit link created, invoice sent, payment pending."
+        />
       </section>
 
       <section className="grid gap-4 border border-[#9ed39f]/18 bg-black/34 p-5">

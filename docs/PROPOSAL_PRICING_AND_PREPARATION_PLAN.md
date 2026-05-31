@@ -586,8 +586,23 @@ Suggested shape:
     "amount": 0
   },
   "deposit_required": 600,
-  "final_total": 1200,
-  "payment_schedule": "50% to begin, 50% before final delivery"
+  "balance_amount": 600,
+  "final_total": 1200
+}
+```
+
+### `payment_terms_json`
+
+Suggested shape for the manual payment-link layer:
+
+```json
+{
+  "payment_schedule": "50% to begin, 50% before final delivery",
+  "deposit_required": 600,
+  "deposit_payment_url": "https://buy.stripe.com/example-deposit-link",
+  "final_payment_url": "https://buy.stripe.com/example-final-link",
+  "payment_instructions": "A deposit is required to begin work. The remaining balance is due before final delivery unless otherwise agreed.",
+  "payment_status_note": "Admin-only note about payment link creation or payment state."
 }
 ```
 

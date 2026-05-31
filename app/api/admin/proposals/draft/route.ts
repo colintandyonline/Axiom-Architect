@@ -109,8 +109,11 @@ function proposalPayload(formData: FormData, existingReference?: string | null) 
   const complexityMultiplier = cleanNumber(cleanInput(formData.get("complexity_multiplier"))) || 1;
   const discountAmount = cleanNumber(cleanInput(formData.get("discount_amount")));
   const depositRequired = cleanNumber(cleanInput(formData.get("deposit_required")));
+  const balanceAmount = cleanNumber(cleanInput(formData.get("balance_amount")));
   const finalTotal = cleanNumber(cleanInput(formData.get("final_total")));
   const paymentSchedule = cleanInput(formData.get("payment_schedule"));
+  const paymentInstructions = cleanInput(formData.get("payment_instructions"));
+  const paymentStatusNote = cleanInput(formData.get("payment_status_note"));
   const sourceRecordId = cleanInput(formData.get("source_record_id"));
   const sourceRecordType = cleanInput(formData.get("source_record_type"));
   const sourceRecordTitle = cleanInput(formData.get("source_record_title"));
@@ -151,6 +154,7 @@ function proposalPayload(formData: FormData, existingReference?: string | null) 
       add_ons_text: cleanInput(formData.get("add_ons_text")),
       discount_amount: discountAmount,
       deposit_required: depositRequired,
+      balance_amount: balanceAmount,
       final_total: finalTotal,
     },
     internal_pricing_notes: nullableText(cleanInput(formData.get("internal_pricing_notes"))),
@@ -160,6 +164,10 @@ function proposalPayload(formData: FormData, existingReference?: string | null) 
     payment_terms_json: {
       payment_schedule: paymentSchedule,
       deposit_required: depositRequired,
+      deposit_payment_url: cleanInput(formData.get("deposit_payment_url")),
+      final_payment_url: cleanInput(formData.get("final_payment_url")),
+      payment_instructions: paymentInstructions,
+      payment_status_note: paymentStatusNote,
     },
     valid_until: cleanDate(cleanInput(formData.get("valid_until"))),
     proposal_json: {
