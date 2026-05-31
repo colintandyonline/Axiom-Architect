@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   fetchProposalPdfObject,
-  validateProposalClientAccess,
+  validateProposalClientOrAuthenticatedAccess,
 } from "../../../../../../lib/axiom-proposal-client.server";
 
 export const runtime = "nodejs";
@@ -17,7 +17,7 @@ export async function GET(
 ) {
   const { proposalId } = await context.params;
   const token = new URL(request.url).searchParams.get("token");
-  const access = await validateProposalClientAccess(proposalId, token);
+  const access = await validateProposalClientOrAuthenticatedAccess(proposalId, token);
 
   if (access.ok === false) {
     return new NextResponse(access.message, { status: access.status });
