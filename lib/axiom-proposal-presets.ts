@@ -20,7 +20,7 @@ export type ProposalPreset = {
   suggested_min_price: number;
   suggested_max_price: number;
   suggested_base_price: number;
-  currency: "GBP";
+  currency: "USD";
   default_complexity_level: string;
   default_complexity_multiplier: number;
   default_risk_level: string;
@@ -44,7 +44,7 @@ export const proposalPresets: ProposalPreset[] = [
     suggested_min_price: 250,
     suggested_max_price: 750,
     suggested_base_price: 500,
-    currency: "GBP",
+    currency: "USD",
     default_complexity_level: "simple",
     default_complexity_multiplier: 1,
     default_risk_level: "low",
@@ -92,9 +92,9 @@ export const proposalPresets: ProposalPreset[] = [
     client_price_explanation:
       "The investment reflects the workflow review, future-state design, AI suitability assessment, human review gate planning, and implementation sequence required to produce a controlled blueprint.",
     optional_add_ons: [
-      "Implementation support session - from £250.",
-      "Custom assistant instruction kit - from £450.",
-      "Follow-up review after implementation - from £250.",
+      "Implementation support session - from $250.",
+      "Custom assistant instruction kit - from $450.",
+      "Follow-up review after implementation - from $250.",
     ],
   },
   {
@@ -103,7 +103,7 @@ export const proposalPresets: ProposalPreset[] = [
     suggested_min_price: 500,
     suggested_max_price: 1500,
     suggested_base_price: 950,
-    currency: "GBP",
+    currency: "USD",
     default_complexity_level: "standard",
     default_complexity_multiplier: 1.5,
     default_risk_level: "medium",
@@ -151,9 +151,9 @@ export const proposalPresets: ProposalPreset[] = [
     client_price_explanation:
       "The investment reflects the custom operating documentation, role guidance, review gate design, and reusable process instructions needed to make the workflow repeatable.",
     optional_add_ons: [
-      "Implementation support session - from £250.",
-      "Team adoption checklist - from £300.",
-      "Ongoing stewardship review - from £500/month.",
+      "Implementation support session - from $250.",
+      "Team adoption checklist - from $300.",
+      "Ongoing stewardship review - from $500/month.",
     ],
   },
   {
@@ -162,7 +162,7 @@ export const proposalPresets: ProposalPreset[] = [
     suggested_min_price: 400,
     suggested_max_price: 1200,
     suggested_base_price: 750,
-    currency: "GBP",
+    currency: "USD",
     default_complexity_level: "standard",
     default_complexity_multiplier: 1.5,
     default_risk_level: "medium",
@@ -209,9 +209,9 @@ export const proposalPresets: ProposalPreset[] = [
     client_price_explanation:
       "The investment reflects the custom assistant role design, instruction structure, workflow boundaries, review gates, and practical testing guidance needed for safe use.",
     optional_add_ons: [
-      "Additional assistant variant - from £250.",
-      "Implementation review session - from £250.",
-      "Workflow blueprint add-on - from £400.",
+      "Additional assistant variant - from $250.",
+      "Implementation review session - from $250.",
+      "Workflow blueprint add-on - from $400.",
     ],
   },
   {
@@ -220,7 +220,7 @@ export const proposalPresets: ProposalPreset[] = [
     suggested_min_price: 1000,
     suggested_max_price: 3500,
     suggested_base_price: 1750,
-    currency: "GBP",
+    currency: "USD",
     default_complexity_level: "advanced",
     default_complexity_multiplier: 2.25,
     default_risk_level: "medium",
@@ -268,9 +268,9 @@ export const proposalPresets: ProposalPreset[] = [
     client_price_explanation:
       "The investment reflects the AI workflow model, control design, tool-routing analysis, review gate planning, and phased rollout structure required for a safe operating system.",
     optional_add_ons: [
-      "Custom assistant instruction kit - from £450.",
-      "Implementation support - from £1,500.",
-      "Ongoing workflow stewardship - from £500/month.",
+      "Custom assistant instruction kit - from $450.",
+      "Implementation support - from $1,500.",
+      "Ongoing workflow stewardship - from $500/month.",
     ],
   },
   {
@@ -279,7 +279,7 @@ export const proposalPresets: ProposalPreset[] = [
     suggested_min_price: 750,
     suggested_max_price: 2500,
     suggested_base_price: 1250,
-    currency: "GBP",
+    currency: "USD",
     default_complexity_level: "standard",
     default_complexity_multiplier: 1.5,
     default_risk_level: "medium",
@@ -327,9 +327,9 @@ export const proposalPresets: ProposalPreset[] = [
     client_price_explanation:
       "The investment reflects the tool stack review, workflow routing design, risk analysis, and staged architecture recommendations needed to simplify the operating model.",
     optional_add_ons: [
-      "Implementation planning workshop - from £350.",
-      "Vendor/tool comparison matrix - from £300.",
-      "Done-with-you implementation support - from £1,500.",
+      "Implementation planning workshop - from $350.",
+      "Vendor/tool comparison matrix - from $300.",
+      "Done-with-you implementation support - from $1,500.",
     ],
   },
   {
@@ -338,7 +338,7 @@ export const proposalPresets: ProposalPreset[] = [
     suggested_min_price: 1500,
     suggested_max_price: 5000,
     suggested_base_price: 2750,
-    currency: "GBP",
+    currency: "USD",
     default_complexity_level: "advanced",
     default_complexity_multiplier: 2.25,
     default_risk_level: "high",
@@ -386,9 +386,9 @@ export const proposalPresets: ProposalPreset[] = [
     client_price_explanation:
       "The investment reflects team-level workflow mapping, safe AI usage design, review gate creation, reusable instructions, and adoption documentation.",
     optional_add_ons: [
-      "Team implementation support - from £1,500.",
-      "Custom role-based assistant kits - from £450 each.",
-      "Ongoing stewardship - from £750/month.",
+      "Team implementation support - from $1,500.",
+      "Custom role-based assistant kits - from $450 each.",
+      "Ongoing stewardship - from $750/month.",
     ],
   },
   {
@@ -397,7 +397,7 @@ export const proposalPresets: ProposalPreset[] = [
     suggested_min_price: 1500,
     suggested_max_price: 5000,
     suggested_base_price: 2500,
-    currency: "GBP",
+    currency: "USD",
     default_complexity_level: "advanced",
     default_complexity_multiplier: 2.25,
     default_risk_level: "high",
@@ -444,9 +444,9 @@ export const proposalPresets: ProposalPreset[] = [
     client_price_explanation:
       "The investment reflects guided implementation support, review checkpoints, risk control, and practical translation of the operating design into usable workflow changes.",
     optional_add_ons: [
-      "Additional support session - from £250.",
-      "Post-implementation review - from £350.",
-      "Ongoing stewardship - from £750/month.",
+      "Additional support session - from $250.",
+      "Post-implementation review - from $350.",
+      "Ongoing stewardship - from $750/month.",
     ],
   },
   {
@@ -455,7 +455,7 @@ export const proposalPresets: ProposalPreset[] = [
     suggested_min_price: 3000,
     suggested_max_price: 10000,
     suggested_base_price: 5000,
-    currency: "GBP",
+    currency: "USD",
     default_complexity_level: "complex",
     default_complexity_multiplier: 3,
     default_risk_level: "high",
@@ -503,9 +503,9 @@ export const proposalPresets: ProposalPreset[] = [
     client_price_explanation:
       "The investment reflects the higher level of build responsibility, staged delivery, risk control, documentation, review gates, and handoff support required for done-for-you implementation.",
     optional_add_ons: [
-      "Extended support window - from £1,000.",
+      "Extended support window - from $1,000.",
       "Additional workflow module - quoted after scope review.",
-      "Ongoing stewardship - from £1,000/month.",
+      "Ongoing stewardship - from $1,000/month.",
     ],
   },
   {
@@ -514,7 +514,7 @@ export const proposalPresets: ProposalPreset[] = [
     suggested_min_price: 250,
     suggested_max_price: 1500,
     suggested_base_price: 750,
-    currency: "GBP",
+    currency: "USD",
     default_complexity_level: "standard",
     default_complexity_multiplier: 1.5,
     default_risk_level: "medium",
@@ -562,9 +562,9 @@ export const proposalPresets: ProposalPreset[] = [
     client_price_explanation:
       "The investment reflects recurring review, controlled improvement, risk monitoring, and practical maintenance of the workflow operating model.",
     optional_add_ons: [
-      "Additional monthly review session - from £250.",
-      "Implementation support block - from £750.",
-      "Quarterly operating system audit - from £750.",
+      "Additional monthly review session - from $250.",
+      "Implementation support block - from $750.",
+      "Quarterly operating system audit - from $750.",
     ],
   },
 ];

@@ -142,6 +142,7 @@ function proposalPayload(formData: FormData, existingReference?: string | null) 
     client_responsibilities_json: textToJsonList(cleanInput(formData.get("client_responsibilities"))),
     assumptions_json: textToJsonList(cleanInput(formData.get("assumptions"))),
     pricing_json: {
+      currency: "USD",
       base_service_price: baseServicePrice,
       complexity_level: cleanInput(formData.get("complexity_level")) || "standard",
       complexity_multiplier: complexityMultiplier,

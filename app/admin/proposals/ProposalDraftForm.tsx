@@ -440,8 +440,8 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
             <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Suggested preset</p>
             <h3 className="mt-2 text-xl font-black uppercase tracking-[-0.04em] text-white">{selectedPreset.label}</h3>
             <p className="mt-2 text-sm leading-7 text-white/68">
-              Suggested range: {new Intl.NumberFormat("en-GB", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_min_price)} - {new Intl.NumberFormat("en-GB", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_max_price)}.
-              Suggested base: {new Intl.NumberFormat("en-GB", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_base_price)}.
+              USD suggested range: {new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_min_price)} - {new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_max_price)}.
+              Suggested base: {new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_base_price)}.
             </p>
             <button type="button" onClick={applyPreset} className={`${primaryButtonClass} mt-4`}>
               Apply suggested scope and pricing
@@ -481,12 +481,12 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
         <div className="border border-[#9ed39f]/20 bg-black/30 p-4 text-sm leading-7 text-white/68">
           <strong className="text-[#9ed39f]">Guidance only.</strong>{" "}
           {selectedPreset
-            ? `Suggested range ${new Intl.NumberFormat("en-GB", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_min_price)} - ${new Intl.NumberFormat("en-GB", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_max_price)}; suggested base ${new Intl.NumberFormat("en-GB", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_base_price)}.`
+            ? `USD suggested range ${new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_min_price)} - ${new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_max_price)}; suggested base ${new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_base_price)}.`
             : "No preset guidance available for this route."}{" "}
           Final proposal price is admin controlled.
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <FieldLabel label="Base service price">
+          <FieldLabel label="Base service price (USD)">
             <input name="base_service_price" type="number" step="1" defaultValue={pricing.base_service_price} className={inputClass} />
           </FieldLabel>
           <FieldLabel label="Complexity level">
@@ -501,13 +501,13 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
           <FieldLabel label="Delivery depth">
             <input name="delivery_depth" defaultValue={pricing.delivery_depth} className={inputClass} />
           </FieldLabel>
-          <FieldLabel label="Discount amount">
+          <FieldLabel label="Discount amount (USD)">
             <input name="discount_amount" type="number" step="1" defaultValue={pricing.discount_amount} className={inputClass} />
           </FieldLabel>
-          <FieldLabel label="Deposit required">
+          <FieldLabel label="Deposit required (USD)">
             <input name="deposit_required" type="number" step="1" defaultValue={pricing.deposit_required} className={inputClass} />
           </FieldLabel>
-          <FieldLabel label="Final total">
+          <FieldLabel label="Final total (USD)">
             <input name="final_total" type="number" step="1" defaultValue={pricing.final_total} className={inputClass} />
           </FieldLabel>
         </div>

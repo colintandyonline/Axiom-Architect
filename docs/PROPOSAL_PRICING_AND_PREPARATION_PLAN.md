@@ -187,15 +187,15 @@ These are starting guidance bands, not hard-coded final prices.
 
 | Service route | Suggested band |
 | --- | ---: |
-| Workflow Blueprint | £250 - £750 |
-| Custom Operating Pack | £500 - £1,500 |
-| Custom Agent / Assistant Instruction Kit | £400 - £1,200 |
-| AI Workflow System Design | £1,000 - £3,500 |
-| Tool Stack Architecture | £750 - £2,500 |
-| Team AI Operating System Setup | £1,500 - £5,000 |
-| Implementation Support / Done-With-You | £1,500 - £5,000 |
-| Done-For-You System Build | £3,000 - £10,000+ |
-| Ongoing Workflow Stewardship | £250 - £1,500/month |
+| Workflow Blueprint | $250 - $750 |
+| Custom Operating Pack | $500 - $1,500 |
+| Custom Agent / Assistant Instruction Kit | $400 - $1,200 |
+| AI Workflow System Design | $1,000 - $3,500 |
+| Tool Stack Architecture | $750 - $2,500 |
+| Team AI Operating System Setup | $1,500 - $5,000 |
+| Implementation Support / Done-With-You | $1,500 - $5,000 |
+| Done-For-You System Build | $3,000 - $10,000+ |
+| Ongoing Workflow Stewardship | $250 - $1,500/month |
 
 ### Complexity Levels
 
@@ -427,7 +427,7 @@ Example:
 > Workflow Architecture Blueprint
 >
 > Investment  
-> £1,250
+> $1,250
 >
 > Includes  
 > - Workflow diagnosis review  
@@ -443,9 +443,9 @@ Show optional items clearly.
 
 Example:
 
-- Custom Assistant Instruction Kit — £450
-- Implementation Support Session — £250
-- Ongoing Workflow Stewardship — from £500/month
+- Custom Assistant Instruction Kit - $450
+- Implementation Support Session - $250
+- Ongoing Workflow Stewardship - from $500/month
 
 ### Payment Terms
 
@@ -568,7 +568,7 @@ Suggested shape:
 
 ```json
 {
-  "currency": "GBP",
+  "currency": "USD",
   "base_service_price": 750,
   "complexity_level": "standard",
   "complexity_multiplier": 1.5,

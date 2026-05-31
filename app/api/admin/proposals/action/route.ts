@@ -168,7 +168,12 @@ async function generateProposalPdf(proposalId: string) {
       workspace_name: proposal.workspace_name,
       recommended_service_route: proposal.recommended_service_route,
       valid_until: proposal.valid_until,
-      pricing_json: proposal.pricing_json,
+      pricing_json: {
+        ...(proposal.pricing_json && typeof proposal.pricing_json === "object" && !Array.isArray(proposal.pricing_json)
+          ? proposal.pricing_json
+          : {}),
+        currency: "USD",
+      },
     },
     updated_at: now,
   });

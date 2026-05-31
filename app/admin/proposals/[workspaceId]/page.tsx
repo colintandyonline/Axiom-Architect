@@ -324,9 +324,9 @@ function formatSize(bytes: number | null) {
 function formatMoney(amount: number | null, currency: string | null) {
   if (amount === null || amount === undefined) return "Not recorded";
 
-  return new Intl.NumberFormat("en-GB", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: currency || "gbp",
+    currency: currency || "usd",
   }).format(amount / 100);
 }
 

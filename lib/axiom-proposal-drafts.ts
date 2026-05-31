@@ -48,6 +48,7 @@ export type ProposalDraftRecord = {
 };
 
 export type ProposalPricingJson = {
+  currency: "USD";
   base_service_price: number;
   complexity_level: string;
   complexity_multiplier: number;
@@ -85,6 +86,7 @@ export function getProposalPricing(value: unknown): ProposalPricingJson {
     : {};
 
   return {
+    currency: "USD",
     base_service_price: Number(record.base_service_price || 0),
     complexity_level: String(record.complexity_level || "standard"),
     complexity_multiplier: Number(record.complexity_multiplier || 1),
@@ -138,9 +140,9 @@ export function textToJsonList(value: string) {
 export function formatProposalMoney(value: unknown) {
   const amount = typeof value === "number" ? value : Number(value || 0);
 
-  return new Intl.NumberFormat("en-GB", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "GBP",
+    currency: "USD",
     maximumFractionDigits: 0,
   }).format(amount);
 }
