@@ -443,15 +443,21 @@ function ProposalActionBanner({
 function ProposalPdfActions({ proposal }: { proposal: ProposalDraftRecord }) {
   const pdfReady = proposal.pdf_ready === true;
   const readyDisabled = !pdfReady;
+  const canSend = proposal.status === "ready_to_send" && pdfReady && Boolean(proposal.client_email?.trim());
+  const hasClientResponse = Boolean(proposal.accepted_at || proposal.changes_requested_at);
 
   return (
-    <AdminSection eyebrow="Proposal PDF" title="Admin review and release state">
+    <AdminSection eyebrow="Proposal delivery" title="Admin review and client release">
       <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-start">
         <div className="grid gap-4 text-sm leading-7 text-white/68 sm:grid-cols-2 xl:grid-cols-4">
           <DetailLine labelText="PDF status" value={pdfReady ? "Generated" : "Not generated"} />
           <DetailLine labelText="PDF generated" value={formatDate(proposal.pdf_generated_at)} />
           <DetailLine labelText="Proposal status" value={label(proposal.status)} />
           <DetailLine labelText="Sent to client" value={proposal.sent_at ? formatDate(proposal.sent_at) : "Not sent"} />
+          <DetailLine labelText="Viewed" value={proposal.viewed_at ? formatDate(proposal.viewed_at) : "Not viewed"} />
+          <DetailLine labelText="Accepted" value={proposal.accepted_at ? formatDate(proposal.accepted_at) : "Not accepted"} />
+          <DetailLine labelText="Changes requested" value={proposal.changes_requested_at ? formatDate(proposal.changes_requested_at) : "No"} />
+          <DetailLine labelText="Access expires" value={formatDate(proposal.client_access_expires_at)} />
         </div>
         <div className="flex flex-wrap gap-3 lg:max-w-[34rem] lg:justify-end">
           <ProposalActionForm
@@ -473,13 +479,25 @@ function ProposalPdfActions({ proposal }: { proposal: ProposalDraftRecord }) {
             primary={pdfReady}
             disabled={readyDisabled}
           />
-          <button type="button" disabled className={`${buttonClass} cursor-not-allowed border-white/15 text-white/30`}>
-            Send later
-          </button>
+          <ProposalActionForm
+            proposalId={proposal.id}
+            action="send_to_client"
+            labelText="Send to client"
+            primary={canSend}
+            disabled={!canSend}
+          />
         </div>
       </div>
+      {proposal.change_request_message ? (
+        <div className="mt-5 border border-[#9ed39f]/18 bg-black/34 p-4">
+          <p className="text-[0.66rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">Client change request</p>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-white/70">{proposal.change_request_message}</p>
+        </div>
+      ) : null}
       <p className="mt-5 border border-[#9ed39f]/18 bg-black/34 p-4 text-sm leading-7 text-white/66">
-        PDF ready means the admin deliverable exists. Ready to send means admin has approved it for release. This screen does not send the proposal to the client.
+        PDF ready means the admin deliverable exists. Ready to send means admin has approved it for release. Send to client creates a secure review link, emails the client, and keeps the PDF in private storage.
+        {!canSend && proposal.status === "ready_to_send" ? " Add a generated PDF and client email before sending." : ""}
+        {hasClientResponse ? " Client response is now recorded on this proposal." : ""}
       </p>
     </AdminSection>
   );
@@ -585,7 +603,7 @@ export default async function AdminProposalWorkspacePage({ params, searchParams 
         adminEmail={adminEmail}
         eyebrow="Proposal draft"
         title={proposalDraft.workspace_name || proposalDraft.proposal_reference || "Proposal draft"}
-        intro="Edit the internal proposal preparation record. Client acceptance, PDF generation, Stripe conversion, and email delivery are intentionally outside this workflow."
+        intro="Edit the proposal record, generate the client-ready PDF, and send the secure proposal review link when it is ready."
         activePath="/admin/proposals"
       >
         {proposalStatus ? (

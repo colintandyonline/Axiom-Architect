@@ -1,6 +1,14 @@
 import { proposalPresetRoutes, type ProposalServiceRoute } from "./axiom-proposal-presets";
 
-export type ProposalDraftStatus = "draft" | "internal_review" | "ready_to_send";
+export type ProposalDraftStatus =
+  | "draft"
+  | "internal_review"
+  | "ready_to_send"
+  | "sent"
+  | "viewed"
+  | "accepted"
+  | "changes_requested"
+  | "expired";
 export type ProposalDraftType = "simple" | "standard" | "strategic";
 
 export type ProposalDraftRecord = {
@@ -38,10 +46,15 @@ export type ProposalDraftRecord = {
   pdf_file_path: string | null;
   pdf_ready: boolean | null;
   pdf_generated_at: string | null;
+  client_access_token_hash: string | null;
+  client_access_token_created_at: string | null;
+  client_access_token_last_used_at: string | null;
+  client_access_expires_at: string | null;
   sent_at: string | null;
   viewed_at: string | null;
   accepted_at: string | null;
   changes_requested_at: string | null;
+  change_request_message: string | null;
   converted_order_id: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -71,7 +84,16 @@ export type ProposalPaymentTermsJson = {
 };
 
 export const proposalTypeOptions: ProposalDraftType[] = ["simple", "standard", "strategic"];
-export const proposalStatusOptions: ProposalDraftStatus[] = ["draft", "internal_review", "ready_to_send"];
+export const proposalStatusOptions: ProposalDraftStatus[] = [
+  "draft",
+  "internal_review",
+  "ready_to_send",
+  "sent",
+  "viewed",
+  "accepted",
+  "changes_requested",
+  "expired",
+];
 
 const legacyServiceRouteOptions = [
   "workflow-audit",

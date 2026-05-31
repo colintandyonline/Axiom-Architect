@@ -36,10 +36,15 @@ create table if not exists public.axiom_proposals (
   pdf_file_path text null,
   pdf_ready boolean not null default false,
   pdf_generated_at timestamptz null,
+  client_access_token_hash text null,
+  client_access_token_created_at timestamptz null,
+  client_access_token_last_used_at timestamptz null,
+  client_access_expires_at timestamptz null,
   sent_at timestamptz null,
   viewed_at timestamptz null,
   accepted_at timestamptz null,
   changes_requested_at timestamptz null,
+  change_request_message text null,
   converted_order_id uuid null references public.axiom_orders(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -66,7 +71,7 @@ begin
   ) then
     alter table public.axiom_proposals
       add constraint axiom_proposals_status_check
-      check (status in ('draft', 'internal_review', 'ready_to_send'));
+      check (status in ('draft', 'internal_review', 'ready_to_send', 'sent', 'viewed', 'accepted', 'changes_requested', 'expired'));
   end if;
 end $$;
 
@@ -79,6 +84,15 @@ create index if not exists axiom_proposals_source_record_idx
 create index if not exists axiom_proposals_status_idx
   on public.axiom_proposals(status);
 
+create index if not exists axiom_proposals_client_token_hash_idx
+  on public.axiom_proposals(client_access_token_hash);
+
+create index if not exists axiom_proposals_sent_at_idx
+  on public.axiom_proposals(sent_at desc);
+
+create index if not exists axiom_proposals_accepted_at_idx
+  on public.axiom_proposals(accepted_at desc);
+
 create index if not exists axiom_proposals_updated_at_idx
   on public.axiom_proposals(updated_at desc);
 
@@ -89,5 +103,5 @@ for all
 using (auth.role() = 'service_role')
 with check (auth.role() = 'service_role');
 
--- Client-facing proposal read/acceptance policies are intentionally not added yet.
--- This table is admin-preparation only until the proposal acceptance flow is built.
+-- Client-facing proposal access is handled by server-side token validation.
+-- The storage bucket must remain private.

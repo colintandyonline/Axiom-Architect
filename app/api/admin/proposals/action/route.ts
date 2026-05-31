@@ -1,18 +1,29 @@
 import { NextResponse } from "next/server";
 import { requireAxiomAdmin } from "../../../../../lib/axiom-admin";
+import {
+  generateProposalAccessToken,
+  hashProposalAccessToken,
+  proposalReviewUrl,
+} from "../../../../../lib/axiom-proposal-client-access";
 import { generateAxiomProposalPdf } from "../../../../../lib/axiom-proposal-pdf.server";
 import type { ProposalDraftRecord } from "../../../../../lib/axiom-proposal-drafts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type ProposalAction = "generate_pdf" | "regenerate_pdf" | "mark_ready_to_send" | "mark_internal_review";
+type ProposalAction =
+  | "generate_pdf"
+  | "regenerate_pdf"
+  | "mark_ready_to_send"
+  | "mark_internal_review"
+  | "send_to_client";
 
 const allowedActions = new Set<ProposalAction>([
   "generate_pdf",
   "regenerate_pdf",
   "mark_ready_to_send",
   "mark_internal_review",
+  "send_to_client",
 ]);
 const proposalPdfStorageBucket = "axiom-client-deliverables";
 
@@ -27,6 +38,24 @@ function getSupabaseConfig() {
   return {
     url: url.replace(/\/$/, ""),
     serviceRoleKey,
+  };
+}
+
+function getResendConfig() {
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.RESEND_FROM_EMAIL;
+
+  if (!apiKey) {
+    throw new Error("Missing RESEND_API_KEY environment variable.");
+  }
+
+  if (!fromEmail) {
+    throw new Error("Missing RESEND_FROM_EMAIL environment variable.");
+  }
+
+  return {
+    apiKey,
+    fromEmail,
   };
 }
 
@@ -133,6 +162,25 @@ function redirectBack(request: Request, returnPath: string, action: string, resu
   return NextResponse.redirect(url, 303);
 }
 
+function appUrl(request: Request) {
+  const configuredUrl = process.env.APP_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  if (configuredUrl) {
+    return configuredUrl.replace(/\/$/, "");
+  }
+
+  return new URL(request.url).origin.replace(/\/$/, "");
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function safeFilename(value?: string | null) {
   const baseName = (value || "proposal")
     .toLowerCase()
@@ -141,6 +189,65 @@ function safeFilename(value?: string | null) {
     .slice(0, 80);
 
   return `${baseName || "proposal"}-proposal.pdf`;
+}
+
+function proposalTitle(proposal: ProposalDraftRecord) {
+  return proposal.business_name || proposal.workspace_name || proposal.proposal_reference || "Axiom Architect proposal";
+}
+
+async function sendProposalDeliveryEmail({
+  proposal,
+  reviewUrl,
+}: {
+  proposal: ProposalDraftRecord;
+  reviewUrl: string;
+}) {
+  const { apiKey, fromEmail } = getResendConfig();
+  const clientEmail = proposal.client_email?.trim();
+
+  if (!clientEmail) {
+    throw new Error("Cannot send proposal because the client email is missing.");
+  }
+
+  const title = proposalTitle(proposal);
+  const clientName = proposal.client_name?.trim() || proposal.business_name?.trim() || "there";
+  const escapedName = escapeHtml(clientName);
+  const escapedTitle = escapeHtml(title);
+  const escapedReviewUrl = escapeHtml(reviewUrl);
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: fromEmail,
+      to: [clientEmail],
+      subject: `Axiom Architect proposal: ${title}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;background:#050805;color:#ffffff;padding:32px;line-height:1.6;">
+          <div style="max-width:680px;margin:0 auto;border:1px solid rgba(158,211,159,0.35);padding:28px;background:#030804;">
+            <p style="margin:0 0 16px;color:#9ed39f;font-size:12px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;">Axiom Architect</p>
+            <h1 style="margin:0 0 18px;font-size:30px;line-height:1.05;text-transform:uppercase;letter-spacing:-0.04em;">Your proposal is ready to review.</h1>
+            <p style="margin:0 0 18px;color:#dfeee0;">Hi ${escapedName},</p>
+            <p style="margin:0 0 18px;color:#dfeee0;">Your Axiom Architect proposal for <strong style="color:#9ed39f;">${escapedTitle}</strong> is ready to review in your secure proposal workspace.</p>
+            <p style="margin:0 0 24px;color:#dfeee0;">You can view the proposal summary, download the PDF, confirm acceptance, or request changes. Deposit and payment instructions are shown inside the proposal page where applicable.</p>
+            <p style="margin:0 0 24px;">
+              <a href="${escapedReviewUrl}" style="display:inline-block;background:#9ed39f;color:#000000;text-decoration:none;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;font-size:12px;padding:14px 18px;">Review proposal</a>
+            </p>
+            <p style="margin:0;color:#aebbae;font-size:13px;">If the button does not work, copy this secure link into your browser:<br>${escapedReviewUrl}</p>
+          </div>
+        </div>
+      `,
+      text: `Hi ${clientName},\n\nYour Axiom Architect proposal for ${title} is ready to review.\n\nOpen your secure proposal page here: ${reviewUrl}\n\nYou can view the summary, download the PDF, accept the proposal, or request changes. Deposit and payment instructions are shown inside the proposal page where applicable.`,
+    }),
+  });
+  const responseText = await response.text();
+
+  if (!response.ok) {
+    throw new Error(`Resend delivery failed: ${response.status} ${responseText}`);
+  }
 }
 
 async function generateProposalPdf(proposalId: string) {
@@ -177,6 +284,64 @@ async function generateProposalPdf(proposalId: string) {
     },
     updated_at: now,
   });
+}
+
+async function sendProposalToClient(request: Request, proposalId: string) {
+  const proposal = await getProposal(proposalId);
+
+  if (!proposal) {
+    throw new Error("Proposal draft not found.");
+  }
+
+  if (proposal.status !== "ready_to_send") {
+    throw new Error("Only ready-to-send proposals can be sent to clients.");
+  }
+
+  if (proposal.pdf_ready !== true || !proposal.pdf_file_path) {
+    throw new Error("Generate the proposal PDF before sending it to the client.");
+  }
+
+  if (!proposal.client_email?.trim()) {
+    throw new Error("Add a client email before sending the proposal.");
+  }
+
+  const now = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const token = generateProposalAccessToken();
+  const tokenHash = hashProposalAccessToken(token);
+  const reviewUrl = proposalReviewUrl({
+    appUrl: appUrl(request),
+    proposalId: proposal.id,
+    token,
+  });
+
+  await patchProposal(proposal.id, {
+    client_access_token_hash: tokenHash,
+    client_access_token_created_at: now,
+    client_access_token_last_used_at: null,
+    client_access_expires_at: expiresAt,
+    status: "sent",
+    sent_at: now,
+    updated_at: now,
+  });
+
+  try {
+    await sendProposalDeliveryEmail({
+      proposal,
+      reviewUrl,
+    });
+  } catch (error) {
+    await patchProposal(proposal.id, {
+      client_access_token_hash: null,
+      client_access_token_created_at: null,
+      client_access_token_last_used_at: null,
+      client_access_expires_at: null,
+      status: "ready_to_send",
+      sent_at: null,
+      updated_at: new Date().toISOString(),
+    });
+    throw error;
+  }
 }
 
 export async function POST(request: Request) {
@@ -219,6 +384,11 @@ export async function POST(request: Request) {
         updated_at: now,
       });
       return redirectBack(request, returnPath, action, "success", "Proposal marked ready to send.");
+    }
+
+    if (action === "send_to_client") {
+      await sendProposalToClient(request, proposalId);
+      return redirectBack(request, returnPath, action, "success", "Proposal sent to the client.");
     }
 
     return redirectBack(request, returnPath, action, "error", "Unsupported proposal action.");
