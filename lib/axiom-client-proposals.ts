@@ -151,9 +151,9 @@ export async function loadClientProposals() {
     return [];
   }
 
-  const filters = [`customer_id=eq.${encodeURIComponent(authContext.customer.id)}`];
+  const filters = [`customer_id.eq.${encodeURIComponent(authContext.customer.id)}`];
   const emailFilters = customerEmailFilters(authContext.customer, authContext.user).map(
-    (email) => `client_email=eq.${encodeURIComponent(email)}`,
+    (email) => `client_email.eq.${encodeURIComponent(email)}`,
   );
 
   filters.push(...emailFilters);
