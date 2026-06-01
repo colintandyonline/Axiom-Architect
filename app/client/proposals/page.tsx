@@ -21,9 +21,32 @@ function formatDate(value: string | null | undefined) {
   return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value));
 }
 
+function paymentStateText(value: string | null | undefined) {
+  switch (value) {
+    case "deposit_paid":
+      return "Deposit received";
+    case "final_balance_due":
+      return "Final balance due";
+    case "paid_complete":
+      return "Payment complete";
+    case "cancelled":
+      return "Payment cancelled";
+    case "refunded":
+      return "Refunded";
+    case "deposit_pending":
+      return "Deposit pending";
+    default:
+      return "Awaiting payment";
+  }
+}
+
 export default async function ClientProposalsPage() {
   const proposals = await loadClientProposals();
   const latest = proposals[0] ?? null;
+  const latestPricing = latest ? getProposalPricing(latest.pricing_json) : null;
+  const depositReceivedCount = proposals.filter((proposal) => ["deposit_paid", "final_balance_due", "paid_complete"].includes(proposal.payment_status || "")).length;
+  const finalBalanceDueCount = proposals.filter((proposal) => proposal.payment_status === "final_balance_due").length;
+  const paymentCompleteCount = proposals.filter((proposal) => proposal.payment_status === "paid_complete").length;
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -43,7 +66,9 @@ export default async function ClientProposalsPage() {
               {latest?.business_name || latest?.workspace_name || "None yet"}
             </p>
             <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/72">
-              {latest ? `${proposalStatusLabel(latest.status)} · ${proposalPaymentLabel(latest.payment_status)}` : "No sent proposals are attached to this account yet."}
+              {latest && latestPricing
+                ? `${paymentStateText(latest.payment_status)} · ${formatProposalCurrency(latestPricing.final_total)}`
+                : "No sent proposals are attached to this account yet."}
             </p>
           </aside>
         </div>
@@ -53,27 +78,27 @@ export default async function ClientProposalsPage() {
         <div className="mx-auto grid max-w-[1440px] gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <article className="border border-[#9ed39f]/30 bg-black p-5">
             <span className="mb-5 flex h-9 w-9 items-center justify-center border border-[#9ed39f]/60 text-[#9ed39f]">▣</span>
-            <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Proposals</p>
+            <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Active proposals</p>
             <h2 className="mt-3 text-3xl font-black uppercase tracking-[-0.05em] text-white">{proposals.length}</h2>
             <p className="mt-4 text-sm leading-6 text-[#e6f6e7]/72">Attached</p>
           </article>
           <article className="border border-[#9ed39f]/30 bg-black p-5">
             <span className="mb-5 flex h-9 w-9 items-center justify-center border border-[#9ed39f]/60 text-[#9ed39f]">▣</span>
-            <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Accepted</p>
-            <h2 className="mt-3 text-3xl font-black uppercase tracking-[-0.05em] text-white">{proposals.filter((proposal) => proposal.status === "accepted" || proposal.accepted_at).length}</h2>
-            <p className="mt-4 text-sm leading-6 text-[#e6f6e7]/72">Confirmed</p>
+            <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Deposit received</p>
+            <h2 className="mt-3 text-3xl font-black uppercase tracking-[-0.05em] text-white">{depositReceivedCount}</h2>
+            <p className="mt-4 text-sm leading-6 text-[#e6f6e7]/72">Paid to start</p>
           </article>
           <article className="border border-[#9ed39f]/30 bg-black p-5">
             <span className="mb-5 flex h-9 w-9 items-center justify-center border border-[#9ed39f]/60 text-[#9ed39f]">▣</span>
-            <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Deposit</p>
-            <h2 className="mt-3 text-3xl font-black uppercase tracking-[-0.05em] text-white">{proposals.filter((proposal) => ["deposit_paid", "final_balance_due", "paid_complete"].includes(proposal.payment_status || "")).length}</h2>
-            <p className="mt-4 text-sm leading-6 text-[#e6f6e7]/72">Received</p>
+            <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Final balance due</p>
+            <h2 className="mt-3 text-3xl font-black uppercase tracking-[-0.05em] text-white">{finalBalanceDueCount}</h2>
+            <p className="mt-4 text-sm leading-6 text-[#e6f6e7]/72">Awaiting balance</p>
           </article>
           <article className="border border-[#9ed39f]/30 bg-black p-5">
             <span className="mb-5 flex h-9 w-9 items-center justify-center border border-[#9ed39f]/60 text-[#9ed39f]">▣</span>
-            <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Payment</p>
-            <h2 className="mt-3 text-3xl font-black uppercase tracking-[-0.05em] text-white">{proposals.filter((proposal) => proposal.payment_status === "paid_complete").length}</h2>
-            <p className="mt-4 text-sm leading-6 text-[#e6f6e7]/72">Complete</p>
+            <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Payment complete</p>
+            <h2 className="mt-3 text-3xl font-black uppercase tracking-[-0.05em] text-white">{paymentCompleteCount}</h2>
+            <p className="mt-4 text-sm leading-6 text-[#e6f6e7]/72">Fully paid</p>
           </article>
         </div>
       </section>
@@ -99,7 +124,7 @@ export default async function ClientProposalsPage() {
               return (
                 <article key={proposal.id} className="grid gap-5 border border-[#9ed39f]/24 bg-[#030804] p-5 lg:grid-cols-[1fr_auto] lg:items-center">
                   <div>
-                    <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{proposalStatusLabel(proposal.status)} · {proposalPaymentLabel(proposal.payment_status)}</p>
+                    <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{proposalStatusLabel(proposal.status)} · {paymentStateText(proposal.payment_status)}</p>
                     <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.05em] text-white">{proposal.business_name || proposal.workspace_name || "Axiom proposal"}</h3>
                     <p className="mt-2 text-sm leading-7 text-[#e6f6e7]/72">{proposal.workspace_name || proposal.recommended_service_route || "Proposal details"}</p>
                     <div className="mt-4 grid gap-2 text-sm leading-7 text-[#e6f6e7]/70 md:grid-cols-3">
