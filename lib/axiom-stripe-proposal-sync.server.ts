@@ -52,9 +52,7 @@ export function getStripeWebhookSecret() {
 }
 
 export function getStripeServerClient() {
-  return new Stripe(getStripeSecretKey(), {
-    apiVersion: "2025-11-17.clover",
-  });
+  return new Stripe(getStripeSecretKey());
 }
 
 async function supabaseServiceFetch<T>(
