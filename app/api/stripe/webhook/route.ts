@@ -6,6 +6,12 @@ import {
   type AxiomCheckoutProductSlug,
   type AxiomPackageModel,
 } from "../../../../lib/axiom-package-model";
+import {
+  getProposalSyncMetadataFromEvent,
+  getStripeObjectIdsFromEvent,
+  markStripePaymentFailed,
+  markStripePaymentSucceeded,
+} from "../../../../lib/axiom-stripe-proposal-sync.server";
 
 export const runtime = "nodejs";
 
@@ -31,6 +37,18 @@ type OrderRecord = {
 type WorkspaceRecord = {
   id: string;
 };
+
+const proposalPaymentSucceededEvents = new Set([
+  "invoice.paid",
+  "invoice.payment_succeeded",
+  "checkout.session.completed",
+  "payment_intent.succeeded",
+]);
+
+const proposalPaymentFailedEvents = new Set([
+  "invoice.payment_failed",
+  "payment_intent.payment_failed",
+]);
 
 function isCheckoutProductSlug(value: string | null | undefined): value is AxiomCheckoutProductSlug {
   return typeof value === "string" && (axiomCheckoutProductSlugs as readonly string[]).includes(value);
@@ -466,6 +484,42 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   });
 }
 
+async function handleProposalPaymentEvent(event: Stripe.Event) {
+  const { proposalId, paymentStage } = getProposalSyncMetadataFromEvent(event);
+
+  if (!proposalId || !paymentStage) {
+    return false;
+  }
+
+  const objectIds = getStripeObjectIdsFromEvent(event);
+
+  if (proposalPaymentSucceededEvents.has(event.type)) {
+    await markStripePaymentSucceeded({
+      proposalId,
+      paymentStage,
+      eventId: event.id,
+      eventType: event.type,
+      ...objectIds,
+      payload: event.data.object,
+    });
+    return true;
+  }
+
+  if (proposalPaymentFailedEvents.has(event.type)) {
+    await markStripePaymentFailed({
+      proposalId,
+      paymentStage,
+      eventId: event.id,
+      eventType: event.type,
+      ...objectIds,
+      payload: event.data.object,
+    });
+    return true;
+  }
+
+  return false;
+}
+
 export async function POST(request: Request) {
   let stripe: Stripe;
   let webhookSecret: string;
@@ -504,6 +558,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    const proposalPaymentProcessed = await handleProposalPaymentEvent(event);
+
+    if (proposalPaymentProcessed) {
+      return NextResponse.json({ received: true, processed: "proposal_payment" });
+    }
+
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
