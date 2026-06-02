@@ -127,6 +127,14 @@ function metadataFromObject(object: Stripe.Event.Data.Object): Record<string, st
   return metadata as Record<string, string>;
 }
 
+function stripeObjectField(object: Stripe.Event.Data.Object, key: "id" | "payment_intent" | "customer") {
+  if (key in object) {
+    return firstString(object[key as keyof typeof object]);
+  }
+
+  return null;
+}
+
 export function getProposalSyncMetadataFromEvent(event: Stripe.Event) {
   const object = event.data.object;
   const metadata = metadataFromObject(object);
@@ -140,14 +148,14 @@ export function getProposalSyncMetadataFromEvent(event: Stripe.Event) {
 }
 
 export function getStripeObjectIdsFromEvent(event: Stripe.Event) {
-  const object = event.data.object as Record<string, unknown>;
-  const invoiceId = firstString(object.id);
-  const paymentIntentId = firstString(object.payment_intent);
-  const customerId = firstString(object.customer);
+  const object = event.data.object;
+  const objectId = stripeObjectField(object, "id");
+  const paymentIntentId = stripeObjectField(object, "payment_intent");
+  const customerId = stripeObjectField(object, "customer");
 
   return {
-    stripeInvoiceId: event.type.startsWith("invoice.") ? invoiceId : null,
-    stripePaymentIntentId: paymentIntentId || (event.type.startsWith("payment_intent.") ? invoiceId : null),
+    stripeInvoiceId: event.type.startsWith("invoice.") ? objectId : null,
+    stripePaymentIntentId: paymentIntentId || (event.type.startsWith("payment_intent.") ? objectId : null),
     stripeCustomerId: customerId,
   };
 }
