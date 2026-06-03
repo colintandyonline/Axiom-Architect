@@ -68,6 +68,15 @@ export type ProposalDraftRecord = {
   final_balance_paid_at: string | null;
   payment_status: ProposalPaymentStatus | string | null;
   payment_status_note: string | null;
+  stripe_customer_id: string | null;
+  stripe_deposit_invoice_id: string | null;
+  stripe_final_invoice_id: string | null;
+  stripe_deposit_payment_intent_id: string | null;
+  stripe_final_payment_intent_id: string | null;
+  stripe_latest_event_id: string | null;
+  stripe_latest_event_type: string | null;
+  stripe_payment_synced_at: string | null;
+  stripe_last_error: string | null;
   converted_order_id: string | null;
   created_at: string | null;
   updated_at: string | null;
