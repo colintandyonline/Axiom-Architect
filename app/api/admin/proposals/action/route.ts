@@ -7,6 +7,8 @@ import {
 } from "../../../../../lib/axiom-proposal-client-access";
 import { generateAxiomProposalPdf } from "../../../../../lib/axiom-proposal-pdf.server";
 import type { ProposalDraftRecord } from "../../../../../lib/axiom-proposal-drafts";
+import { getProposalPaymentTerms } from "../../../../../lib/axiom-proposal-drafts";
+import { createStripeProposalInvoice } from "../../../../../lib/axiom-stripe-proposal-invoices.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +19,8 @@ type ProposalAction =
   | "mark_ready_to_send"
   | "mark_internal_review"
   | "send_to_client"
+  | "create_deposit_invoice"
+  | "create_final_invoice"
   | "mark_deposit_paid"
   | "mark_final_balance_due"
   | "mark_final_balance_paid"
@@ -28,6 +32,8 @@ const allowedActions = new Set<ProposalAction>([
   "mark_ready_to_send",
   "mark_internal_review",
   "send_to_client",
+  "create_deposit_invoice",
+  "create_final_invoice",
   "mark_deposit_paid",
   "mark_final_balance_due",
   "mark_final_balance_paid",
@@ -352,6 +358,41 @@ async function sendProposalToClient(request: Request, proposalId: string) {
   }
 }
 
+async function createProposalInvoice(proposalId: string, stage: "deposit" | "final") {
+  const proposal = await getProposal(proposalId);
+
+  if (!proposal) {
+    throw new Error("Proposal draft not found.");
+  }
+
+  const invoice = await createStripeProposalInvoice(proposal, stage);
+  const now = new Date().toISOString();
+  const paymentTerms = getProposalPaymentTerms(proposal.payment_terms_json);
+  const paymentTermsJson = {
+    ...(proposal.payment_terms_json && typeof proposal.payment_terms_json === "object" && !Array.isArray(proposal.payment_terms_json)
+      ? proposal.payment_terms_json
+      : {}),
+    deposit_payment_url: stage === "deposit" ? invoice.hosted_invoice_url : paymentTerms.deposit_payment_url,
+    final_payment_url: stage === "final" ? invoice.hosted_invoice_url : paymentTerms.final_payment_url,
+    payment_instructions: paymentTerms.payment_instructions,
+    payment_schedule: paymentTerms.payment_schedule,
+    deposit_required: paymentTerms.deposit_required,
+    payment_status_note: stage === "deposit"
+      ? "Deposit invoice created by Axiom Architect. Stripe will update payment status when paid."
+      : "Final balance invoice created by Axiom Architect. Stripe will update payment status when paid.",
+  };
+
+  await patchProposal(proposal.id, {
+    stripe_customer_id: invoice.stripe_customer_id,
+    stripe_deposit_invoice_id: stage === "deposit" ? invoice.stripe_invoice_id : proposal.stripe_deposit_invoice_id,
+    stripe_final_invoice_id: stage === "final" ? invoice.stripe_invoice_id : proposal.stripe_final_invoice_id,
+    payment_status: stage === "deposit" ? "deposit_pending" : "final_balance_due",
+    final_balance_requested_at: stage === "final" ? now : proposal.final_balance_requested_at,
+    payment_terms_json: paymentTermsJson,
+    updated_at: now,
+  });
+}
+
 export async function POST(request: Request) {
   await requireAxiomAdmin();
 
@@ -397,6 +438,16 @@ export async function POST(request: Request) {
     if (action === "send_to_client") {
       await sendProposalToClient(request, proposalId);
       return redirectBack(request, returnPath, action, "success", "Proposal sent to the client.");
+    }
+
+    if (action === "create_deposit_invoice") {
+      await createProposalInvoice(proposalId, "deposit");
+      return redirectBack(request, returnPath, action, "success", "Stripe deposit invoice created and attached.");
+    }
+
+    if (action === "create_final_invoice") {
+      await createProposalInvoice(proposalId, "final");
+      return redirectBack(request, returnPath, action, "success", "Stripe final balance invoice created and attached.");
     }
 
     if (action === "mark_deposit_paid") {
