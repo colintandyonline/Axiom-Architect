@@ -112,6 +112,7 @@ export async function createStripeProposalInvoice(
 
   const invoice = await stripe.invoices.create({
     customer: stripeCustomerId,
+    currency: "usd",
     collection_method: "send_invoice",
     days_until_due: 7,
     auto_advance: false,
