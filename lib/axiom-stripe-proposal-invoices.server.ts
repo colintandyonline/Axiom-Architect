@@ -126,11 +126,14 @@ export async function createStripeProposalInvoice(
   });
 
   const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+  const sentInvoice = finalizedInvoice.status === "open"
+    ? await stripe.invoices.sendInvoice(finalizedInvoice.id)
+    : finalizedInvoice;
 
   return {
     stripe_customer_id: stripeCustomerId,
-    stripe_invoice_id: finalizedInvoice.id,
-    hosted_invoice_url: getHostedInvoiceUrl(finalizedInvoice),
-    invoice_pdf: finalizedInvoice.invoice_pdf || null,
+    stripe_invoice_id: sentInvoice.id,
+    hosted_invoice_url: getHostedInvoiceUrl(sentInvoice),
+    invoice_pdf: sentInvoice.invoice_pdf || null,
   };
 }
