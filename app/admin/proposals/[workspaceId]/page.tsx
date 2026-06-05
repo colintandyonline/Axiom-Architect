@@ -514,12 +514,11 @@ function ProposalPaymentActions({ proposal }: { proposal: ProposalDraftRecord })
   const paymentStatus = proposal.payment_status || "unpaid";
   const paymentNote = proposal.payment_status_note || paymentTerms.payment_status_note;
   const canMarkDepositPaid = !["deposit_paid", "final_balance_due", "paid_complete", "cancelled", "refunded"].includes(paymentStatus);
-  const canMarkFinalDue = ["deposit_paid"].includes(paymentStatus);
   const canMarkFinalPaid = ["deposit_paid", "final_balance_due"].includes(paymentStatus);
   const canCancel = !["paid_complete", "cancelled", "refunded"].includes(paymentStatus);
 
   return (
-    <AdminSection eyebrow="Payment status" title="Manual payment tracking">
+    <AdminSection eyebrow="Payment status" title="Proposal payment control">
       <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-start">
         <div className="grid gap-4 text-sm leading-7 text-white/68 sm:grid-cols-2 xl:grid-cols-4">
           <DetailLine labelText="Final total" value={formatProposalMoney(pricing.final_total)} />
@@ -541,13 +540,6 @@ function ProposalPaymentActions({ proposal }: { proposal: ProposalDraftRecord })
           />
           <ProposalActionForm
             proposalId={proposal.id}
-            action="mark_final_balance_due"
-            labelText="Mark final balance due"
-            primary={canMarkFinalDue}
-            disabled={!canMarkFinalDue}
-          />
-          <ProposalActionForm
-            proposalId={proposal.id}
             action="mark_final_balance_paid"
             labelText="Mark final balance paid"
             primary={canMarkFinalPaid}
@@ -559,10 +551,11 @@ function ProposalPaymentActions({ proposal }: { proposal: ProposalDraftRecord })
             labelText="Mark cancelled"
             disabled={!canCancel}
           />
+          <Link href={`/admin/proposals/${proposal.id}/payments`} className={primaryButtonClass}>Open payment page</Link>
         </div>
       </div>
       <p className="mt-5 border border-[#9ed39f]/18 bg-black/34 p-4 text-sm leading-7 text-white/66">
-        These controls are manual payment tracking only. They do not create Stripe sessions, read invoices, or listen to payment webhooks.
+        Use the proposal payment page to create Stripe deposit and final balance invoices. Manual paid/cancelled controls are fallback record corrections only and do not create Stripe invoices.
       </p>
     </AdminSection>
   );

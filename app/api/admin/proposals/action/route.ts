@@ -22,7 +22,6 @@ type ProposalAction =
   | "create_deposit_invoice"
   | "create_final_invoice"
   | "mark_deposit_paid"
-  | "mark_final_balance_due"
   | "mark_final_balance_paid"
   | "mark_payment_cancelled";
 
@@ -35,7 +34,6 @@ const allowedActions = new Set<ProposalAction>([
   "create_deposit_invoice",
   "create_final_invoice",
   "mark_deposit_paid",
-  "mark_final_balance_due",
   "mark_final_balance_paid",
   "mark_payment_cancelled",
 ]);
@@ -485,15 +483,6 @@ export async function POST(request: Request) {
         updated_at: now,
       });
       return redirectBack(request, returnPath, action, "success", "Deposit marked as paid.");
-    }
-
-    if (action === "mark_final_balance_due") {
-      await patchProposal(proposalId, {
-        final_balance_requested_at: now,
-        payment_status: "final_balance_due",
-        updated_at: now,
-      });
-      return redirectBack(request, returnPath, action, "success", "Final balance marked as due.");
     }
 
     if (action === "mark_final_balance_paid") {
