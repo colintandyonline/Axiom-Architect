@@ -126,10 +126,12 @@ export default async function AdminProposalPaymentsPage({ params, searchParams }
   const pricing = getProposalPricing(proposal.pricing_json);
   const paymentTerms = getProposalPaymentTerms(proposal.payment_terms_json);
   const paymentStatus = proposal.payment_status || "unpaid";
-  const depositInvoiceCreated = Boolean(proposal.stripe_deposit_invoice_id || paymentTerms.deposit_payment_url);
-  const finalInvoiceCreated = Boolean(proposal.stripe_final_invoice_id || paymentTerms.final_payment_url);
-  const canCreateDepositInvoice = !depositInvoiceCreated && !["deposit_paid", "final_balance_due", "paid_complete", "cancelled", "refunded"].includes(paymentStatus);
-  const canCreateFinalInvoice = !finalInvoiceCreated && ["deposit_paid", "final_balance_due"].includes(paymentStatus);
+  const hasAxiomDepositInvoice = Boolean(proposal.stripe_deposit_invoice_id);
+  const hasAxiomFinalInvoice = Boolean(proposal.stripe_final_invoice_id);
+  const hasAnyDepositLink = Boolean(proposal.stripe_deposit_invoice_id || paymentTerms.deposit_payment_url);
+  const hasAnyFinalLink = Boolean(proposal.stripe_final_invoice_id || paymentTerms.final_payment_url);
+  const canCreateDepositInvoice = !["deposit_paid", "final_balance_due", "paid_complete", "cancelled", "refunded"].includes(paymentStatus);
+  const canCreateFinalInvoice = !["paid_complete", "cancelled", "refunded"].includes(paymentStatus) && ["deposit_paid", "final_balance_due"].includes(paymentStatus);
 
   return (
     <AdminShell
@@ -164,21 +166,21 @@ export default async function AdminProposalPaymentsPage({ params, searchParams }
                 <ProposalActionForm
                   proposalId={proposal.id}
                   action="create_deposit_invoice"
-                  labelText="Create deposit invoice"
+                  labelText={hasAxiomDepositInvoice ? "Replace deposit invoice" : "Create deposit invoice"}
                   primary={canCreateDepositInvoice}
                   disabled={!canCreateDepositInvoice}
                 />
                 <ProposalActionForm
                   proposalId={proposal.id}
                   action="create_final_invoice"
-                  labelText="Create final invoice"
+                  labelText={hasAxiomFinalInvoice ? "Replace final invoice" : "Create final invoice"}
                   primary={canCreateFinalInvoice}
                   disabled={!canCreateFinalInvoice}
                 />
               </div>
             </div>
             <p className="mt-5 border border-[#9ed39f]/18 bg-black/34 p-4 text-sm leading-7 text-white/66">
-              These buttons create Stripe invoices from Axiom with metadata attached automatically: axiom_proposal_id, axiom_payment_stage, axiom_customer_id, and proposal reference. The existing Stripe webhook then updates payment status when Stripe marks the invoice paid.
+              These buttons create Stripe invoices from Axiom with metadata attached automatically: axiom_proposal_id, axiom_payment_stage, axiom_customer_id, and proposal reference. Existing unpaid links can be replaced when they were created manually or before metadata sync existed. Void old unpaid Stripe invoices manually in Stripe if you no longer want them payable.
             </p>
           </AdminSection>
 
@@ -203,8 +205,9 @@ export default async function AdminProposalPaymentsPage({ params, searchParams }
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
               {statusPill(paymentStatus)}
-              {statusPill(depositInvoiceCreated ? "deposit invoice ready" : "deposit invoice missing")}
-              {statusPill(finalInvoiceCreated ? "final invoice ready" : "final invoice missing")}
+              {statusPill(hasAnyDepositLink ? "deposit link exists" : "deposit link missing")}
+              {statusPill(hasAxiomDepositInvoice ? "axiom deposit invoice" : "manual/no deposit invoice")}
+              {statusPill(hasAnyFinalLink ? "final link exists" : "final link missing")}
             </div>
           </AdminSection>
         </div>
