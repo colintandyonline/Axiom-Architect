@@ -180,6 +180,14 @@ export async function recordStripeEvent(input: ProposalSyncInput) {
   });
 }
 
+async function stripeEventAlreadyRecorded(eventId: string) {
+  const records = await supabaseServiceFetch<Array<{ id: string }>>(
+    `axiom_stripe_events?select=id&id=eq.${encodeURIComponent(eventId)}&limit=1`,
+  );
+
+  return Boolean(records[0]?.id);
+}
+
 async function getProposalPaymentStatus(proposalId: string) {
   const records = await supabaseServiceFetch<Array<ProposalPaymentRecord>>(
     `axiom_proposals?select=payment_status,pricing_json&id=eq.${encodeURIComponent(proposalId)}&limit=1`,
@@ -241,6 +249,10 @@ async function markStripePaymentIgnored(input: ProposalSyncInput & { errorMessag
 }
 
 export async function markStripePaymentSucceeded(input: ProposalSyncInput) {
+  if (await stripeEventAlreadyRecorded(input.eventId)) {
+    return;
+  }
+
   await recordStripeEvent(input);
 
   const now = new Date().toISOString();
@@ -298,6 +310,10 @@ export async function markStripePaymentSucceeded(input: ProposalSyncInput) {
 }
 
 export async function markStripePaymentFailed(input: ProposalSyncInput & { errorMessage?: string }) {
+  if (await stripeEventAlreadyRecorded(input.eventId)) {
+    return;
+  }
+
   await recordStripeEvent(input);
 
   const now = new Date().toISOString();

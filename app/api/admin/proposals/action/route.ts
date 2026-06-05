@@ -365,6 +365,33 @@ async function createProposalInvoice(proposalId: string, stage: "deposit" | "fin
     throw new Error("Proposal draft not found.");
   }
 
+  const paymentStatus = proposal.payment_status || "unpaid";
+  const accepted = proposal.status === "accepted" || Boolean(proposal.accepted_at);
+
+  if (paymentStatus === "cancelled" || paymentStatus === "refunded") {
+    throw new Error("Cannot create a Stripe invoice for a cancelled or refunded proposal.");
+  }
+
+  if (stage === "deposit") {
+    if (!accepted) {
+      throw new Error("The proposal must be accepted before creating a deposit invoice.");
+    }
+
+    if (proposal.deposit_paid_at) {
+      throw new Error("The deposit is already recorded as paid.");
+    }
+  }
+
+  if (stage === "final") {
+    if (!proposal.deposit_paid_at) {
+      throw new Error("Record the deposit payment before creating a final balance invoice.");
+    }
+
+    if (proposal.final_balance_paid_at) {
+      throw new Error("The final balance is already recorded as paid.");
+    }
+  }
+
   const invoice = await createStripeProposalInvoice(proposal, stage);
   const now = new Date().toISOString();
   const paymentTerms = getProposalPaymentTerms(proposal.payment_terms_json);
@@ -389,6 +416,7 @@ async function createProposalInvoice(proposalId: string, stage: "deposit" | "fin
     payment_status: stage === "deposit" ? "deposit_pending" : "final_balance_due",
     final_balance_requested_at: stage === "final" ? now : proposal.final_balance_requested_at,
     payment_terms_json: paymentTermsJson,
+    stripe_last_error: null,
     updated_at: now,
   });
 }

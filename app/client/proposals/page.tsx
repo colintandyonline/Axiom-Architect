@@ -4,7 +4,6 @@ import {
   formatProposalCurrency,
   getProposalNextAction,
   loadClientProposals,
-  proposalPaymentLabel,
   proposalStatusLabel,
 } from "../../../lib/axiom-client-proposals";
 import { getProposalPaymentTerms, getProposalPricing } from "../../../lib/axiom-proposal-drafts";
@@ -15,6 +14,8 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-dynamic";
+
+type ClientProposal = Awaited<ReturnType<typeof loadClientProposals>>[number];
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "Not recorded";
@@ -40,13 +41,37 @@ function paymentStateText(value: string | null | undefined) {
   }
 }
 
+function proposalPaymentState(proposal: ClientProposal) {
+  if (proposal.payment_status === "cancelled" || proposal.payment_status === "refunded") {
+    return proposal.payment_status;
+  }
+
+  if (proposal.final_balance_paid_at) {
+    return "paid_complete";
+  }
+
+  if (proposal.deposit_paid_at && (proposal.payment_status === "final_balance_due" || proposal.final_balance_requested_at)) {
+    return "final_balance_due";
+  }
+
+  if (proposal.deposit_paid_at) {
+    return "deposit_paid";
+  }
+
+  if (proposal.payment_status === "deposit_pending") {
+    return "deposit_pending";
+  }
+
+  return "unpaid";
+}
+
 export default async function ClientProposalsPage() {
   const proposals = await loadClientProposals();
   const latest = proposals[0] ?? null;
   const latestPricing = latest ? getProposalPricing(latest.pricing_json) : null;
-  const depositReceivedCount = proposals.filter((proposal) => ["deposit_paid", "final_balance_due", "paid_complete"].includes(proposal.payment_status || "")).length;
-  const finalBalanceDueCount = proposals.filter((proposal) => proposal.payment_status === "final_balance_due").length;
-  const paymentCompleteCount = proposals.filter((proposal) => proposal.payment_status === "paid_complete").length;
+  const depositReceivedCount = proposals.filter((proposal) => Boolean(proposal.deposit_paid_at)).length;
+  const finalBalanceDueCount = proposals.filter((proposal) => proposalPaymentState(proposal) === "final_balance_due").length;
+  const paymentCompleteCount = proposals.filter((proposal) => Boolean(proposal.final_balance_paid_at)).length;
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -67,7 +92,7 @@ export default async function ClientProposalsPage() {
             </p>
             <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/72">
               {latest && latestPricing
-                ? `${paymentStateText(latest.payment_status)} · ${formatProposalCurrency(latestPricing.final_total)}`
+                ? `${paymentStateText(proposalPaymentState(latest))} · ${formatProposalCurrency(latestPricing.final_total)}`
                 : "No sent proposals are attached to this account yet."}
             </p>
           </aside>
@@ -120,11 +145,12 @@ export default async function ClientProposalsPage() {
               const nextAction = getProposalNextAction(proposal);
               const accepted = proposal.status === "accepted" || Boolean(proposal.accepted_at);
               const pdfHref = `/api/client/proposals/${proposal.id}/pdf`;
+              const paymentState = proposalPaymentState(proposal);
 
               return (
                 <article key={proposal.id} className="grid gap-5 border border-[#9ed39f]/24 bg-[#030804] p-5 lg:grid-cols-[1fr_auto] lg:items-center">
                   <div>
-                    <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{proposalStatusLabel(proposal.status)} · {paymentStateText(proposal.payment_status)}</p>
+                    <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{proposalStatusLabel(proposal.status)} · {paymentStateText(paymentState)}</p>
                     <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.05em] text-white">{proposal.business_name || proposal.workspace_name || "Axiom proposal"}</h3>
                     <p className="mt-2 text-sm leading-7 text-[#e6f6e7]/72">{proposal.workspace_name || proposal.recommended_service_route || "Proposal details"}</p>
                     <div className="mt-4 grid gap-2 text-sm leading-7 text-[#e6f6e7]/70 md:grid-cols-3">
