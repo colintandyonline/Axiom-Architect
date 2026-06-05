@@ -86,8 +86,11 @@ function getHostedInvoiceUrl(invoice: Stripe.Invoice) {
 }
 
 function assertInvoiceHasExpectedTotal(invoice: Stripe.Invoice, expectedAmountInCents: number) {
-  if ((invoice.total || 0) < expectedAmountInCents) {
-    throw new Error("Stripe invoice total was lower than the proposal payment amount. Invoice was not sent.");
+  const total = invoice.total || 0;
+  const amountDue = invoice.amount_due || 0;
+
+  if (total < expectedAmountInCents || amountDue < expectedAmountInCents) {
+    throw new Error("Stripe invoice amount was lower than the proposal payment amount. Invoice was not sent.");
   }
 }
 

@@ -160,9 +160,9 @@ export default async function ClientProposalPage({ params, searchParams }: PageP
   const paymentTerms = getProposalPaymentTerms(proposal.payment_terms_json);
   const accepted = proposal.status === "accepted" || Boolean(proposal.accepted_at);
   const paymentStatus = proposal.payment_status || "unpaid";
-  const depositReceived = ["deposit_paid", "final_balance_due", "paid_complete"].includes(paymentStatus);
-  const finalBalanceDue = paymentStatus === "final_balance_due";
-  const paymentComplete = paymentStatus === "paid_complete";
+  const depositReceived = Boolean(proposal.deposit_paid_at);
+  const paymentComplete = Boolean(proposal.final_balance_paid_at);
+  const finalBalanceDue = depositReceived && !paymentComplete && (paymentStatus === "final_balance_due" || Boolean(proposal.final_balance_requested_at));
   const paymentCancelled = paymentStatus === "cancelled";
   const deliverables = listItems(proposal.deliverables_json, 5);
   const notice = noticeMessage(firstParam(query.proposal));

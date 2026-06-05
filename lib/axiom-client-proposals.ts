@@ -80,16 +80,15 @@ function proposalBelongsToClient(
 }
 
 function depositRecordedPaid(proposal: ProposalDraftRecord) {
-  const paymentStatus = proposal.payment_status || "unpaid";
-  return Boolean(proposal.deposit_paid_at) || paymentStatus === "final_balance_due" || paymentStatus === "paid_complete";
+  return Boolean(proposal.deposit_paid_at);
 }
 
 function finalRecordedPaid(proposal: ProposalDraftRecord) {
-  return Boolean(proposal.final_balance_paid_at) || proposal.payment_status === "paid_complete";
+  return Boolean(proposal.final_balance_paid_at);
 }
 
 function finalBalanceIsDue(proposal: ProposalDraftRecord) {
-  return !finalRecordedPaid(proposal) && (
+  return depositRecordedPaid(proposal) && !finalRecordedPaid(proposal) && (
     proposal.payment_status === "final_balance_due" || Boolean(proposal.final_balance_requested_at)
   );
 }

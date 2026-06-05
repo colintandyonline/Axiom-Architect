@@ -130,9 +130,11 @@ export default async function AdminProposalPaymentsPage({ params, searchParams }
   const hasAxiomFinalInvoice = Boolean(proposal.stripe_final_invoice_id);
   const hasAnyDepositLink = Boolean(proposal.stripe_deposit_invoice_id || paymentTerms.deposit_payment_url);
   const hasAnyFinalLink = Boolean(proposal.stripe_final_invoice_id || paymentTerms.final_payment_url);
-  const depositIsRecordedPaid = Boolean(proposal.deposit_paid_at) || ["deposit_paid", "final_balance_due", "paid_complete"].includes(paymentStatus);
-  const canCreateDepositInvoice = !depositIsRecordedPaid && !["cancelled", "refunded"].includes(paymentStatus);
-  const canCreateFinalInvoice = depositIsRecordedPaid && !["paid_complete", "cancelled", "refunded"].includes(paymentStatus);
+  const depositIsRecordedPaid = Boolean(proposal.deposit_paid_at);
+  const finalBalanceIsRecordedPaid = Boolean(proposal.final_balance_paid_at);
+  const proposalAccepted = proposal.status === "accepted" || Boolean(proposal.accepted_at);
+  const canCreateDepositInvoice = proposalAccepted && !depositIsRecordedPaid && !["cancelled", "refunded"].includes(paymentStatus);
+  const canCreateFinalInvoice = depositIsRecordedPaid && !finalBalanceIsRecordedPaid && !["cancelled", "refunded"].includes(paymentStatus);
 
   return (
     <AdminShell

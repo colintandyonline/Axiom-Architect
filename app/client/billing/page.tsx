@@ -9,6 +9,8 @@ import {
 } from "../../../lib/axiom-client-proposals";
 import { getProposalPaymentTerms, getProposalPricing } from "../../../lib/axiom-proposal-drafts";
 
+type BillingProposal = Awaited<ReturnType<typeof loadClientProposals>>[number];
+
 export const metadata: Metadata = {
   title: "Billing | Axiom Architect Client Portal",
   description: "Client billing dashboard for proposal payments, invoices, receipts, and payment status.",
@@ -66,6 +68,30 @@ function paymentStateNote(value: string | null | undefined) {
   }
 }
 
+function proposalPaymentState(proposal: BillingProposal) {
+  if (proposal.payment_status === "cancelled" || proposal.payment_status === "refunded") {
+    return proposal.payment_status;
+  }
+
+  if (proposal.final_balance_paid_at) {
+    return "paid_complete";
+  }
+
+  if (proposal.deposit_paid_at && (proposal.payment_status === "final_balance_due" || proposal.final_balance_requested_at)) {
+    return "final_balance_due";
+  }
+
+  if (proposal.deposit_paid_at) {
+    return "deposit_paid";
+  }
+
+  if (proposal.payment_status === "deposit_pending") {
+    return "deposit_pending";
+  }
+
+  return "unpaid";
+}
+
 export default async function ClientPortalBillingPage() {
   const [data, proposals] = await Promise.all([
     loadClientPortalData("/client/billing"),
@@ -76,9 +102,9 @@ export default async function ClientPortalBillingPage() {
   const latestProposal = proposals[0] ?? null;
   const latestInvoice = invoices[0] ?? null;
   const paidInvoices = invoices.filter((invoice) => invoice.status === "paid");
-  const depositReceivedCount = proposals.filter((proposal) => ["deposit_paid", "final_balance_due", "paid_complete"].includes(proposal.payment_status || "")).length;
-  const finalBalanceDueCount = proposals.filter((proposal) => proposal.payment_status === "final_balance_due").length;
-  const paymentCompleteCount = proposals.filter((proposal) => proposal.payment_status === "paid_complete").length;
+  const depositReceivedCount = proposals.filter((proposal) => Boolean(proposal.deposit_paid_at)).length;
+  const finalBalanceDueCount = proposals.filter((proposal) => proposalPaymentState(proposal) === "final_balance_due").length;
+  const paymentCompleteCount = proposals.filter((proposal) => Boolean(proposal.final_balance_paid_at)).length;
   const latestProposalPricing = latestProposal ? getProposalPricing(latestProposal.pricing_json) : null;
 
   const stats = [
@@ -110,7 +136,7 @@ export default async function ClientPortalBillingPage() {
             </p>
             <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/72">
               {latestProposal && latestProposalPricing
-                ? `${paymentStateText(latestProposal.payment_status)} · ${formatProposalCurrency(latestProposalPricing.final_total)}`
+                ? `${paymentStateText(proposalPaymentState(latestProposal))} · ${formatProposalCurrency(latestProposalPricing.final_total)}`
                 : latestInvoice
                   ? `${label(latestInvoice.status)} · ${invoiceMoney(latestInvoice.amount_due, latestInvoice.currency)}`
                   : "No payment is due right now."}
@@ -150,20 +176,21 @@ export default async function ClientPortalBillingPage() {
               const paymentTerms = getProposalPaymentTerms(proposal.payment_terms_json);
               const nextAction = getProposalNextAction(proposal);
               const accepted = proposal.status === "accepted" || Boolean(proposal.accepted_at);
-              const isFinalBalanceDue = proposal.payment_status === "final_balance_due";
-              const isPaymentComplete = proposal.payment_status === "paid_complete";
+              const paymentState = proposalPaymentState(proposal);
+              const isFinalBalanceDue = paymentState === "final_balance_due";
+              const isPaymentComplete = paymentState === "paid_complete";
 
               return (
                 <article key={proposal.id} className="grid gap-5 border border-[#9ed39f]/24 bg-[#030804] p-5 lg:grid-cols-[1fr_auto] lg:items-center">
                   <div>
-                    <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{proposalStatusLabel(proposal.status)} · {paymentStateText(proposal.payment_status)}</p>
+                    <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">{proposalStatusLabel(proposal.status)} · {paymentStateText(paymentState)}</p>
                     <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.05em] text-white">{proposal.business_name || proposal.workspace_name || "Axiom proposal"}</h3>
                     <div className="mt-4 grid gap-2 text-sm leading-7 text-[#e6f6e7]/70 md:grid-cols-3">
                       <p><strong className="text-[#9ed39f]">Total:</strong> {formatProposalCurrency(pricing.final_total)}</p>
                       <p><strong className="text-[#9ed39f]">Deposit:</strong> {formatProposalCurrency(pricing.deposit_required)}</p>
                       <p><strong className="text-[#9ed39f]">Balance:</strong> {formatProposalCurrency(pricing.balance_amount)}</p>
                     </div>
-                    <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/62">{paymentStateNote(proposal.payment_status)}</p>
+                    <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/62">{paymentStateNote(paymentState)}</p>
                     {proposal.deposit_paid_at ? <p className="mt-2 text-xs font-bold uppercase tracking-[0.14em] text-[#e6f6e7]/56">Deposit received {date(proposal.deposit_paid_at)}</p> : null}
                     {proposal.final_balance_requested_at ? <p className="mt-2 text-xs font-bold uppercase tracking-[0.14em] text-[#e6f6e7]/56">Final balance requested {date(proposal.final_balance_requested_at)}</p> : null}
                     {proposal.final_balance_paid_at ? <p className="mt-2 text-xs font-bold uppercase tracking-[0.14em] text-[#e6f6e7]/56">Final balance paid {date(proposal.final_balance_paid_at)}</p> : null}

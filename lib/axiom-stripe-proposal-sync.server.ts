@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { getProposalPricing } from "./axiom-proposal-drafts";
 
 const proposalPaymentStatuses = new Set([
   "unpaid",
@@ -21,6 +22,11 @@ type ProposalSyncInput = {
   stripeInvoiceId?: string | null;
   stripePaymentIntentId?: string | null;
   payload?: unknown;
+};
+
+type ProposalPaymentRecord = {
+  payment_status: string | null;
+  pricing_json: unknown;
 };
 
 function getSupabaseServiceConfig() {
@@ -175,18 +181,90 @@ export async function recordStripeEvent(input: ProposalSyncInput) {
 }
 
 async function getProposalPaymentStatus(proposalId: string) {
-  const records = await supabaseServiceFetch<Array<{ payment_status: string | null }>>(
-    `axiom_proposals?select=payment_status&id=eq.${encodeURIComponent(proposalId)}&limit=1`,
+  const records = await supabaseServiceFetch<Array<ProposalPaymentRecord>>(
+    `axiom_proposals?select=payment_status,pricing_json&id=eq.${encodeURIComponent(proposalId)}&limit=1`,
   );
 
-  return records[0]?.payment_status || null;
+  return records[0] || null;
+}
+
+function expectedAmountCents(proposal: ProposalPaymentRecord | null, paymentStage: StripeProposalStage) {
+  if (!proposal) {
+    return 0;
+  }
+
+  const pricing = getProposalPricing(proposal.pricing_json);
+  const amount = paymentStage === "deposit" ? pricing.deposit_required : pricing.balance_amount;
+
+  return Math.round(Number(amount || 0) * 100);
+}
+
+function numericField(record: Record<string, unknown>, key: string) {
+  const value = record[key];
+
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function observedStripeAmountCents(payload: unknown) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return 0;
+  }
+
+  const record = payload as Record<string, unknown>;
+  const candidateAmounts = [
+    numericField(record, "amount_paid"),
+    numericField(record, "amount_received"),
+    numericField(record, "amount_total"),
+    numericField(record, "total"),
+    numericField(record, "amount_due"),
+    numericField(record, "amount"),
+  ];
+
+  return Math.max(...candidateAmounts);
+}
+
+async function markStripePaymentIgnored(input: ProposalSyncInput & { errorMessage: string }) {
+  const now = new Date().toISOString();
+
+  await supabaseServiceFetch(`axiom_proposals?id=eq.${encodeURIComponent(input.proposalId)}`, {
+    method: "PATCH",
+    prefer: "return=minimal",
+    body: JSON.stringify({
+      stripe_customer_id: input.stripeCustomerId || undefined,
+      stripe_latest_event_id: input.eventId,
+      stripe_latest_event_type: input.eventType,
+      stripe_payment_synced_at: now,
+      stripe_last_error: input.errorMessage,
+      updated_at: now,
+    }),
+  });
 }
 
 export async function markStripePaymentSucceeded(input: ProposalSyncInput) {
   await recordStripeEvent(input);
 
   const now = new Date().toISOString();
-  const currentPaymentStatus = await getProposalPaymentStatus(input.proposalId);
+  const proposalPayment = await getProposalPaymentStatus(input.proposalId);
+  const expectedAmount = expectedAmountCents(proposalPayment, input.paymentStage);
+  const observedAmount = observedStripeAmountCents(input.payload);
+
+  if (expectedAmount <= 0) {
+    await markStripePaymentIgnored({
+      ...input,
+      errorMessage: "Stripe payment event ignored because the proposal expected amount is zero or missing.",
+    });
+    return;
+  }
+
+  if (observedAmount < expectedAmount) {
+    await markStripePaymentIgnored({
+      ...input,
+      errorMessage: "Stripe payment event ignored because the paid amount was lower than the proposal payment amount.",
+    });
+    return;
+  }
+
+  const currentPaymentStatus = proposalPayment?.payment_status || null;
   const payload: Record<string, unknown> = {
     stripe_customer_id: input.stripeCustomerId || undefined,
     stripe_latest_event_id: input.eventId,

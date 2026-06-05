@@ -63,12 +63,16 @@ async function acceptProposal(proposal: ProposalDraftRecord, now: string) {
   };
 
   if (shouldCreateDepositInvoice(proposal)) {
-    const invoice = await createStripeProposalInvoice(proposal, "deposit");
-    payload.stripe_customer_id = invoice.stripe_customer_id;
-    payload.stripe_deposit_invoice_id = invoice.stripe_invoice_id;
-    payload.payment_status = "deposit_pending";
-    payload.payment_terms_json = paymentTermsWithDepositInvoice(proposal, invoice.hosted_invoice_url);
-    payload.stripe_last_error = null;
+    try {
+      const invoice = await createStripeProposalInvoice(proposal, "deposit");
+      payload.stripe_customer_id = invoice.stripe_customer_id;
+      payload.stripe_deposit_invoice_id = invoice.stripe_invoice_id;
+      payload.payment_status = "deposit_pending";
+      payload.payment_terms_json = paymentTermsWithDepositInvoice(proposal, invoice.hosted_invoice_url);
+      payload.stripe_last_error = null;
+    } catch (error) {
+      payload.stripe_last_error = error instanceof Error ? error.message : "Stripe deposit invoice creation failed.";
+    }
   }
 
   await patchClientProposal(proposal.id, payload);
