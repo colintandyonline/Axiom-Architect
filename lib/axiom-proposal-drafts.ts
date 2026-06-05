@@ -100,7 +100,11 @@ export type ProposalPaymentTermsJson = {
   payment_schedule: string;
   deposit_required: number;
   deposit_payment_url: string;
+  deposit_invoice_pdf: string;
+  deposit_receipt_url: string;
   final_payment_url: string;
+  final_invoice_pdf: string;
+  final_receipt_url: string;
   payment_instructions: string;
   payment_status_note: string;
 };
@@ -169,7 +173,11 @@ export function getProposalPaymentTerms(value: unknown): ProposalPaymentTermsJso
     payment_schedule: String(record.payment_schedule || ""),
     deposit_required: Number(record.deposit_required || 0),
     deposit_payment_url: String(record.deposit_payment_url || ""),
+    deposit_invoice_pdf: String(record.deposit_invoice_pdf || ""),
+    deposit_receipt_url: String(record.deposit_receipt_url || ""),
     final_payment_url: String(record.final_payment_url || ""),
+    final_invoice_pdf: String(record.final_invoice_pdf || ""),
+    final_receipt_url: String(record.final_receipt_url || ""),
     payment_instructions: String(record.payment_instructions || ""),
     payment_status_note: String(record.payment_status_note || ""),
   };

@@ -25,13 +25,79 @@ function centsFromDollars(value: unknown) {
   return Math.round(amount * 100);
 }
 
+function formatInvoiceMoney(value: unknown) {
+  const amount = typeof value === "number" ? value : Number(value || 0);
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function percentageOfTotal(amount: number, total: number) {
+  if (!total || total <= 0) {
+    return null;
+  }
+
+  return Math.round((amount / total) * 100);
+}
+
 function getProposalAmount(proposal: ProposalDraftRecord, stage: ProposalInvoiceStage) {
   const pricing = getProposalPricing(proposal.pricing_json);
   return stage === "deposit" ? pricing.deposit_required : pricing.balance_amount;
 }
 
 function invoiceDescription(proposal: ProposalDraftRecord, stage: ProposalInvoiceStage) {
-  return `${proposalTitle(proposal)} ${stageLabel(stage)}`;
+  const pricing = getProposalPricing(proposal.pricing_json);
+  const total = formatInvoiceMoney(pricing.final_total);
+  const deposit = formatInvoiceMoney(pricing.deposit_required);
+  const balance = formatInvoiceMoney(pricing.balance_amount);
+  const depositPercentage = percentageOfTotal(pricing.deposit_required, pricing.final_total);
+  const balancePercentage = percentageOfTotal(pricing.balance_amount, pricing.final_total);
+
+  if (stage === "deposit") {
+    return `Deposit payment - ${depositPercentage ? `${depositPercentage}% of ` : ""}${total} proposal total. Remaining balance: ${balance}.`;
+  }
+
+  return `Final balance - remaining ${balancePercentage ? `${balancePercentage}% of ` : ""}${total} proposal total. Deposit already paid: ${deposit}.`;
+}
+
+function invoiceFooter(proposal: ProposalDraftRecord, stage: ProposalInvoiceStage) {
+  const pricing = getProposalPricing(proposal.pricing_json);
+  const paymentTerms = getProposalPaymentTerms(proposal.payment_terms_json);
+  const total = formatInvoiceMoney(pricing.final_total);
+  const deposit = formatInvoiceMoney(pricing.deposit_required);
+  const balance = formatInvoiceMoney(pricing.balance_amount);
+  const stageNote = stage === "deposit"
+    ? `This invoice charges the deposit only. Full proposal total: ${total}. Deposit: ${deposit}. Remaining balance: ${balance}.`
+    : `This invoice charges the final balance only. Full proposal total: ${total}. Deposit already paid: ${deposit}. Final balance: ${balance}.`;
+  const paymentInstructions = paymentTerms.payment_instructions?.trim();
+
+  return paymentInstructions ? `${stageNote}\n\n${paymentInstructions}` : stageNote;
+}
+
+function invoiceCustomFields(proposal: ProposalDraftRecord, stage: ProposalInvoiceStage): Stripe.InvoiceCreateParams.CustomField[] {
+  const pricing = getProposalPricing(proposal.pricing_json);
+
+  return [
+    {
+      name: "Proposal",
+      value: proposal.proposal_reference || proposal.id,
+    },
+    {
+      name: "Full total",
+      value: formatInvoiceMoney(pricing.final_total),
+    },
+    {
+      name: stage === "deposit" ? "Deposit due" : "Deposit paid",
+      value: formatInvoiceMoney(pricing.deposit_required),
+    },
+    {
+      name: "Final balance",
+      value: formatInvoiceMoney(pricing.balance_amount),
+    },
+  ];
 }
 
 function proposalMetadata(proposal: ProposalDraftRecord, stage: ProposalInvoiceStage) {
@@ -109,6 +175,7 @@ export async function createStripeProposalInvoice(
   const stripeCustomerId = await findOrCreateStripeCustomer(stripe, proposal);
   const metadata = proposalMetadata(proposal, stage);
   const description = invoiceDescription(proposal, stage);
+  const fullDescription = `${proposalTitle(proposal)} - ${description}`;
 
   const invoice = await stripe.invoices.create({
     customer: stripeCustomerId,
@@ -116,15 +183,10 @@ export async function createStripeProposalInvoice(
     collection_method: "send_invoice",
     days_until_due: 7,
     auto_advance: false,
-    description,
+    description: fullDescription,
     metadata,
-    custom_fields: [
-      {
-        name: "Proposal",
-        value: proposal.proposal_reference || proposal.id,
-      },
-    ],
-    footer: getProposalPaymentTerms(proposal.payment_terms_json).payment_instructions || undefined,
+    custom_fields: invoiceCustomFields(proposal, stage),
+    footer: invoiceFooter(proposal, stage),
   });
 
   await stripe.invoiceItems.create({
@@ -132,7 +194,7 @@ export async function createStripeProposalInvoice(
     invoice: invoice.id,
     amount: amountInCents,
     currency: "usd",
-    description,
+    description: fullDescription,
     metadata,
   });
 

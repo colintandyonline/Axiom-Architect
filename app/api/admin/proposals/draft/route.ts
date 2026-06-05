@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAxiomAdmin } from "../../../../../lib/axiom-admin";
 import {
+  getProposalPaymentTerms,
   proposalStatusOptions,
   proposalTypeOptions,
   serviceRouteOptions,
@@ -100,7 +101,12 @@ async function supabaseServiceFetch<T>(path: string, options: RequestInit = {}) 
   return JSON.parse(responseText) as T;
 }
 
-function proposalPayload(formData: FormData, existingReference?: string | null) {
+type ExistingProposalState = {
+  proposal_reference: string | null;
+  payment_terms_json: unknown;
+};
+
+function proposalPayload(formData: FormData, existing?: ExistingProposalState | null) {
   const proposalType = cleanInput(formData.get("proposal_type")) || "standard";
   const status = cleanInput(formData.get("status")) || "draft";
   const recommendedServiceRoute = cleanInput(formData.get("recommended_service_route")) || "workflow-blueprint";
@@ -118,12 +124,15 @@ function proposalPayload(formData: FormData, existingReference?: string | null) 
   const sourceRecordType = cleanInput(formData.get("source_record_type"));
   const sourceRecordTitle = cleanInput(formData.get("source_record_title"));
   const sourceRecordSummary = cleanInput(formData.get("source_record_summary"));
+  const existingPaymentTerms = getProposalPaymentTerms(existing?.payment_terms_json);
+  const depositPaymentUrl = cleanInput(formData.get("deposit_payment_url")) || existingPaymentTerms.deposit_payment_url;
+  const finalPaymentUrl = cleanInput(formData.get("final_payment_url")) || existingPaymentTerms.final_payment_url;
 
   return {
     customer_id: nullableText(cleanInput(formData.get("customer_id"))),
     source_record_id: nullableText(sourceRecordId),
     source_record_type: nullableText(sourceRecordType),
-    proposal_reference: existingReference || cleanInput(formData.get("proposal_reference")) || proposalReference(),
+    proposal_reference: existing?.proposal_reference || cleanInput(formData.get("proposal_reference")) || proposalReference(),
     proposal_type: validProposalTypes.has(proposalType) ? proposalType : "standard",
     status: validProposalStatuses.has(status) ? status : "draft",
     client_name: nullableText(cleanInput(formData.get("client_name"))),
@@ -164,8 +173,12 @@ function proposalPayload(formData: FormData, existingReference?: string | null) 
     payment_terms_json: {
       payment_schedule: paymentSchedule,
       deposit_required: depositRequired,
-      deposit_payment_url: cleanInput(formData.get("deposit_payment_url")),
-      final_payment_url: cleanInput(formData.get("final_payment_url")),
+      deposit_payment_url: depositPaymentUrl,
+      deposit_invoice_pdf: existingPaymentTerms.deposit_invoice_pdf,
+      deposit_receipt_url: existingPaymentTerms.deposit_receipt_url,
+      final_payment_url: finalPaymentUrl,
+      final_invoice_pdf: existingPaymentTerms.final_invoice_pdf,
+      final_receipt_url: existingPaymentTerms.final_receipt_url,
       payment_instructions: paymentInstructions,
       payment_status_note: paymentStatusNote,
     },
@@ -188,12 +201,12 @@ function proposalPayload(formData: FormData, existingReference?: string | null) 
   };
 }
 
-async function getExistingReference(proposalId: string) {
-  const records = await supabaseServiceFetch<{ proposal_reference: string | null }[]>(
-    `axiom_proposals?select=proposal_reference&id=eq.${encodeURIComponent(proposalId)}&limit=1`,
+async function getExistingProposalState(proposalId: string) {
+  const records = await supabaseServiceFetch<ExistingProposalState[]>(
+    `axiom_proposals?select=proposal_reference,payment_terms_json&id=eq.${encodeURIComponent(proposalId)}&limit=1`,
   );
 
-  return records?.[0]?.proposal_reference || null;
+  return records?.[0] || null;
 }
 
 export async function POST(request: Request) {
@@ -213,7 +226,7 @@ export async function POST(request: Request) {
       return redirectWithStatus(request, "/admin/proposals", "missing");
     }
 
-    const existingReference = await getExistingReference(proposalId);
+    const existing = await getExistingProposalState(proposalId);
     const records = await supabaseServiceFetch<{ id: string }[]>(
       `axiom_proposals?id=eq.${encodeURIComponent(proposalId)}&select=id`,
       {
@@ -221,7 +234,7 @@ export async function POST(request: Request) {
         headers: {
           Prefer: "return=representation",
         },
-        body: JSON.stringify(proposalPayload(formData, existingReference)),
+        body: JSON.stringify(proposalPayload(formData, existing)),
       },
     );
 

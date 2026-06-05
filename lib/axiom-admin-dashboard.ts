@@ -41,11 +41,31 @@ export type ReportRecord = {
   updated_at: string | null;
 };
 
+export type ProposalPaymentRecord = {
+  id: string;
+  proposal_reference: string | null;
+  business_name: string | null;
+  workspace_name: string | null;
+  client_email: string | null;
+  status: string | null;
+  payment_status: string | null;
+  pricing_json: unknown;
+  deposit_paid_at: string | null;
+  final_balance_requested_at: string | null;
+  final_balance_paid_at: string | null;
+  stripe_deposit_invoice_id: string | null;
+  stripe_final_invoice_id: string | null;
+  stripe_latest_event_type: string | null;
+  stripe_payment_synced_at: string | null;
+  updated_at: string | null;
+};
+
 export type AdminData = {
   customers: CustomerRecord[];
   orders: OrderRecord[];
   workflows: WorkflowRecord[];
   reports: ReportRecord[];
+  proposals: ProposalPaymentRecord[];
 };
 
 function getSupabaseConfig() {
@@ -88,7 +108,7 @@ export async function supabaseAdminFetch<T>(path: string): Promise<T | null> {
 }
 
 export async function getAdminData(): Promise<AdminData> {
-  const [customers, orders, workflows, reports] = await Promise.all([
+  const [customers, orders, workflows, reports, proposals] = await Promise.all([
     supabaseAdminFetch<CustomerRecord[]>(
       "axiom_customers?select=id,email,full_name,business_name,account_status,created_at,last_login_at&order=created_at.desc&limit=100",
     ),
@@ -101,6 +121,9 @@ export async function getAdminData(): Promise<AdminData> {
     supabaseAdminFetch<ReportRecord[]>(
       "axiom_audit_reports?select=id,submission_id,tier_slug,status,quality_score,quality_status,client_summary,generated_at,updated_at&order=updated_at.desc&limit=100",
     ),
+    supabaseAdminFetch<ProposalPaymentRecord[]>(
+      "axiom_proposals?select=id,proposal_reference,business_name,workspace_name,client_email,status,payment_status,pricing_json,deposit_paid_at,final_balance_requested_at,final_balance_paid_at,stripe_deposit_invoice_id,stripe_final_invoice_id,stripe_latest_event_type,stripe_payment_synced_at,updated_at&order=updated_at.desc&limit=100",
+    ),
   ]);
 
   return {
@@ -108,6 +131,7 @@ export async function getAdminData(): Promise<AdminData> {
     orders: orders || [],
     workflows: workflows || [],
     reports: reports || [],
+    proposals: proposals || [],
   };
 }
 

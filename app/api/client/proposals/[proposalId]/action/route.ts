@@ -38,7 +38,10 @@ function shouldCreateDepositInvoice(proposal: ProposalDraftRecord) {
     !["deposit_paid", "final_balance_due", "paid_complete", "cancelled", "refunded"].includes(status);
 }
 
-function paymentTermsWithDepositInvoice(proposal: ProposalDraftRecord, depositPaymentUrl: string) {
+function paymentTermsWithDepositInvoice(
+  proposal: ProposalDraftRecord,
+  invoice: { hosted_invoice_url: string; invoice_pdf: string | null },
+) {
   const paymentTerms = getProposalPaymentTerms(proposal.payment_terms_json);
   const existingTerms = proposal.payment_terms_json && typeof proposal.payment_terms_json === "object" && !Array.isArray(proposal.payment_terms_json)
     ? proposal.payment_terms_json
@@ -48,8 +51,12 @@ function paymentTermsWithDepositInvoice(proposal: ProposalDraftRecord, depositPa
     ...existingTerms,
     payment_schedule: paymentTerms.payment_schedule,
     deposit_required: paymentTerms.deposit_required,
-    deposit_payment_url: depositPaymentUrl,
+    deposit_payment_url: invoice.hosted_invoice_url,
+    deposit_invoice_pdf: invoice.invoice_pdf || "",
+    deposit_receipt_url: paymentTerms.deposit_receipt_url,
     final_payment_url: paymentTerms.final_payment_url,
+    final_invoice_pdf: paymentTerms.final_invoice_pdf,
+    final_receipt_url: paymentTerms.final_receipt_url,
     payment_instructions: paymentTerms.payment_instructions,
     payment_status_note: "Deposit invoice created automatically after proposal acceptance.",
   };
@@ -68,7 +75,7 @@ async function acceptProposal(proposal: ProposalDraftRecord, now: string) {
       payload.stripe_customer_id = invoice.stripe_customer_id;
       payload.stripe_deposit_invoice_id = invoice.stripe_invoice_id;
       payload.payment_status = "deposit_pending";
-      payload.payment_terms_json = paymentTermsWithDepositInvoice(proposal, invoice.hosted_invoice_url);
+      payload.payment_terms_json = paymentTermsWithDepositInvoice(proposal, invoice);
       payload.stripe_last_error = null;
     } catch (error) {
       payload.stripe_last_error = error instanceof Error ? error.message : "Stripe deposit invoice creation failed.";

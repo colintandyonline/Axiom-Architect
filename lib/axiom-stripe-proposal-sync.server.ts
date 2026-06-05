@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { getProposalPricing } from "./axiom-proposal-drafts";
+import { getProposalPaymentTerms, getProposalPricing } from "./axiom-proposal-drafts";
 
 const proposalPaymentStatuses = new Set([
   "unpaid",
@@ -27,6 +27,7 @@ type ProposalSyncInput = {
 type ProposalPaymentRecord = {
   payment_status: string | null;
   pricing_json: unknown;
+  payment_terms_json: unknown;
 };
 
 function getSupabaseServiceConfig() {
@@ -190,7 +191,7 @@ async function stripeEventAlreadyRecorded(eventId: string) {
 
 async function getProposalPaymentStatus(proposalId: string) {
   const records = await supabaseServiceFetch<Array<ProposalPaymentRecord>>(
-    `axiom_proposals?select=payment_status,pricing_json&id=eq.${encodeURIComponent(proposalId)}&limit=1`,
+    `axiom_proposals?select=payment_status,pricing_json,payment_terms_json&id=eq.${encodeURIComponent(proposalId)}&limit=1`,
   );
 
   return records[0] || null;
@@ -229,6 +230,121 @@ function observedStripeAmountCents(payload: unknown) {
   ];
 
   return Math.max(...candidateAmounts);
+}
+
+function objectRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function stringField(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function firstStripeId(value: unknown): string | null {
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+
+  const record = objectRecord(value);
+  return record && typeof record.id === "string" ? record.id : null;
+}
+
+function receiptFromCharge(value: unknown) {
+  const record = objectRecord(value);
+  return record ? stringField(record.receipt_url) : "";
+}
+
+function receiptFromPaymentIntent(value: unknown) {
+  const record = objectRecord(value);
+  return record ? receiptFromCharge(record.latest_charge) : "";
+}
+
+async function fetchStripeReceiptDetails(input: ProposalSyncInput) {
+  const payloadRecord = objectRecord(input.payload);
+  const payloadReceipt =
+    receiptFromPaymentIntent(payloadRecord?.payment_intent) ||
+    receiptFromCharge(payloadRecord?.charge) ||
+    receiptFromCharge(payloadRecord?.latest_charge);
+
+  if (payloadReceipt) {
+    return {
+      receiptUrl: payloadReceipt,
+      paymentIntentId: input.stripePaymentIntentId || firstStripeId(payloadRecord?.payment_intent),
+    };
+  }
+
+  try {
+    const stripe = getStripeServerClient();
+    let paymentIntentId = input.stripePaymentIntentId || null;
+
+    if (!paymentIntentId && input.stripeInvoiceId) {
+      const invoice = await stripe.invoices.retrieve(input.stripeInvoiceId, {
+        expand: ["payment_intent"],
+      });
+      const invoiceRecord = invoice as unknown as Record<string, unknown>;
+
+      paymentIntentId = firstStripeId(invoiceRecord.payment_intent);
+    }
+
+    if (!paymentIntentId) {
+      return {
+        receiptUrl: "",
+        paymentIntentId: null,
+      };
+    }
+
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+      expand: ["latest_charge"],
+    });
+
+    return {
+      receiptUrl: receiptFromPaymentIntent(paymentIntent),
+      paymentIntentId,
+    };
+  } catch (error) {
+    console.warn("Stripe receipt lookup skipped", {
+      eventId: input.eventId,
+      proposalId: input.proposalId,
+      error: error instanceof Error ? error.message : "Unknown Stripe receipt lookup error",
+    });
+    return {
+      receiptUrl: "",
+      paymentIntentId: input.stripePaymentIntentId || null,
+    };
+  }
+}
+
+function paymentTermsWithReceipt(
+  proposalPayment: ProposalPaymentRecord | null,
+  paymentStage: StripeProposalStage,
+  receiptUrl: string,
+) {
+  if (!proposalPayment || !receiptUrl) {
+    return undefined;
+  }
+
+  const paymentTerms = getProposalPaymentTerms(proposalPayment.payment_terms_json);
+  const existingTerms = proposalPayment.payment_terms_json &&
+    typeof proposalPayment.payment_terms_json === "object" &&
+    !Array.isArray(proposalPayment.payment_terms_json)
+    ? proposalPayment.payment_terms_json
+    : {};
+
+  return {
+    ...existingTerms,
+    payment_schedule: paymentTerms.payment_schedule,
+    deposit_required: paymentTerms.deposit_required,
+    deposit_payment_url: paymentTerms.deposit_payment_url,
+    deposit_invoice_pdf: paymentTerms.deposit_invoice_pdf,
+    deposit_receipt_url: paymentStage === "deposit" ? receiptUrl : paymentTerms.deposit_receipt_url,
+    final_payment_url: paymentTerms.final_payment_url,
+    final_invoice_pdf: paymentTerms.final_invoice_pdf,
+    final_receipt_url: paymentStage === "final" ? receiptUrl : paymentTerms.final_receipt_url,
+    payment_instructions: paymentTerms.payment_instructions,
+    payment_status_note: paymentTerms.payment_status_note,
+  };
 }
 
 async function markStripePaymentIgnored(input: ProposalSyncInput & { errorMessage: string }) {
@@ -277,6 +393,9 @@ export async function markStripePaymentSucceeded(input: ProposalSyncInput) {
   }
 
   const currentPaymentStatus = proposalPayment?.payment_status || null;
+  const receipt = await fetchStripeReceiptDetails(input);
+  const stripePaymentIntentId = input.stripePaymentIntentId || receipt.paymentIntentId || undefined;
+  const updatedPaymentTerms = paymentTermsWithReceipt(proposalPayment, input.paymentStage, receipt.receiptUrl);
   const payload: Record<string, unknown> = {
     stripe_customer_id: input.stripeCustomerId || undefined,
     stripe_latest_event_id: input.eventId,
@@ -286,20 +405,24 @@ export async function markStripePaymentSucceeded(input: ProposalSyncInput) {
     updated_at: now,
   };
 
+  if (updatedPaymentTerms) {
+    payload.payment_terms_json = updatedPaymentTerms;
+  }
+
   if (input.paymentStage === "deposit") {
     payload.deposit_paid_at = now;
     payload.payment_status = currentPaymentStatus === "final_balance_due" || currentPaymentStatus === "paid_complete"
       ? currentPaymentStatus
       : "deposit_paid";
     payload.stripe_deposit_invoice_id = input.stripeInvoiceId || undefined;
-    payload.stripe_deposit_payment_intent_id = input.stripePaymentIntentId || undefined;
+    payload.stripe_deposit_payment_intent_id = stripePaymentIntentId;
   }
 
   if (input.paymentStage === "final") {
     payload.final_balance_paid_at = now;
     payload.payment_status = "paid_complete";
     payload.stripe_final_invoice_id = input.stripeInvoiceId || undefined;
-    payload.stripe_final_payment_intent_id = input.stripePaymentIntentId || undefined;
+    payload.stripe_final_payment_intent_id = stripePaymentIntentId;
   }
 
   await supabaseServiceFetch(`axiom_proposals?id=eq.${encodeURIComponent(input.proposalId)}`, {

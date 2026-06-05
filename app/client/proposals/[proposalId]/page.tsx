@@ -8,6 +8,10 @@ import {
   type ProposalDraftRecord,
 } from "../../../../lib/axiom-proposal-drafts";
 import {
+  hasVisibleProposalPaymentDocument,
+  loadProposalPaymentDocuments,
+} from "../../../../lib/axiom-proposal-payment-history";
+import {
   recordProposalClientView,
   validateProposalClientOrAuthenticatedAccess,
 } from "../../../../lib/axiom-proposal-client.server";
@@ -80,6 +84,18 @@ function noticeMessage(value?: string) {
     default:
       return null;
   }
+}
+
+function paymentDocumentStatus(value: string) {
+  if (value === "paid") {
+    return "Paid";
+  }
+
+  if (value === "pending") {
+    return "Invoice issued";
+  }
+
+  return "Not issued";
 }
 
 function UnavailableProposal({ message }: { message: string }) {
@@ -166,6 +182,7 @@ export default async function ClientProposalPage({ params, searchParams }: PageP
   const paymentCancelled = paymentStatus === "cancelled";
   const deliverables = listItems(proposal.deliverables_json, 5);
   const notice = noticeMessage(firstParam(query.proposal));
+  const paymentDocuments = (await loadProposalPaymentDocuments(proposal)).filter(hasVisibleProposalPaymentDocument);
   const pdfUrl = token
     ? `/api/client/proposals/${encodeURIComponent(proposal.id)}/pdf?token=${encodeURIComponent(token)}`
     : `/api/client/proposals/${encodeURIComponent(proposal.id)}/pdf`;
@@ -300,6 +317,29 @@ export default async function ClientProposalPage({ params, searchParams }: PageP
                 <p className="mt-4 text-xs leading-6 text-white/50">
                   Payment buttons become available after the proposal is accepted.
                 </p>
+              ) : null}
+              {paymentDocuments.length ? (
+                <div className="mt-5 grid gap-3 border-t border-[#9ed39f]/16 pt-5">
+                  <p className="text-[0.64rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">Invoice and receipt links</p>
+                  {paymentDocuments.map((document) => (
+                    <div key={document.stage} className="border border-[#9ed39f]/14 bg-black/30 p-3">
+                      <p className="text-xs font-black uppercase tracking-[0.14em] text-white/80">
+                        {document.title} · {paymentDocumentStatus(document.status)}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {document.invoiceUrl ? (
+                          <a href={document.invoiceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center justify-center border border-[#9ed39f]/35 px-3 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black">Invoice</a>
+                        ) : null}
+                        {document.invoicePdfUrl ? (
+                          <a href={document.invoicePdfUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center justify-center border border-[#9ed39f]/35 px-3 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black">PDF</a>
+                        ) : null}
+                        {document.receiptUrl ? (
+                          <a href={document.receiptUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-3 text-[0.62rem] font-black uppercase tracking-[0.12em] text-black transition hover:bg-white">Receipt</a>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : null}
             </section>
           </aside>

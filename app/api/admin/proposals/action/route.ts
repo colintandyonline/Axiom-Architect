@@ -398,7 +398,11 @@ async function createProposalInvoice(proposalId: string, stage: "deposit" | "fin
       ? proposal.payment_terms_json
       : {}),
     deposit_payment_url: stage === "deposit" ? invoice.hosted_invoice_url : paymentTerms.deposit_payment_url,
+    deposit_invoice_pdf: stage === "deposit" ? invoice.invoice_pdf || "" : paymentTerms.deposit_invoice_pdf,
+    deposit_receipt_url: paymentTerms.deposit_receipt_url,
     final_payment_url: stage === "final" ? invoice.hosted_invoice_url : paymentTerms.final_payment_url,
+    final_invoice_pdf: stage === "final" ? invoice.invoice_pdf || "" : paymentTerms.final_invoice_pdf,
+    final_receipt_url: paymentTerms.final_receipt_url,
     payment_instructions: paymentTerms.payment_instructions,
     payment_schedule: paymentTerms.payment_schedule,
     deposit_required: paymentTerms.deposit_required,

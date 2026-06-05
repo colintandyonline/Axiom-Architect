@@ -7,6 +7,11 @@ import {
   loadClientProposals,
   proposalStatusLabel,
 } from "../../../lib/axiom-client-proposals";
+import {
+  hasVisibleProposalPaymentDocument,
+  loadProposalPaymentDocuments,
+  type ProposalPaymentDocument,
+} from "../../../lib/axiom-proposal-payment-history";
 import { getProposalPaymentTerms, getProposalPricing } from "../../../lib/axiom-proposal-drafts";
 
 type BillingProposal = Awaited<ReturnType<typeof loadClientProposals>>[number];
@@ -68,6 +73,18 @@ function paymentStateNote(value: string | null | undefined) {
   }
 }
 
+function documentStatusText(document: ProposalPaymentDocument) {
+  if (document.status === "paid") {
+    return "Paid";
+  }
+
+  if (document.status === "pending") {
+    return "Invoice issued";
+  }
+
+  return "Not issued";
+}
+
 function proposalPaymentState(proposal: BillingProposal) {
   if (proposal.payment_status === "cancelled" || proposal.payment_status === "refunded") {
     return proposal.payment_status;
@@ -99,6 +116,15 @@ export default async function ClientPortalBillingPage() {
   ]);
 
   const invoices = data.invoices;
+  const proposalDocumentGroups = await Promise.all(
+    proposals.map(async (proposal) => ({
+      proposal,
+      documents: (await loadProposalPaymentDocuments(proposal)).filter(hasVisibleProposalPaymentDocument),
+    })),
+  );
+  const proposalDocuments = proposalDocumentGroups.flatMap((group) =>
+    group.documents.map((document) => ({ proposal: group.proposal, document })),
+  );
   const latestProposal = proposals[0] ?? null;
   const latestInvoice = invoices[0] ?? null;
   const paidInvoices = invoices.filter((invoice) => invoice.status === "paid");
@@ -225,12 +251,44 @@ export default async function ClientPortalBillingPage() {
           <div className="flex flex-col gap-5 border-b border-[#9ed39f]/20 pb-6 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="inline-flex border border-[#9ed39f] bg-[#9ed39f] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.22em] text-black">Invoice and receipt history</p>
-              <h2 className="mt-5 text-[clamp(2rem,4vw,4rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-white">{invoices.length ? "Billing history." : "No invoices or receipts yet."}</h2>
+              <h2 className="mt-5 text-[clamp(2rem,4vw,4rem)] font-black uppercase leading-[0.9] tracking-[-0.07em] text-white">{proposalDocuments.length || invoices.length ? "Billing history." : "No invoices or receipts yet."}</h2>
             </div>
             <Link href="/client/deliverables" className="inline-flex min-h-12 items-center justify-center border border-[#9ed39f] px-5 text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black">View deliverables</Link>
           </div>
 
           <div className="mt-8 grid gap-4">
+            {proposalDocuments.map(({ proposal, document }) => (
+              <article key={`${proposal.id}-${document.stage}`} className="grid gap-4 border border-[#9ed39f]/24 bg-[#030804] p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div>
+                  <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">
+                    Proposal payment · {documentStatusText(document)} · {formatProposalCurrency(document.amount)}
+                  </p>
+                  <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.05em] text-white">
+                    {proposal.business_name || proposal.workspace_name || "Axiom proposal"} · {document.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-7 text-[#e6f6e7]/72">
+                    {proposal.proposal_reference || proposal.id}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {document.invoiceUrl ? (
+                      <a href={document.invoiceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center border border-[#9ed39f]/35 px-4 text-[0.66rem] font-black uppercase tracking-[0.14em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black">Open invoice</a>
+                    ) : null}
+                    {document.invoicePdfUrl ? (
+                      <a href={document.invoicePdfUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center border border-[#9ed39f]/35 px-4 text-[0.66rem] font-black uppercase tracking-[0.14em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black">Invoice PDF</a>
+                    ) : null}
+                    {document.receiptUrl ? (
+                      <a href={document.receiptUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-4 text-[0.66rem] font-black uppercase tracking-[0.14em] text-black transition hover:bg-white">Receipt</a>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="text-left text-xs font-bold uppercase tracking-[0.14em] text-[#e6f6e7]/58 lg:text-right">
+                  <p>Stage {document.stage === "deposit" ? "Deposit" : "Final balance"}</p>
+                  <p className="mt-2">Issued {date(document.requestedAt)}</p>
+                  {document.paidAt ? <p className="mt-2">Paid {date(document.paidAt)}</p> : null}
+                </div>
+              </article>
+            ))}
+
             {invoices.length ? invoices.map((invoice) => (
               <article key={invoice.id} className="grid gap-4 border border-[#9ed39f]/24 bg-[#030804] p-5 lg:grid-cols-[1fr_auto] lg:items-center">
                 <div>
@@ -244,12 +302,14 @@ export default async function ClientPortalBillingPage() {
                   {invoice.paid_at && <p className="mt-2">Paid {date(invoice.paid_at)}</p>}
                 </div>
               </article>
-            )) : (
+            )) : null}
+
+            {!proposalDocuments.length && !invoices.length ? (
               <article className="border border-[#9ed39f]/24 bg-[#030804] p-6">
                 <h3 className="text-2xl font-black uppercase tracking-[-0.05em] text-white">No invoices or receipts attached.</h3>
-                <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/72">Stripe invoices and receipts will appear here once payment sync is connected.</p>
+                <p className="mt-3 text-sm leading-7 text-[#e6f6e7]/72">Stripe proposal invoices and receipts will appear here after proposal payments are created or received.</p>
               </article>
-            )}
+            ) : null}
           </div>
         </div>
       </section>

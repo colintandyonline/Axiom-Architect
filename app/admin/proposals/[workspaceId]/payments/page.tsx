@@ -10,6 +10,11 @@ import {
   getProposalPricing,
   type ProposalDraftRecord,
 } from "../../../../../lib/axiom-proposal-drafts";
+import {
+  hasVisibleProposalPaymentDocument,
+  loadProposalPaymentDocuments,
+  type ProposalPaymentDocument,
+} from "../../../../../lib/axiom-proposal-payment-history";
 
 export const metadata: Metadata = {
   title: "Proposal Payments | Axiom Architect Admin",
@@ -113,6 +118,18 @@ function stripeLinkLabel(url: string) {
   return url ? "Open Stripe invoice" : "No Stripe invoice URL saved";
 }
 
+function documentStatusText(document: ProposalPaymentDocument) {
+  if (document.status === "paid") {
+    return "Paid";
+  }
+
+  if (document.status === "pending") {
+    return "Invoice issued";
+  }
+
+  return "Not issued";
+}
+
 export default async function AdminProposalPaymentsPage({ params, searchParams }: PageProps) {
   const { adminEmail } = await requireAxiomAdmin();
   const { workspaceId } = await params;
@@ -135,6 +152,7 @@ export default async function AdminProposalPaymentsPage({ params, searchParams }
   const proposalAccepted = proposal.status === "accepted" || Boolean(proposal.accepted_at);
   const canCreateDepositInvoice = proposalAccepted && !depositIsRecordedPaid && !["cancelled", "refunded"].includes(paymentStatus);
   const canCreateFinalInvoice = depositIsRecordedPaid && !finalBalanceIsRecordedPaid && !["cancelled", "refunded"].includes(paymentStatus);
+  const paymentDocuments = (await loadProposalPaymentDocuments(proposal)).filter(hasVisibleProposalPaymentDocument);
 
   return (
     <AdminShell
@@ -206,6 +224,34 @@ export default async function AdminProposalPaymentsPage({ params, searchParams }
                 <a href={paymentTerms.final_payment_url} target="_blank" rel="noopener noreferrer" className={buttonClass}>Open final invoice</a>
               ) : null}
             </div>
+            {paymentDocuments.length ? (
+              <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                {paymentDocuments.map((document) => (
+                  <article key={document.stage} className="border border-[#9ed39f]/16 bg-black/32 p-4">
+                    <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]">
+                      {document.title} · {documentStatusText(document)}
+                    </p>
+                    <div className="mt-3 grid gap-2 text-sm leading-7 text-white/66">
+                      <DetailLine labelText="Amount" value={formatProposalMoney(document.amount)} />
+                      <DetailLine labelText="Invoice ID" value={document.invoiceId} />
+                      <DetailLine labelText="Payment intent" value={document.paymentIntentId} />
+                      <DetailLine labelText="Paid at" value={formatDate(document.paidAt)} />
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {document.invoiceUrl ? (
+                        <a href={document.invoiceUrl} target="_blank" rel="noopener noreferrer" className={buttonClass}>Open invoice</a>
+                      ) : null}
+                      {document.invoicePdfUrl ? (
+                        <a href={document.invoicePdfUrl} target="_blank" rel="noopener noreferrer" className={buttonClass}>Invoice PDF</a>
+                      ) : null}
+                      {document.receiptUrl ? (
+                        <a href={document.receiptUrl} target="_blank" rel="noopener noreferrer" className={primaryButtonClass}>Receipt</a>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : null}
             <div className="mt-5 flex flex-wrap gap-2">
               {statusPill(paymentStatus)}
               {statusPill(hasAnyDepositLink ? "deposit link exists" : "deposit link missing")}

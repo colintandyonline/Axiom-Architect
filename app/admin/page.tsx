@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAxiomAdmin } from "../../lib/axiom-admin";
 import { formatCurrency, getAdminData } from "../../lib/axiom-admin-dashboard";
+import { formatProposalMoney, getProposalPricing } from "../../lib/axiom-proposal-drafts";
 import { AdminSection, AdminShell, StatCard, buttonClass, primaryButtonClass } from "../../components/admin/AdminShell";
 
 export const metadata: Metadata = {
@@ -20,6 +21,17 @@ export default async function AdminDashboardPage() {
   const submittedWorkflows = data.workflows.filter((workflow) => workflow.status && workflow.status !== "draft");
   const activeReports = data.reports.filter((report) => ["queued", "generating", "needs_review"].includes(report.status || "")).length;
   const generatedReports = data.reports.filter((report) => ["generated", "approved", "delivered"].includes(report.status || "")).length;
+  const proposalDepositsReceived = data.proposals.filter((proposal) => proposal.deposit_paid_at);
+  const proposalFinalsReceived = data.proposals.filter((proposal) => proposal.final_balance_paid_at);
+  const proposalDepositPaidFinalDue = data.proposals.filter((proposal) => proposal.deposit_paid_at && !proposal.final_balance_paid_at);
+  const proposalPaymentsComplete = data.proposals.filter((proposal) => proposal.final_balance_paid_at);
+  const proposalDepositsTotal = proposalDepositsReceived.reduce((sum, proposal) => sum + getProposalPricing(proposal.pricing_json).deposit_required, 0);
+  const proposalFinalsTotal = proposalFinalsReceived.reduce((sum, proposal) => sum + getProposalPricing(proposal.pricing_json).balance_amount, 0);
+  const proposalPaymentsTotal = proposalDepositsTotal + proposalFinalsTotal;
+  const proposalOutstandingFinals = proposalDepositPaidFinalDue.reduce((sum, proposal) => sum + getProposalPricing(proposal.pricing_json).balance_amount, 0);
+  const recentProposalPayments = data.proposals
+    .filter((proposal) => proposal.deposit_paid_at || proposal.final_balance_paid_at || proposal.payment_status)
+    .slice(0, 5);
 
   return (
     <AdminShell
@@ -79,6 +91,47 @@ export default async function AdminDashboardPage() {
                   <Link href="/client/deliverables" className={buttonClass}>Client deliverables view</Link>
                 </div>
               </article>
+            </div>
+          </AdminSection>
+
+          <AdminSection eyebrow="Service proposal revenue" title="Proposal payments">
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-6">
+              <StatCard title="Received" value={formatProposalMoney(proposalPaymentsTotal)} helper="Deposit plus final proposal payments" />
+              <StatCard title="Deposits" value={formatProposalMoney(proposalDepositsTotal)} helper="Recorded proposal deposits" />
+              <StatCard title="Finals" value={formatProposalMoney(proposalFinalsTotal)} helper="Recorded final balances" />
+              <StatCard title="Outstanding" value={formatProposalMoney(proposalOutstandingFinals)} helper="Final balances still open" />
+              <StatCard title="Complete" value={String(proposalPaymentsComplete.length)} helper="Proposal payments fully paid" />
+              <StatCard title="Final due" value={String(proposalDepositPaidFinalDue.length)} helper="Deposit paid, final not paid" />
+            </div>
+            <div className="mt-6 overflow-x-auto">
+              <table className="min-w-[860px] w-full border-collapse text-left text-sm">
+                <thead className="text-[0.68rem] uppercase tracking-[0.16em] text-[#9ed39f]">
+                  <tr>{["Proposal", "Status", "Deposit", "Final", "Latest Stripe sync"].map((heading) => <th key={heading} className="border-b border-[#9ed39f]/20 p-3">{heading}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {recentProposalPayments.length ? recentProposalPayments.map((proposal) => {
+                    const pricing = getProposalPricing(proposal.pricing_json);
+
+                    return (
+                      <tr key={proposal.id} className="border-b border-[#9ed39f]/12 text-white/76">
+                        <td className="p-3 font-bold text-white">
+                          <Link href={`/admin/proposals/${proposal.id}/payments`} className="text-[#9ed39f] hover:text-white">
+                            {proposal.business_name || proposal.workspace_name || proposal.proposal_reference || "Proposal"}
+                          </Link>
+                        </td>
+                        <td className="p-3">{proposal.payment_status || "unpaid"}</td>
+                        <td className="p-3">{proposal.deposit_paid_at ? formatProposalMoney(pricing.deposit_required) : "Not paid"}</td>
+                        <td className="p-3">{proposal.final_balance_paid_at ? formatProposalMoney(pricing.balance_amount) : proposal.final_balance_requested_at ? "Due" : "Not requested"}</td>
+                        <td className="p-3">{proposal.stripe_latest_event_type || "No Stripe event"}</td>
+                      </tr>
+                    );
+                  }) : (
+                    <tr className="border-b border-[#9ed39f]/12 text-white/62">
+                      <td colSpan={5} className="p-3">No proposal payments are recorded yet.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </AdminSection>
         </div>
