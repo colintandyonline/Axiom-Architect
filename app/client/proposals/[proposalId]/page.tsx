@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import {
   formatProposalMoney,
@@ -72,7 +72,7 @@ function listItems(value: unknown, limit = 5) {
 function noticeMessage(value?: string) {
   switch (value) {
     case "accepted":
-      return "Proposal accepted. Deposit payment is now available if a deposit link has been provided.";
+      return "Proposal accepted. Deposit payment will appear once the Stripe invoice is ready.";
     case "changes-requested":
       return "Change request sent. Axiom Architect will review your note.";
     case "missing-message":
@@ -271,6 +271,11 @@ export default async function ClientProposalPage({ params, searchParams }: PageP
                   Pay deposit
                 </a>
               ) : null}
+              {accepted && !paymentTerms.deposit_payment_url && !depositReceived && !paymentComplete && !paymentCancelled ? (
+                <p className="mt-4 border border-[#9ed39f]/18 bg-black/30 p-4 text-sm leading-7 text-white/62">
+                  Deposit invoice is being prepared. Refresh this page shortly or check your email for the Stripe invoice.
+                </p>
+              ) : null}
               {depositReceived && !paymentComplete && !paymentCancelled ? (
                 <p className="mt-4 border border-[#9ed39f]/22 bg-[#9ed39f]/10 p-4 text-sm font-bold leading-7 text-white/78">
                   Deposit received.
@@ -303,3 +308,4 @@ export default async function ClientProposalPage({ params, searchParams }: PageP
     </main>
   );
 }
+

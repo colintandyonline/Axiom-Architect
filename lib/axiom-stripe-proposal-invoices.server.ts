@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+﻿import Stripe from "stripe";
 import type { ProposalDraftRecord } from "./axiom-proposal-drafts";
 import { getProposalPaymentTerms, getProposalPricing } from "./axiom-proposal-drafts";
 import { getStripeServerClient } from "./axiom-stripe-proposal-sync.server";
@@ -85,6 +85,12 @@ function getHostedInvoiceUrl(invoice: Stripe.Invoice) {
   return hostedInvoiceUrl;
 }
 
+function assertInvoiceHasExpectedTotal(invoice: Stripe.Invoice, expectedAmountInCents: number) {
+  if ((invoice.total || 0) < expectedAmountInCents) {
+    throw new Error("Stripe invoice total was lower than the proposal payment amount. Invoice was not sent.");
+  }
+}
+
 export async function createStripeProposalInvoice(
   proposal: ProposalDraftRecord,
   stage: ProposalInvoiceStage,
@@ -100,14 +106,6 @@ export async function createStripeProposalInvoice(
   const stripeCustomerId = await findOrCreateStripeCustomer(stripe, proposal);
   const metadata = proposalMetadata(proposal, stage);
   const description = invoiceDescription(proposal, stage);
-
-  await stripe.invoiceItems.create({
-    customer: stripeCustomerId,
-    amount: amountInCents,
-    currency: "usd",
-    description,
-    metadata,
-  });
 
   const invoice = await stripe.invoices.create({
     customer: stripeCustomerId,
@@ -125,7 +123,19 @@ export async function createStripeProposalInvoice(
     footer: getProposalPaymentTerms(proposal.payment_terms_json).payment_instructions || undefined,
   });
 
+  await stripe.invoiceItems.create({
+    customer: stripeCustomerId,
+    invoice: invoice.id,
+    amount: amountInCents,
+    currency: "usd",
+    description,
+    metadata,
+  });
+
   const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+
+  assertInvoiceHasExpectedTotal(finalizedInvoice, amountInCents);
+
   const sentInvoice = finalizedInvoice.status === "open"
     ? await stripe.invoices.sendInvoice(finalizedInvoice.id)
     : finalizedInvoice;
