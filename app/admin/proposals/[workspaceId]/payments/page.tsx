@@ -130,8 +130,9 @@ export default async function AdminProposalPaymentsPage({ params, searchParams }
   const hasAxiomFinalInvoice = Boolean(proposal.stripe_final_invoice_id);
   const hasAnyDepositLink = Boolean(proposal.stripe_deposit_invoice_id || paymentTerms.deposit_payment_url);
   const hasAnyFinalLink = Boolean(proposal.stripe_final_invoice_id || paymentTerms.final_payment_url);
-  const canCreateDepositInvoice = !["deposit_paid", "final_balance_due", "paid_complete", "cancelled", "refunded"].includes(paymentStatus);
-  const canCreateFinalInvoice = !["paid_complete", "cancelled", "refunded"].includes(paymentStatus) && ["deposit_paid", "final_balance_due"].includes(paymentStatus);
+  const depositIsRecordedPaid = Boolean(proposal.deposit_paid_at) || ["deposit_paid", "final_balance_due", "paid_complete"].includes(paymentStatus);
+  const canCreateDepositInvoice = !depositIsRecordedPaid && !["cancelled", "refunded"].includes(paymentStatus);
+  const canCreateFinalInvoice = depositIsRecordedPaid && !["paid_complete", "cancelled", "refunded"].includes(paymentStatus);
 
   return (
     <AdminShell
@@ -207,6 +208,7 @@ export default async function AdminProposalPaymentsPage({ params, searchParams }
               {statusPill(paymentStatus)}
               {statusPill(hasAnyDepositLink ? "deposit link exists" : "deposit link missing")}
               {statusPill(hasAxiomDepositInvoice ? "axiom deposit invoice" : "manual/no deposit invoice")}
+              {statusPill(depositIsRecordedPaid ? "deposit recorded paid" : "deposit not recorded")}
               {statusPill(hasAnyFinalLink ? "final link exists" : "final link missing")}
             </div>
           </AdminSection>
