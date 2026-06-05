@@ -3,6 +3,8 @@ import {
   patchClientProposal,
   validateProposalClientOrAuthenticatedAccess,
 } from "../../../../../../lib/axiom-proposal-client.server";
+import { getProposalPaymentTerms, getProposalPricing, type ProposalDraftRecord } from "../../../../../../lib/axiom-proposal-drafts";
+import { createStripeProposalInvoice } from "../../../../../../lib/axiom-stripe-proposal-invoices.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +24,56 @@ function redirectToProposal(request: Request, proposalId: string, token: string,
   return NextResponse.redirect(url, 303);
 }
 
+function hasDepositInvoice(proposal: ProposalDraftRecord) {
+  const paymentTerms = getProposalPaymentTerms(proposal.payment_terms_json);
+  return Boolean(proposal.stripe_deposit_invoice_id || paymentTerms.deposit_payment_url);
+}
+
+function shouldCreateDepositInvoice(proposal: ProposalDraftRecord) {
+  const pricing = getProposalPricing(proposal.pricing_json);
+  const status = proposal.payment_status || "unpaid";
+
+  return pricing.deposit_required > 0 &&
+    !hasDepositInvoice(proposal) &&
+    !["deposit_paid", "final_balance_due", "paid_complete", "cancelled", "refunded"].includes(status);
+}
+
+function paymentTermsWithDepositInvoice(proposal: ProposalDraftRecord, depositPaymentUrl: string) {
+  const paymentTerms = getProposalPaymentTerms(proposal.payment_terms_json);
+  const existingTerms = proposal.payment_terms_json && typeof proposal.payment_terms_json === "object" && !Array.isArray(proposal.payment_terms_json)
+    ? proposal.payment_terms_json
+    : {};
+
+  return {
+    ...existingTerms,
+    payment_schedule: paymentTerms.payment_schedule,
+    deposit_required: paymentTerms.deposit_required,
+    deposit_payment_url: depositPaymentUrl,
+    final_payment_url: paymentTerms.final_payment_url,
+    payment_instructions: paymentTerms.payment_instructions,
+    payment_status_note: "Deposit invoice created automatically after proposal acceptance.",
+  };
+}
+
+async function acceptProposal(proposal: ProposalDraftRecord, now: string) {
+  const payload: Record<string, unknown> = {
+    accepted_at: proposal.accepted_at || now,
+    status: "accepted",
+    updated_at: now,
+  };
+
+  if (shouldCreateDepositInvoice(proposal)) {
+    const invoice = await createStripeProposalInvoice(proposal, "deposit");
+    payload.stripe_customer_id = invoice.stripe_customer_id;
+    payload.stripe_deposit_invoice_id = invoice.stripe_invoice_id;
+    payload.payment_status = "deposit_pending";
+    payload.payment_terms_json = paymentTermsWithDepositInvoice(proposal, invoice.hosted_invoice_url);
+    payload.stripe_last_error = null;
+  }
+
+  await patchClientProposal(proposal.id, payload);
+}
+
 export async function POST(
   request: Request,
   context: { params: Promise<{ proposalId: string }> },
@@ -39,11 +91,7 @@ export async function POST(
   const now = new Date().toISOString();
 
   if (action === "accept_proposal") {
-    await patchClientProposal(access.proposal.id, {
-      accepted_at: access.proposal.accepted_at || now,
-      status: "accepted",
-      updated_at: now,
-    });
+    await acceptProposal(access.proposal, now);
     return redirectToProposal(request, access.proposal.id, token, "accepted");
   }
 
