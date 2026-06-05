@@ -32,6 +32,7 @@ const textareaClass = "min-h-28 border border-[#9ed39f]/30 bg-black px-3 py-3 te
 const labelClass = "grid gap-2 text-[0.66rem] font-black uppercase tracking-[0.16em] text-[#9ed39f]";
 const buttonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f]/35 bg-black px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#9ed39f] transition hover:bg-[#9ed39f] hover:text-black";
 const primaryButtonClass = "inline-flex min-h-10 items-center justify-center border border-[#9ed39f] bg-[#9ed39f] px-3 text-center text-[0.62rem] font-black uppercase tracking-[0.14em] text-black transition hover:bg-white";
+const defaultPaymentInstructions = "A deposit is required to begin work. The remaining balance is due before final delivery unless otherwise agreed.";
 
 function customerLabel(customer: CustomerOption) {
   const name = customer.business_name || customer.full_name || customer.email || "Unnamed customer";
@@ -76,21 +77,8 @@ function suggestedBalance(preset: ProposalPreset) {
   return Math.max(0, preset.suggested_base_price - suggestedDeposit(preset));
 }
 
-const defaultPaymentInstructions = "A deposit is required to begin work. The remaining balance is due before final delivery unless otherwise agreed.";
-
-function FieldLabel({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className={labelClass}>
-      {label}
-      {children}
-    </label>
-  );
+function FieldLabel({ label, children }: { label: string; children: React.ReactNode }) {
+  return <label className={labelClass}>{label}{children}</label>;
 }
 
 function TextAreaField({
@@ -108,37 +96,13 @@ function TextAreaField({
 }) {
   return (
     <FieldLabel label={label}>
-      <textarea
-        name={name}
-        rows={rows}
-        defaultValue={value || ""}
-        placeholder={placeholder}
-        className={textareaClass}
-      />
+      <textarea name={name} rows={rows} defaultValue={value || ""} placeholder={placeholder} className={textareaClass} />
     </FieldLabel>
   );
 }
 
-function ListField({
-  name,
-  label,
-  value,
-  placeholder,
-}: {
-  name: string;
-  label: string;
-  value: unknown;
-  placeholder?: string;
-}) {
-  return (
-    <TextAreaField
-      name={name}
-      label={label}
-      value={jsonListToText(value)}
-      rows={5}
-      placeholder={placeholder || "Add one item per line."}
-    />
-  );
+function ListField({ name, label, value, placeholder }: { name: string; label: string; value: unknown; placeholder?: string }) {
+  return <TextAreaField name={name} label={label} value={jsonListToText(value)} rows={5} placeholder={placeholder || "Add one item per line."} />;
 }
 
 export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: ProposalDraftFormProps) {
@@ -156,32 +120,22 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
   const [selectedCustomerId, setSelectedCustomerId] = useState(initialCustomerId);
   const [selectedSourceKey, setSelectedSourceKey] = useState(initialSourceKey);
   const selectedPreset = useMemo(() => getProposalPreset(selectedRoute), [selectedRoute]);
-  const selectedCustomer = useMemo(
-    () => customers.find((item) => item.id === selectedCustomerId) || null,
-    [customers, selectedCustomerId],
-  );
-  const filteredSourceOptions = useMemo(
-    () => {
-      if (!selectedCustomerId || !selectedCustomer) {
-        return [];
+  const selectedCustomer = useMemo(() => customers.find((item) => item.id === selectedCustomerId) || null, [customers, selectedCustomerId]);
+  const filteredSourceOptions = useMemo(() => {
+    if (!selectedCustomerId || !selectedCustomer) {
+      return [];
+    }
+
+    const customerEmail = normalizedEmail(selectedCustomer.email);
+
+    return sourceOptions.filter((source) => {
+      if (source.customer_id && source.customer_id === selectedCustomerId) {
+        return true;
       }
 
-      const customerEmail = normalizedEmail(selectedCustomer.email);
-
-      return sourceOptions.filter((source) => {
-        if (source.customer_id && source.customer_id === selectedCustomerId) {
-          return true;
-        }
-
-        if (customerEmail && normalizedEmail(source.client_email) === customerEmail) {
-          return true;
-        }
-
-        return false;
-      });
-    },
-    [selectedCustomer, selectedCustomerId, sourceOptions],
-  );
+      return Boolean(customerEmail && normalizedEmail(source.client_email) === customerEmail);
+    });
+  }, [selectedCustomer, selectedCustomerId, sourceOptions]);
   const selectedSource = useMemo(
     () => filteredSourceOptions.find((source) => sourceKey(source) === selectedSourceKey) || null,
     [filteredSourceOptions, selectedSourceKey],
@@ -190,11 +144,7 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
   function setFieldValue(name: string, value: string | number) {
     const field = formRef.current?.elements.namedItem(name);
 
-    if (
-      field instanceof HTMLInputElement ||
-      field instanceof HTMLTextAreaElement ||
-      field instanceof HTMLSelectElement
-    ) {
+    if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) {
       field.value = String(value);
     }
   }
@@ -202,11 +152,7 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
   function fieldHasValue(name: string) {
     const field = formRef.current?.elements.namedItem(name);
 
-    if (
-      field instanceof HTMLInputElement ||
-      field instanceof HTMLTextAreaElement ||
-      field instanceof HTMLSelectElement
-    ) {
+    if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) {
       return field.value.trim().length > 0 && field.value.trim() !== "0";
     }
 
@@ -216,11 +162,7 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
   function fieldValue(name: string) {
     const field = formRef.current?.elements.namedItem(name);
 
-    if (
-      field instanceof HTMLInputElement ||
-      field instanceof HTMLTextAreaElement ||
-      field instanceof HTMLSelectElement
-    ) {
+    if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) {
       return field.value.trim();
     }
 
@@ -372,6 +314,8 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
       <input type="hidden" name="source_record_type" defaultValue={proposal?.source_record_type || ""} />
       <input type="hidden" name="source_record_title" defaultValue={initialSource?.title || ""} />
       <input type="hidden" name="source_record_summary" defaultValue={initialSource?.source_context || ""} />
+      <input type="hidden" name="deposit_payment_url" defaultValue={paymentTerms.deposit_payment_url} />
+      <input type="hidden" name="final_payment_url" defaultValue={paymentTerms.final_payment_url} />
 
       <section className="grid gap-4 border border-[#9ed39f]/18 bg-black/34 p-5">
         <div>
@@ -380,87 +324,31 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <FieldLabel label="Linked customer">
-            <select
-              name="customer_id"
-              defaultValue={initialCustomerId}
-              className={inputClass}
-              onChange={(event) => handleCustomerChange(event.currentTarget.value)}
-            >
+            <select name="customer_id" defaultValue={initialCustomerId} className={inputClass} onChange={(event) => handleCustomerChange(event.currentTarget.value)}>
               <option value="">No linked customer</option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customerLabel(customer)}
-                </option>
-              ))}
+              {customers.map((customer) => <option key={customer.id} value={customer.id}>{customerLabel(customer)}</option>)}
             </select>
           </FieldLabel>
-          <FieldLabel label="Proposal workspace name">
-            <input name="workspace_name" defaultValue={proposal?.workspace_name || ""} placeholder="Business workflow proposal" className={inputClass} />
-          </FieldLabel>
-          <FieldLabel label="Client name">
-            <input name="client_name" defaultValue={proposal?.client_name || ""} className={inputClass} />
-          </FieldLabel>
-          <FieldLabel label="Business name">
-            <input name="business_name" defaultValue={proposal?.business_name || ""} className={inputClass} />
-          </FieldLabel>
-          <FieldLabel label="Client email">
-            <input name="client_email" type="email" defaultValue={proposal?.client_email || ""} className={inputClass} />
-          </FieldLabel>
-          <FieldLabel label="Proposal type">
-            <select name="proposal_type" defaultValue={proposal?.proposal_type || "standard"} className={inputClass}>
-              {proposalTypeOptions.map((option) => (
-                <option key={option} value={option}>{option.replace(/_/g, " ")}</option>
-              ))}
-            </select>
-          </FieldLabel>
-          <FieldLabel label="Status">
-            <select name="status" defaultValue={proposal?.status || "draft"} className={inputClass}>
-              {proposalStatusOptions.map((option) => (
-                <option key={option} value={option}>{option.replace(/_/g, " ")}</option>
-              ))}
-            </select>
-          </FieldLabel>
-          <FieldLabel label="Recommended service route">
-            <select
-              name="recommended_service_route"
-              defaultValue={initialRoute}
-              className={inputClass}
-              onChange={(event) => setSelectedRoute(event.currentTarget.value)}
-            >
-              {serviceRouteOptions.map((option) => (
-                <option key={option} value={option}>{serviceRouteLabel(option)}</option>
-              ))}
-            </select>
-          </FieldLabel>
-          <FieldLabel label="Alternative service route">
-            <select name="alternative_service_route" defaultValue={proposal?.alternative_service_route || ""} className={inputClass}>
-              <option value="">No alternative route</option>
-              {serviceRouteOptions.map((option) => (
-                <option key={option} value={option}>{serviceRouteLabel(option)}</option>
-              ))}
-            </select>
-          </FieldLabel>
-          <FieldLabel label="Valid until">
-            <input name="valid_until" type="date" defaultValue={inputDate(proposal?.valid_until)} className={inputClass} />
-          </FieldLabel>
+          <FieldLabel label="Proposal workspace name"><input name="workspace_name" defaultValue={proposal?.workspace_name || ""} placeholder="Business workflow proposal" className={inputClass} /></FieldLabel>
+          <FieldLabel label="Client name"><input name="client_name" defaultValue={proposal?.client_name || ""} className={inputClass} /></FieldLabel>
+          <FieldLabel label="Business name"><input name="business_name" defaultValue={proposal?.business_name || ""} className={inputClass} /></FieldLabel>
+          <FieldLabel label="Client email"><input name="client_email" type="email" defaultValue={proposal?.client_email || ""} className={inputClass} /></FieldLabel>
+          <FieldLabel label="Proposal type"><select name="proposal_type" defaultValue={proposal?.proposal_type || "standard"} className={inputClass}>{proposalTypeOptions.map((option) => <option key={option} value={option}>{option.replace(/_/g, " ")}</option>)}</select></FieldLabel>
+          <FieldLabel label="Status"><select name="status" defaultValue={proposal?.status || "draft"} className={inputClass}>{proposalStatusOptions.map((option) => <option key={option} value={option}>{option.replace(/_/g, " ")}</option>)}</select></FieldLabel>
+          <FieldLabel label="Recommended service route"><select name="recommended_service_route" defaultValue={initialRoute} className={inputClass} onChange={(event) => setSelectedRoute(event.currentTarget.value)}>{serviceRouteOptions.map((option) => <option key={option} value={option}>{serviceRouteLabel(option)}</option>)}</select></FieldLabel>
+          <FieldLabel label="Alternative service route"><select name="alternative_service_route" defaultValue={proposal?.alternative_service_route || ""} className={inputClass}><option value="">No alternative route</option>{serviceRouteOptions.map((option) => <option key={option} value={option}>{serviceRouteLabel(option)}</option>)}</select></FieldLabel>
+          <FieldLabel label="Valid until"><input name="valid_until" type="date" defaultValue={inputDate(proposal?.valid_until)} className={inputClass} /></FieldLabel>
         </div>
         {selectedPreset ? (
           <div className="border border-[#9ed39f]/22 bg-[#9ed39f]/10 p-4">
             <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Suggested preset</p>
             <h3 className="mt-2 text-xl font-black uppercase tracking-[-0.04em] text-white">{selectedPreset.label}</h3>
             <p className="mt-2 text-sm leading-7 text-white/68">
-              USD suggested range: {new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_min_price)} - {new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_max_price)}.
-              Suggested base: {new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_base_price)}.
+              USD suggested range: {new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_min_price)} - {new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_max_price)}. Suggested base: {new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_base_price)}.
             </p>
-            <button type="button" onClick={applyPreset} className={`${primaryButtonClass} mt-4`}>
-              Apply suggested scope and pricing
-            </button>
+            <button type="button" onClick={applyPreset} className={`${primaryButtonClass} mt-4`}>Apply suggested scope and pricing</button>
           </div>
-        ) : (
-          <div className="border border-[#9ed39f]/18 bg-black/30 p-4 text-sm leading-7 text-white/62">
-            No preset is available for this route yet. Admin can still complete the proposal manually.
-          </div>
-        )}
+        ) : <div className="border border-[#9ed39f]/18 bg-black/30 p-4 text-sm leading-7 text-white/62">No preset is available for this route yet. Admin can still complete the proposal manually.</div>}
       </section>
 
       <section className="grid gap-4 border border-[#9ed39f]/18 bg-black/34 p-5">
@@ -472,51 +360,24 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
           <div className="grid gap-4 border border-[#9ed39f]/24 bg-[#9ed39f]/10 p-4">
             <div className="grid gap-2">
               <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#9ed39f]">Client submitted context</p>
-              <p className="text-sm leading-7 text-white/68">
-                Loaded {filteredSourceOptions.length} source records for this client. Import the client-submitted context first, then apply pricing and scope presets below.
-              </p>
+              <p className="text-sm leading-7 text-white/68">Loaded {filteredSourceOptions.length} source records for this client. Import the client-submitted context first, then apply pricing and scope presets below.</p>
             </div>
             {filteredSourceOptions.length > 0 ? (
               <div className="grid gap-4">
                 <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
                   <FieldLabel label="Available request / intake">
-                    <select
-                      value={selectedSourceKey}
-                      className={inputClass}
-                      onChange={(event) => {
-                        const nextKey = event.currentTarget.value;
-                        const nextSource = filteredSourceOptions.find((source) => sourceKey(source) === nextKey) || null;
-                        setSelectedSourceKey(nextKey);
-                        setSourceFields(nextSource);
-                      }}
-                    >
-                      {filteredSourceOptions.map((source) => (
-                        <option key={sourceKey(source)} value={sourceKey(source)}>
-                          {sourceLabel(source)}
-                        </option>
-                      ))}
-                    </select>
+                    <select value={selectedSourceKey} className={inputClass} onChange={(event) => {
+                      const nextKey = event.currentTarget.value;
+                      const nextSource = filteredSourceOptions.find((source) => sourceKey(source) === nextKey) || null;
+                      setSelectedSourceKey(nextKey);
+                      setSourceFields(nextSource);
+                    }}>{filteredSourceOptions.map((source) => <option key={sourceKey(source)} value={sourceKey(source)}>{sourceLabel(source)}</option>)}</select>
                   </FieldLabel>
-                  <button type="button" onClick={importSourceDetails} disabled={!selectedSource} className={`${primaryButtonClass} disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-black disabled:text-white/30`}>
-                    Import selected client context
-                  </button>
+                  <button type="button" onClick={importSourceDetails} disabled={!selectedSource} className={`${primaryButtonClass} disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-black disabled:text-white/30`}>Import selected client context</button>
                 </div>
-                {selectedSource ? (
-                  <div className="grid gap-3 border border-[#9ed39f]/18 bg-[#030804] p-4 text-sm leading-7 text-white/66 md:grid-cols-[0.26fr_0.74fr]">
-                    <div>
-                      <p><strong className="text-[#9ed39f]">Type:</strong> {selectedSource.type_label}</p>
-                      <p><strong className="text-[#9ed39f]">Title:</strong> {selectedSource.title}</p>
-                      <p><strong className="text-[#9ed39f]">Created:</strong> {inputDate(selectedSource.created_at) || "Not set"}</p>
-                    </div>
-                    <p className="whitespace-pre-wrap">{sourcePreview(selectedSource) || "No preview text was found on this source record."}</p>
-                  </div>
-                ) : null}
+                {selectedSource ? <div className="grid gap-3 border border-[#9ed39f]/18 bg-[#030804] p-4 text-sm leading-7 text-white/66 md:grid-cols-[0.26fr_0.74fr]"><div><p><strong className="text-[#9ed39f]">Type:</strong> {selectedSource.type_label}</p><p><strong className="text-[#9ed39f]">Title:</strong> {selectedSource.title}</p><p><strong className="text-[#9ed39f]">Created:</strong> {inputDate(selectedSource.created_at) || "Not set"}</p></div><p className="whitespace-pre-wrap">{sourcePreview(selectedSource) || "No preview text was found on this source record."}</p></div> : null}
               </div>
-            ) : (
-              <p className="border border-[#9ed39f]/16 bg-black/36 p-4 text-sm leading-7 text-white/58">
-                No submitted request or workflow intake was found for this client. You can still complete the proposal manually.
-              </p>
-            )}
+            ) : <p className="border border-[#9ed39f]/16 bg-black/36 p-4 text-sm leading-7 text-white/58">No submitted request or workflow intake was found for this client. You can still complete the proposal manually.</p>}
           </div>
         ) : null}
         <TextAreaField name="client_summary" label="Client summary" value={proposal?.client_summary} />
@@ -538,35 +399,15 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
           <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">Pricing</p>
           <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.05em] text-white">Manual pricing controls</h2>
         </div>
-        <div className="border border-[#9ed39f]/20 bg-black/30 p-4 text-sm leading-7 text-white/68">
-          <strong className="text-[#9ed39f]">Guidance only.</strong>{" "}
-          {selectedPreset
-            ? `USD suggested range ${new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_min_price)} - ${new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_max_price)}; suggested base ${new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_base_price)}.`
-            : "No preset guidance available for this route."}{" "}
-          Final proposal price is admin controlled.
-        </div>
+        <div className="border border-[#9ed39f]/20 bg-black/30 p-4 text-sm leading-7 text-white/68"><strong className="text-[#9ed39f]">Guidance only.</strong> {selectedPreset ? `USD suggested range ${new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_min_price)} - ${new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_max_price)}; suggested base ${new Intl.NumberFormat("en-US", { style: "currency", currency: selectedPreset.currency, maximumFractionDigits: 0 }).format(selectedPreset.suggested_base_price)}.` : "No preset guidance available for this route."} Final proposal price is admin controlled.</div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <FieldLabel label="Base service price (USD)">
-            <input name="base_service_price" type="number" step="1" defaultValue={pricing.base_service_price} className={inputClass} />
-          </FieldLabel>
-          <FieldLabel label="Complexity level">
-            <input name="complexity_level" defaultValue={pricing.complexity_level} className={inputClass} />
-          </FieldLabel>
-          <FieldLabel label="Complexity multiplier">
-            <input name="complexity_multiplier" type="number" step="0.01" defaultValue={pricing.complexity_multiplier} className={inputClass} />
-          </FieldLabel>
-          <FieldLabel label="Risk level">
-            <input name="risk_level" defaultValue={pricing.risk_level} className={inputClass} />
-          </FieldLabel>
-          <FieldLabel label="Delivery depth">
-            <input name="delivery_depth" defaultValue={pricing.delivery_depth} className={inputClass} />
-          </FieldLabel>
-          <FieldLabel label="Discount amount (USD)">
-            <input name="discount_amount" type="number" step="1" defaultValue={pricing.discount_amount} className={inputClass} />
-          </FieldLabel>
-          <FieldLabel label="Final total (USD)">
-            <input name="final_total" type="number" step="1" defaultValue={pricing.final_total} className={inputClass} />
-          </FieldLabel>
+          <FieldLabel label="Base service price (USD)"><input name="base_service_price" type="number" step="1" defaultValue={pricing.base_service_price} className={inputClass} /></FieldLabel>
+          <FieldLabel label="Complexity level"><input name="complexity_level" defaultValue={pricing.complexity_level} className={inputClass} /></FieldLabel>
+          <FieldLabel label="Complexity multiplier"><input name="complexity_multiplier" type="number" step="0.01" defaultValue={pricing.complexity_multiplier} className={inputClass} /></FieldLabel>
+          <FieldLabel label="Risk level"><input name="risk_level" defaultValue={pricing.risk_level} className={inputClass} /></FieldLabel>
+          <FieldLabel label="Delivery depth"><input name="delivery_depth" defaultValue={pricing.delivery_depth} className={inputClass} /></FieldLabel>
+          <FieldLabel label="Discount amount (USD)"><input name="discount_amount" type="number" step="1" defaultValue={pricing.discount_amount} className={inputClass} /></FieldLabel>
+          <FieldLabel label="Final total (USD)"><input name="final_total" type="number" step="1" defaultValue={pricing.final_total} className={inputClass} /></FieldLabel>
         </div>
         <TextAreaField name="add_ons_text" label="Add-ons as text / JSON for now" value={pricing.add_ons_text} />
         <TextAreaField name="payment_schedule" label="Payment schedule" value={paymentTerms.payment_schedule} />
@@ -576,36 +417,21 @@ export function ProposalDraftForm({ proposal, customers, sourceOptions, mode }: 
       <section className="grid gap-4 border border-[#9ed39f]/18 bg-black/34 p-5">
         <div>
           <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[#9ed39f]">Proposal payment</p>
-          <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.05em] text-white">Manual payment links</h2>
-          <p className="mt-2 text-sm leading-7 text-white/62">
-            Admin-only payment preparation. These links are saved for later proposal delivery and are not exposed to clients by this screen.
-          </p>
+          <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.05em] text-white">Payment setup</h2>
+          <p className="mt-2 text-sm leading-7 text-white/62">Set the proposal amounts and instructions here. Stripe invoice links are generated automatically from the proposal payment page after the proposal is ready.</p>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <FieldLabel label="Deposit amount (USD)">
-            <input name="deposit_required" type="number" step="1" defaultValue={pricing.deposit_required} className={inputClass} />
-          </FieldLabel>
-          <FieldLabel label="Balance amount (USD)">
-            <input name="balance_amount" type="number" step="1" defaultValue={pricing.balance_amount} className={inputClass} />
-          </FieldLabel>
-          <FieldLabel label="Deposit payment URL">
-            <input name="deposit_payment_url" type="url" defaultValue={paymentTerms.deposit_payment_url} placeholder="https://buy.stripe.com/..." className={inputClass} />
-          </FieldLabel>
-          <FieldLabel label="Final payment URL">
-            <input name="final_payment_url" type="url" defaultValue={paymentTerms.final_payment_url} placeholder="https://buy.stripe.com/..." className={inputClass} />
-          </FieldLabel>
+          <FieldLabel label="Deposit amount (USD)"><input name="deposit_required" type="number" step="1" defaultValue={pricing.deposit_required} className={inputClass} /></FieldLabel>
+          <FieldLabel label="Balance amount (USD)"><input name="balance_amount" type="number" step="1" defaultValue={pricing.balance_amount} className={inputClass} /></FieldLabel>
         </div>
-        <TextAreaField
-          name="payment_instructions"
-          label="Payment instructions"
-          value={paymentTerms.payment_instructions || defaultPaymentInstructions}
-        />
-        <TextAreaField
-          name="payment_status_note"
-          label="Payment status note"
-          value={paymentTerms.payment_status_note}
-          placeholder="Internal note, e.g. deposit link created, invoice sent, payment pending."
-        />
+        {proposal ? (
+          <div className="border border-[#9ed39f]/20 bg-[#9ed39f]/10 p-4 text-sm leading-7 text-white/70">
+            <p><strong className="text-[#9ed39f]">Invoice creation:</strong> Use the proposal payments page to create/send Stripe invoices with metadata attached automatically.</p>
+            <a href={`/admin/proposals/${proposal.id}/payments`} className={`${buttonClass} mt-3`}>Open payment page</a>
+          </div>
+        ) : null}
+        <TextAreaField name="payment_instructions" label="Payment instructions" value={paymentTerms.payment_instructions || defaultPaymentInstructions} />
+        <TextAreaField name="payment_status_note" label="Payment status note" value={paymentTerms.payment_status_note} placeholder="Internal note, e.g. invoice sent, payment pending, deposit received." />
       </section>
 
       <section className="grid gap-4 border border-[#9ed39f]/18 bg-black/34 p-5">
