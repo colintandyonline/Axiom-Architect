@@ -79,6 +79,21 @@ function proposalBelongsToClient(
   return Boolean(proposalEmail && customerEmailFilters(customer, user).includes(proposalEmail));
 }
 
+function depositRecordedPaid(proposal: ProposalDraftRecord) {
+  const paymentStatus = proposal.payment_status || "unpaid";
+  return Boolean(proposal.deposit_paid_at) || paymentStatus === "final_balance_due" || paymentStatus === "paid_complete";
+}
+
+function finalRecordedPaid(proposal: ProposalDraftRecord) {
+  return Boolean(proposal.final_balance_paid_at) || proposal.payment_status === "paid_complete";
+}
+
+function finalBalanceIsDue(proposal: ProposalDraftRecord) {
+  return !finalRecordedPaid(proposal) && (
+    proposal.payment_status === "final_balance_due" || Boolean(proposal.final_balance_requested_at)
+  );
+}
+
 export function proposalStatusLabel(value?: string | null) {
   return value ? value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) : "Not set";
 }
@@ -90,8 +105,11 @@ export function proposalPaymentLabel(value?: string | null) {
 export function getProposalNextAction(proposal: ProposalDraftRecord) {
   const pricing = getProposalPricing(proposal.pricing_json);
   const paymentTerms = getProposalPaymentTerms(proposal.payment_terms_json);
-  const paymentStatus = proposal.payment_status || "unpaid";
   const accepted = proposal.status === "accepted" || Boolean(proposal.accepted_at);
+  const paymentCancelled = proposal.payment_status === "cancelled";
+  const depositPaid = depositRecordedPaid(proposal);
+  const finalPaid = finalRecordedPaid(proposal);
+  const balanceDue = finalBalanceIsDue(proposal);
 
   if (!accepted) {
     return {
@@ -101,7 +119,7 @@ export function getProposalNextAction(proposal: ProposalDraftRecord) {
     };
   }
 
-  if (["unpaid", "deposit_pending"].includes(paymentStatus) && paymentTerms.deposit_payment_url) {
+  if (!depositPaid && !paymentCancelled && paymentTerms.deposit_payment_url) {
     return {
       label: "Pay deposit",
       href: paymentTerms.deposit_payment_url,
@@ -110,7 +128,7 @@ export function getProposalNextAction(proposal: ProposalDraftRecord) {
     };
   }
 
-  if (paymentStatus === "final_balance_due" && paymentTerms.final_payment_url) {
+  if (balanceDue && !paymentCancelled && paymentTerms.final_payment_url) {
     return {
       label: "Pay final balance",
       href: paymentTerms.final_payment_url,
@@ -119,7 +137,7 @@ export function getProposalNextAction(proposal: ProposalDraftRecord) {
     };
   }
 
-  if (paymentStatus === "paid_complete") {
+  if (finalPaid) {
     return {
       label: "View deliverables",
       href: "/client/deliverables",
