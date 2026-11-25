@@ -98,3 +98,22 @@ Runtime credentials and service configuration are not included here. Never commi
 **Diagnose clearly. Design deliberately. Build what matters.**
 
 </div>
+<!-- CTDG-ENGINEERING-START -->
+## CTDG engineering intelligence
+
+![CTDG](https://img.shields.io/badge/CTDG-17466c?style=flat-square) ![automation](https://img.shields.io/badge/automation-17466c?style=flat-square) ![business-process](https://img.shields.io/badge/business--process-17466c?style=flat-square) ![typescript](https://img.shields.io/badge/typescript-17466c?style=flat-square) ![workflow-architecture](https://img.shields.io/badge/workflow--architecture-17466c?style=flat-square)
+
+![Repository statistics](./assets/ctdg-repository-intelligence.svg)
+
+| Repository detail | Verified snapshot |
+| --- | --- |
+| Primary language | TypeScript |
+| Repository stars | 1 |
+| Forks | 0 |
+| Open pull requests | 3 |
+| Data date (UTC) | 2026-11-25 |
+
+[CT DIGITAL GROUP](https://ctdigital.group/) · [Repository activity](https://github.com/colintandyonline/Axiom-Architect/activity) · [Pull requests](https://github.com/colintandyonline/Axiom-Architect/pulls)
+
+Statistics are a point-in-time GitHub snapshot, not an indication of release readiness.
+<!-- CTDG-ENGINEERING-END -->
